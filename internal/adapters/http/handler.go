@@ -14,10 +14,10 @@ import (
 )
 
 type UserHandler struct {
-	UserInteractor app.UserUsecasesManager
+	UserInteractor app.UserServiceImpl
 }
 
-func NewUserHandler(userInteractor app.UserUsecasesManager) UserHandler {
+func NewUserHandler(userInteractor app.UserServiceImpl) UserHandler {
 	return UserHandler{UserInteractor: userInteractor}
 }
 
