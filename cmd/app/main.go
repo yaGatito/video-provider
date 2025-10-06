@@ -35,7 +35,7 @@ func main() {
 	}(db)
 
 	userRepository := mysql.NewSQLUserRepository(db)
-	userInteractor := usecase.NewUserUsecasesManager(userRepository)
+	userInteractor := usecase.NewUserServiceImpl(userRepository)
 	userHandler := http2.NewUserHandler(userInteractor)
 
 	router := mux.NewRouter()

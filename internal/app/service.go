@@ -27,15 +27,15 @@ type UserService interface {
 	Get(id int64) (GetUserResult, error)
 }
 
-type UserUsecasesManager struct {
+type UserServiceImpl struct {
 	Repo ports.UserRepository
 }
 
-func NewUserUsecasesManager(repo ports.UserRepository) UserUsecasesManager {
-	return UserUsecasesManager{Repo: repo}
+func NewUserServiceImpl(repo ports.UserRepository) UserServiceImpl {
+	return UserServiceImpl{Repo: repo}
 }
 
-func (ui UserUsecasesManager) Register(cmd RegisterUserCommand) (int64, error) {
+func (ui UserServiceImpl) Register(cmd RegisterUserCommand) (int64, error) {
 	user, err := domain.NewUser(cmd.Email, cmd.Name, cmd.Lastname)
 	if err != nil {
 		return -1, err
@@ -61,7 +61,7 @@ func (ui UserUsecasesManager) Register(cmd RegisterUserCommand) (int64, error) {
 	return id, nil
 }
 
-func (ui UserUsecasesManager) Get(id int64) (GetUserResult, error) {
+func (ui UserServiceImpl) Get(id int64) (GetUserResult, error) {
 	user, err := ui.Repo.FindByID(id)
 	if err != nil {
 		log.Printf("Error retrieving user with ID %d: %v\n", id, err)
