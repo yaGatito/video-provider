@@ -2,11 +2,11 @@ package main
 
 import (
 	"database/sql"
+	http2 "examples-user-service/internal/adapters/http"
+	"examples-user-service/internal/adapters/mysql"
+	usecase "examples-user-service/internal/app"
 	"log"
 	"net/http"
-	http2 "user-service-DDD/internal/adapters/http"
-	"user-service-DDD/internal/adapters/mysql"
-	usecase "user-service-DDD/internal/app"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"

@@ -1,8 +1,8 @@
 package httpadp
 
 import (
+	"examples-user-service/internal/shared"
 	"strings"
-	"user-service-DDD/internal/shared"
 )
 
 // createUserRequest represents the data needed to create a new user.

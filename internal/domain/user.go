@@ -1,9 +1,9 @@
 package domain
 
 import (
+	"examples-user-service/internal/shared"
 	"regexp"
 	"time"
-	"user-service-DDD/internal/shared"
 )
 
 type User struct {

@@ -3,12 +3,12 @@ package httpadp
 import (
 	"encoding/json"
 	"errors"
+	"examples-user-service/internal/app"
+	"examples-user-service/internal/shared"
 	"fmt"
 	"log"
 	"net/http"
 	"strconv"
-	"user-service-DDD/internal/app"
-	"user-service-DDD/internal/shared"
 
 	"github.com/gorilla/mux"
 )

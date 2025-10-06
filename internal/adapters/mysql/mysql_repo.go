@@ -2,10 +2,10 @@ package mysql
 
 import (
 	"database/sql"
+	"examples-user-service/internal/domain"
+	"examples-user-service/internal/ports"
 	"log"
 	"time"
-	"user-service-DDD/internal/domain"
-	"user-service-DDD/internal/ports"
 )
 
 type SQLUserRepository struct {
