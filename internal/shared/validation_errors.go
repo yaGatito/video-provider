@@ -42,7 +42,6 @@ const (
 	ViolatedFieldPassword string = "password"
 )
 
-// Predefined violation codes for createUserRequest validation.
 const (
 	ViolationCodeEmpty string = "EMPTY"
 

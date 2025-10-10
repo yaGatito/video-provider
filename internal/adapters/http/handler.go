@@ -14,10 +14,10 @@ import (
 )
 
 type UserHandler struct {
-	UserInteractor app.UserServiceImpl
+	UserInteractor app.UserService
 }
 
-func NewUserHandler(userInteractor app.UserServiceImpl) UserHandler {
+func NewUserHandler(userInteractor app.UserService) UserHandler {
 	return UserHandler{UserInteractor: userInteractor}
 }
 
@@ -29,13 +29,13 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := createUserRequestData.validate(); err != nil {
+	var vErr shared.ValidationError
+	if err := createUserRequestData.validate(); err != nil && errors.As(err, &vErr) {
 		log.Printf("Validation error: %v", err)
-		var vErr shared.ValidationError
-		errors.As(err, &vErr)
 		writeJSON(w, http.StatusBadRequest, serviceErrorResponse{Code: vErr.Error(), Payload: vErr.Violations})
 		return
 	}
+
 	createUserRequestData.normalize()
 
 	userId, err := h.UserInteractor.Register(app.RegisterUserCommand{

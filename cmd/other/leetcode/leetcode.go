@@ -7,7 +7,7 @@ import (
 	"strings"
 )
 
-func main1() {
+func main() {
 	//area := areaOfMaxDiagonal([][]int{{6, 5}, {8, 6}, {2, 10}, {8, 1}, {9, 2}, {3, 5}, {3, 5}})
 	diagonalOrder := findDiagonalOrder_TEST_NEW_METHOD([][]int{
 		{1, 3, 7, 6, 8, 6, 2, 4},

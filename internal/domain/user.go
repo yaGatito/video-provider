@@ -13,7 +13,7 @@ type User struct {
 	LastName  string
 	CreatedAt time.Time // 2025-08-14 00:37:00
 	IsAdmin   bool      // internal-only; guarded by service logic
-	Status    string    // e.g., "active", "disabled"
+	Status    string    // "active", "disabled"
 }
 
 func NewUser(email string, name string, lastname string) (*User, error) {

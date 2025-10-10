@@ -22,20 +22,20 @@ type GetUserResult struct {
 	CreateAt time.Time
 }
 
-type UserService interface {
+type UserInteractor interface {
 	Register(cmd RegisterUserCommand) (int64, error)
 	Get(id int64) (GetUserResult, error)
 }
 
-type UserServiceImpl struct {
+type UserService struct {
 	Repo ports.UserRepository
 }
 
-func NewUserServiceImpl(repo ports.UserRepository) UserServiceImpl {
-	return UserServiceImpl{Repo: repo}
+func NewUserService(repo ports.UserRepository) UserService {
+	return UserService{Repo: repo}
 }
 
-func (ui UserServiceImpl) Register(cmd RegisterUserCommand) (int64, error) {
+func (ui UserService) Register(cmd RegisterUserCommand) (int64, error) {
 	user, err := domain.NewUser(cmd.Email, cmd.Name, cmd.Lastname)
 	if err != nil {
 		return -1, err
@@ -61,7 +61,7 @@ func (ui UserServiceImpl) Register(cmd RegisterUserCommand) (int64, error) {
 	return id, nil
 }
 
-func (ui UserServiceImpl) Get(id int64) (GetUserResult, error) {
+func (ui UserService) Get(id int64) (GetUserResult, error) {
 	user, err := ui.Repo.FindByID(id)
 	if err != nil {
 		log.Printf("Error retrieving user with ID %d: %v\n", id, err)
