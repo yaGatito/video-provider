@@ -1,5 +1,10 @@
 package main
 
+// https://www.codewars.com/kata/54b72c16cd7f5154e9000457/train/go
+// ···· · −·−−   ·−−− ··− −·· ·
+// ···· · -·--    --- ··- -·· ·
+// 1100 1100 1100 1100 0000 1100 0000 1111 1100 1100 1111 1100 1111 1100 0000 0000 0000 0011 0011 1111 0011 1111 1001 1111 1100 0000 1100 1100 1111 1100 0000 0111 1110 0110 0110 0000 0011
+
 import (
 	"fmt"
 	"strings"
@@ -44,53 +49,70 @@ var MORZE_CODE = map[string]string{
 	"--..":  "Z", // 35
 }
 
-// ···· · −·−−   ·−−− ··− −·· ·
-// 1100 1100 1100 1100 0000 1100 0000 1111 1100 1100 1111 1100 1111 1100 0000 0000 0000 0011 0011 1111 0011 1111 1001 1111 1100 0000 1100 1100 1111 1100 0000 0111 1110 0110 0110 0000 0011
-
-var (
+const (
 	ONE_UNIT    = "1"
-	THREE_UNITS = "111"
 	ZERO_UNIT   = "0"
 	SEVEN_UNITS = "0000000"
-	THREE_ZEROS = "000"
 	DOT         = "."
-	DOT_B       = "1100"
 	DASH        = "-"
-	DASH_B      = "1111"
 	SPACE       = " "
-	SPACE_B     = "0000"
 )
 
 func DecodeBits(bits string) string {
-	bits = strings.Trim(bits, "0")
-	sb := strings.Builder{}
-	delta := 4
-	for i := 0; i < len(bits); i = i + delta {
-		if i+delta > len(bits) {
-			break
+	bits = strings.Trim(bits, ZERO_UNIT)
+	determineUnit := func(onesCounter int, zeroesCounter int) string {
+		if onesCounter >= 1 && onesCounter <= 3 {
+			return DOT
 		}
-		mrz := bits[i : i+delta]
-		switch mrz {
-		case DOT_B:
-			sb.WriteString(DOT)
-		case DASH_B:
-			sb.WriteString(DASH)
-		case SPACE_B:
-			sb.WriteString(SPACE)
-		default:
-			// do nothing
+		if onesCounter == 6 {
+			return DASH
 		}
-		fmt.Println(mrz)
+		if zeroesCounter == 6 {
+			return SPACE
+		}
+		return ""
 	}
+	sb := strings.Builder{}
+	words := strings.Split(bits, SEVEN_UNITS)
+	for _, word := range words {
+		onesCounter := 0
+		zeroesCounter := 0
+		for ixBit, bit := range word {
+			if string(bit) == ZERO_UNIT {
+				sb.WriteString(determineUnit(onesCounter, 0))
+				zeroesCounter++
+				onesCounter = 0
+			} else if string(bit) == ONE_UNIT {
+				sb.WriteString(determineUnit(0, zeroesCounter))
+				onesCounter++
+				if ixBit == len(word)-1 {
+					sb.WriteString(determineUnit(onesCounter, zeroesCounter))
+				}
+				zeroesCounter = 0
+			}
+		}
+
+		sb.WriteString(SPACE)
+	}
+
 	return sb.String()
 }
 
 func DecodeMorse(morseCode string) string {
-	slice := strings.Split(morseCode, " ")
+	words := strings.Split(morseCode, "  ")
 	sb := strings.Builder{}
-	for i := 0; i < len(slice); i++ {
-		sb.WriteString(MORZE_CODE[slice[i]])
-		sb.WriteString(" ")
+	for ixWord, word := range words {
+		chars := strings.Split(word, " ")
+		for _, char := range chars {
+			if char == "" {
+				continue
+			}
+			symbol := MORZE_CODE[char]
+			sb.WriteString(symbol)
+		}
+		if ixWord < len(words)-1 {
+			sb.WriteString(" ")
+		}
 	}
 	return sb.String()
 }
