@@ -33,21 +33,15 @@ const (
 )
 
 const (
-	ViolatedFieldEmail string = "email"
-
-	ViolatedFieldName string = "name"
-
+	ViolatedFieldEmail    string = "email"
+	ViolatedFieldName     string = "name"
 	ViolatedFieldLastName string = "lastname"
-
 	ViolatedFieldPassword string = "password"
 )
 
 const (
-	ViolationCodeEmpty string = "EMPTY"
-
-	ViolationCodeTooShort string = "TOO_SHORT"
-
-	ViolationCodeTooLong string = "TOO_LONG"
-
+	ViolationCodeEmpty         string = "EMPTY"
+	ViolationCodeTooShort      string = "TOO_SHORT"
+	ViolationCodeTooLong       string = "TOO_LONG"
 	ViolationCodeInvalidFormat string = "INVALID_FORMAT"
 )

@@ -2,11 +2,13 @@ package main
 
 import (
 	"database/sql"
-	http2 "examples-user-service/internal/adapters/http"
-	"examples-user-service/internal/adapters/mysql"
-	usecase "examples-user-service/internal/app"
+	"fmt"
 	"log"
 	"net/http"
+	"time"
+	http2 "user-service/internal/adapters/http"
+	"user-service/internal/adapters/mysql"
+	usecase "user-service/internal/app"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
@@ -39,6 +41,8 @@ func main() {
 	userHandler := http2.NewUserHandler(userInteractor)
 
 	router := mux.NewRouter()
+	//router.Path()
+	router.Use(loggingMiddleware)
 	router.HandleFunc("/v1/users", userHandler.Create).Methods("POST")
 	router.HandleFunc("/v1/users/{id}", userHandler.Get).Methods("GET")
 
@@ -48,4 +52,12 @@ func main() {
 		panic("Failed to start the server")
 		return
 	}
+	fmt.Printf("Server successfully started")
+}
+
+func loggingMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.Printf("REQUEST: [%s] %s \"%s\"\n", time.Now().String(), r.Method, r.RequestURI)
+		next.ServeHTTP(w, r)
+	})
 }

@@ -1,7 +1,7 @@
 package ports
 
 import (
-	"examples-user-service/internal/domain"
+	"user-service/internal/domain"
 )
 
 type UserRepository interface {

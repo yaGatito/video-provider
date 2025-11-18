@@ -1,11 +1,11 @@
 package app
 
 import (
-	"examples-user-service/internal/domain"
-	"examples-user-service/internal/ports"
 	"fmt"
 	"log"
 	"time"
+	"user-service/internal/domain"
+	"user-service/internal/ports"
 )
 
 type RegisterUserCommand struct {
