@@ -5,7 +5,7 @@ import (
 	"time"
 )
 
-func main2() {
+func main3() {
 	t := time.Now()
 	const jobsCount, workerCount = 15, 3
 

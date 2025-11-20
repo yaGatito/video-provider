@@ -25,7 +25,7 @@ func (l *loggingMiddleWare) RoundTrip(req *http.Request) (*http.Response, error)
 	return res, nil
 }
 
-func main() {
+func main2() {
 	client := http.Client{
 		Transport: &loggingMiddleWare{
 			logger: os.Stdout,
