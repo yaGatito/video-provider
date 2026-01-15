@@ -15,9 +15,10 @@ func TestValidatePagination(t *testing.T) {
 		expectedOffset int32
 		expectedLimit  int32
 	}{
-		{"ok", 0, 1, 0, 1},
+		{"ok", 0, 5, 0, 5},
 		{"zero limit", 0, 0, 0, policy.MAX_VIDEOS_LIMIT_PER_REQUEST},
-		{"negative limit", 1, -1, 1, policy.MAX_VIDEOS_LIMIT_PER_REQUEST},
+		{"negative limit", 5, -1, 5, policy.MAX_VIDEOS_LIMIT_PER_REQUEST},
+		{"negative offset", -1, 5, 0, 5},
 	}
 
 	for _, tt := range tests {
@@ -38,13 +39,15 @@ func TestValidateSearchQuery(t *testing.T) {
 		outputExpected string
 		query          string
 	}{
-		{"ok", false, "search", "     search"},
-		{"ok2", false, "search", "search      "},
-		{"ok2", false, "search", "   search     "},
-		{"ok3", false, "search", "search"},
-		{"wrong search query", true, "LOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOONG SEARCH QUERY", ""},
-		{"wrong search query", true, "SE%#ARCH$@", ""},
-		{"wrong search query", true, "S!ARCH", ""},
+		{"ok", false, "search", "search"},
+		{"ok beggining spaces", false, "search", "      search"},
+		{"ok ending spaces", false, "search", "search      "},
+		{"ok surrounding spaces", false, "search", "      search      "},
+		{"too short search query 1 len", true, "s", ""},
+		{"too short search query 2 len", true, "s1", ""},
+		{"too long search query", true, "LOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOONG SEARCH QUERY", ""},
+		{"incorrect search query", true, "SE%#ARCH$@", ""},
+		{"incorrect search query 2", true, "S!ARCH", ""},
 	}
 
 	for _, tt := range tests {

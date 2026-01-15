@@ -2,12 +2,9 @@ package app
 
 import (
 	"fmt"
-	"regexp"
 	"strings"
 	"video-service/internal/policy"
 )
-
-var queryRe = regexp.MustCompile(`^[\p{L}\p{N}\s_-]{1,100}$`)
 
 // ValidateSearchQuery Returns trimmed version of query.
 func ValidateSearchQuery(query string) (string, error) {
@@ -19,7 +16,10 @@ func ValidateSearchQuery(query string) (string, error) {
 	if len(qBytes) > policy.MAX_SEARCH_BYTES_SIZE {
 		return "", fmt.Errorf("query len more then limit %d bytes", policy.MAX_SEARCH_BYTES_SIZE)
 	}
-	if !queryRe.MatchString(string(qBytes)) {
+	if len(qBytes) < policy.MIN_SEARCH_BYTES_SIZE {
+		return "", fmt.Errorf("query len less then limit %d bytes", policy.MIN_SEARCH_BYTES_SIZE)
+	}
+	if !policy.WordsFormatRe.MatchString(string(qBytes)) {
 		return "", fmt.Errorf("query string contains prohibited characters")
 	}
 
