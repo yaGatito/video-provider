@@ -19,7 +19,7 @@ func ValidateSearchQuery(query string) (string, error) {
 	if len(qBytes) < policy.MIN_SEARCH_BYTES_SIZE {
 		return "", fmt.Errorf("query len less then limit %d bytes", policy.MIN_SEARCH_BYTES_SIZE)
 	}
-	if !policy.WordsFormatRe.MatchString(string(qBytes)) {
+	if !policy.GET_WORDS_FORMAT_RE_128().MatchString(string(qBytes)) {
 		return "", fmt.Errorf("query string contains prohibited characters")
 	}
 
