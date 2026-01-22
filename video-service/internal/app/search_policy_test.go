@@ -1,10 +1,11 @@
 package app
 
 import (
+	"fmt"
 	"testing"
 	"video-service/internal/policy"
 
-	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/require"
 )
 
 func TestValidatePagination(t *testing.T) {
@@ -21,19 +22,15 @@ func TestValidatePagination(t *testing.T) {
 		{"negative offset", -1, 5, 0, 5},
 	}
 
-	for _, tt := range tests {
-		offset, limit := ValidatePagination(tt.offset, tt.limit)
-		if offset != tt.expectedOffset {
-			t.Fatalf("offset result %d and expected value %d not equals", offset, tt.expectedOffset)
-		}
-		if limit != tt.expectedLimit {
-			t.Fatalf("limit result %d and expected value %d not equals", limit, tt.expectedLimit)
-		}
+	for _, c := range tests {
+		offset, limit := ValidatePagination(c.offset, c.limit)
+		require.Exactly(t, c.expectedOffset, offset)
+		require.Exactly(t, c.expectedLimit, limit)
 	}
 }
 
 func TestValidateSearchQuery(t *testing.T) {
-	tests := []struct {
+	cases := []struct {
 		name           string
 		wantErr        bool
 		outputExpected string
@@ -51,16 +48,40 @@ func TestValidateSearchQuery(t *testing.T) {
 		{"incorrect search query 2", true, "S!ARCH", ""},
 	}
 
-	for _, tt := range tests {
-		searchRes, err := ValidateSearchQuery(tt.query)
-		isEmptyError := err == nil
-		if tt.wantErr == isEmptyError {
-			t.Fatalf("want error:%t, error:%s", tt.wantErr, err)
-			return
+	for _, c := range cases {
+		res, err := ValidateSearchQuery(c.query)
+		if c.wantErr {
+			require.Error(t, err)
+		} else {
+			require.NoError(t, err)
+			require.Exactly(t, c.outputExpected, res)
 		}
-		if isEmptyError && !gomock.Eq(searchRes).Matches(tt.outputExpected) {
-			t.Fatalf("res:%v, expected:%v", searchRes, tt.outputExpected)
-			return
+	}
+}
+
+func TestIncorrectSearchQuery(t *testing.T) {
+	cases := []struct {
+		name  string
+		query string
+	}{}
+
+	var symbols = "@#$%^&*()+=!?,.;'"
+	var format = "se%carch global"
+
+	for i, c := range symbols {
+		newCase := struct {
+			name  string
+			query string
+		}{
+			name:  fmt.Sprintf("incorrect search: %d; symbol: %c", i+1, c),
+			query: fmt.Sprintf(format, c),
 		}
+
+		cases = append(cases, newCase)
+	}
+
+	for _, c := range cases {
+		_, err := ValidateSearchQuery(c.query)
+		require.Error(t, err)
 	}
 }
