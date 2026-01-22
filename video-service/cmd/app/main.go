@@ -5,7 +5,7 @@ import (
 	"net/http"
 	"os"
 	"time"
-	http2 "video-service/internal/adapters/http"
+	httpadapter "video-service/internal/adapters/http"
 	"video-service/internal/adapters/idgen"
 	"video-service/internal/adapters/testdb"
 	"video-service/internal/app"
@@ -39,14 +39,11 @@ func run() error {
 
 	videoRepository := testdb.NewVideoRepoTestDB(store, mwLog.Log())
 	videoService := app.NewVideoInteractor(videoRepository)
-	videoHandler := http2.NewVideoHandler(videoService, idGen, mwLog.log)
+	videoHandler := httpadapter.NewVideoHandler(videoService, idGen, mwLog.log)
 
 	router := mux.NewRouter()
 	router.Use(mwLog.loggingMiddleware)
-	router.HandleFunc("/v1/videos/{videoId}", videoHandler.GetByID).Methods("GET")
-	router.HandleFunc("/v1/videos/pub/{publisherId}", videoHandler.Create).Methods("POST")
-	router.HandleFunc("/v1/videos/pub/{publisherId}", videoHandler.GetByPublisher).Methods("GET")
-	router.HandleFunc("/v1/videos/search/", videoHandler.SearchGlobal).Methods("GET")
+	httpadapter.SetupRouter(router, videoHandler)
 
 	mwLog.log.Printf("Server successfully started")
 	err := http.ListenAndServe(":8081", router)

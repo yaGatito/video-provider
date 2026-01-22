@@ -18,12 +18,12 @@ import (
 	"github.com/gorilla/mux"
 )
 
-const VideoIDPathVar = "videoID"
-const PublisherIDPathVar = "publisherID"
+const PathVarVideoID = "videoID"
+const PathVarPublisherID = "publisherID"
 
-const SearchURLParam = "query"
-const LimitURLParam = "limit"
-const OffsetURLParam = "offset"
+const URLParamSearch = "query"
+const URLParamLimit = "limit"
+const URLParamOffset = "offset"
 
 type VideoHandler struct {
 	VideoInteractor app.VideoService
@@ -41,7 +41,7 @@ func NewVideoHandler(
 
 func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
 	// Required path variable
-	publisherID, err := h.extractUUIDFromPathVar(r, PublisherIDPathVar)
+	publisherID, err := h.extractUUIDFromPathVar(r, PathVarPublisherID)
 	if err != nil {
 		h.writeJSON(w, http.StatusBadRequest, err)
 		return
@@ -79,7 +79,7 @@ func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 func (h *VideoHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	// Required path variable
-	videoID, err := h.extractUUIDFromPathVar(r, VideoIDPathVar)
+	videoID, err := h.extractUUIDFromPathVar(r, PathVarVideoID)
 	if err != nil {
 		h.writeJSON(w, http.StatusBadRequest, err)
 		return
@@ -110,18 +110,18 @@ func (h *VideoHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 
 func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 	// Required path variable
-	publisherID, err := h.extractUUIDFromPathVar(r, PublisherIDPathVar)
+	publisherID, err := h.extractUUIDFromPathVar(r, PathVarPublisherID)
 	if err != nil {
 		h.writeJSON(w, http.StatusBadRequest, err)
 		return
 	}
 
 	// Optional url parameters
-	offset := h.extractOptionalIntFromURLVars(r.URL, OffsetURLParam)
-	limit := h.extractOptionalIntFromURLVars(r.URL, LimitURLParam)
+	offset := h.extractOptionalIntFromURLVars(r.URL, URLParamOffset)
+	limit := h.extractOptionalIntFromURLVars(r.URL, URLParamLimit)
 	offset, limit = app.ValidatePagination(offset, limit)
 	// Not length exceeded search string or empty string
-	search := h.extractOptionalStringFromURLVars(r.URL, SearchURLParam, policy.MaxSearchBytesSize)
+	search := h.extractOptionalStringFromURLVars(r.URL, URLParamSearch, policy.MaxSearchBytesSize)
 
 	var videos []domain.Video
 
@@ -156,7 +156,7 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 
 func (h *VideoHandler) SearchGlobal(w http.ResponseWriter, r *http.Request) {
 	// Required url parameters
-	search, err := h.extractStringFromURLVars(r.URL, SearchURLParam, policy.MaxSearchBytesSize)
+	search, err := h.extractStringFromURLVars(r.URL, URLParamSearch, policy.MaxSearchBytesSize)
 	if err != nil {
 		h.writeJSON(w, http.StatusInternalServerError, err)
 		return
@@ -168,8 +168,8 @@ func (h *VideoHandler) SearchGlobal(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Optional url parameters
-	offset := h.extractOptionalIntFromURLVars(r.URL, OffsetURLParam)
-	limit := h.extractOptionalIntFromURLVars(r.URL, LimitURLParam)
+	offset := h.extractOptionalIntFromURLVars(r.URL, URLParamOffset)
+	limit := h.extractOptionalIntFromURLVars(r.URL, URLParamLimit)
 	offset, limit = app.ValidatePagination(offset, limit)
 
 	// Calling the interactor
