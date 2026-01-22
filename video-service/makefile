@@ -26,6 +26,8 @@ lint:
 	$(GOLANGCI_LINT) run
 lint-fix:
 	$(GOLANGCI_LINT) run --fix
+fmt:
+	$(GOLANGCI_LINT) help
 
 ## Generate sqlc code
 sqlc:
@@ -50,3 +52,5 @@ tests: mocks
 test:
 	$(call go_test,$(PKG),$(TEST))
 
+### endpoints
+# curl.exe -X POST "http://localhost:8081/v1/videos/pub/d9fa522f-0006-464f-8d68-356ba1d6ad7d" -H "Content-Type: application/json" -d '{"topic":"huy sosal","description":"sadasd"}'

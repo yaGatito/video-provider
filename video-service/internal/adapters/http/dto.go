@@ -1,4 +1,4 @@
-package httpadp
+package httpadapter
 
 import (
 	"fmt"
@@ -7,17 +7,17 @@ import (
 )
 
 const (
-	ID_EMPTY                  string = "ID_EMPTY"
-	ID_SIZE_EXCEEDED          string = "ID_SIZE_EXCEEDED"
-	TOPIC_EMPTY               string = "TOPIC_EMPTY"
-	TOPIC_SIZE_EXCEEDED       string = "TOPIC_SIZE_EXCEEDED"
-	DESCRIPTION_EMPTY         string = "DESCRIPTION_EMPTY"
-	DESCRIPTION_SIZE_EXCEEDED string = "DESCRIPTION_SIZE_EXCEEDED"
+	IDEmpty                 string = "ID_EMPTY"
+	IDSizeExceeded          string = "ID_SIZE_EXCEEDED"
+	TopicEmpty              string = "TOPIC_EMPTY"
+	TopicSizeExceeded       string = "TOPIC_SIZE_EXCEEDED"
+	DescriptionEmpty        string = "DESCRIPTION_EMPTY"
+	DescriptionSizeExceeded string = "DESCRIPTION_SIZE_EXCEEDED"
 )
 
 type VideoResponseBody struct {
 	ID          string    `json:"id"`
-	PublisherID string    `json:"publisherId"`
+	PublisherID string    `json:"publisherID"`
 	Topic       string    `json:"topic"`
 	Description string    `json:"description"`
 	CreatedAt   time.Time `json:"createdAt"`
@@ -44,24 +44,28 @@ func (r createVideoRequestBody) validate() error {
 	topicSize := len([]byte(r.Topic))
 	if topicSize == 0 {
 		return ValidationError{
-			ErrorCode: TOPIC_EMPTY, ErrorMessage: "topic is empty",
+			ErrorCode:    TopicEmpty,
+			ErrorMessage: "topic is empty",
 		}
 	}
-	if topicSize > policy.MAX_TOPIC_BYTES_SIZE {
+	if topicSize > policy.MaxTopicBytesSize {
 		return ValidationError{
-			ErrorCode: TOPIC_SIZE_EXCEEDED, ErrorMessage: fmt.Sprintf("topic size is more then %d", policy.MAX_TOPIC_BYTES_SIZE),
+			ErrorCode:    TopicSizeExceeded,
+			ErrorMessage: fmt.Sprintf("topic size is more then %d", policy.MaxTopicBytesSize),
 		}
 	}
 
 	descSize := len([]byte(r.Description))
 	if descSize == 0 {
 		return ValidationError{
-			ErrorCode: DESCRIPTION_EMPTY, ErrorMessage: "description is empty",
+			ErrorCode:    DescriptionEmpty,
+			ErrorMessage: "description is empty",
 		}
 	}
-	if descSize > policy.MAX_DESCRIPTION_BYTES_SIZE {
+	if descSize > policy.MaxDescriptionBytesSize {
 		return ValidationError{
-			ErrorCode: DESCRIPTION_SIZE_EXCEEDED, ErrorMessage: fmt.Sprintf("description size is more then %d", policy.MAX_DESCRIPTION_BYTES_SIZE),
+			ErrorCode:    DescriptionSizeExceeded,
+			ErrorMessage: fmt.Sprintf("description size is more then %d", policy.MaxDescriptionBytesSize),
 		}
 	}
 

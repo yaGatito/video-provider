@@ -1,4 +1,4 @@
-package httpadp
+package httpadapter
 
 import (
 	"encoding/json"
@@ -18,12 +18,12 @@ import (
 	"github.com/gorilla/mux"
 )
 
-const VIDEO_ID_PATH_VAR = "videoId"
-const PUBLISHER_ID_PATH_VAR = "publisherId"
+const VideoIDPathVar = "videoID"
+const PublisherIDPathVar = "publisherID"
 
-const SEARCH_URL_PARAM = "query"
-const LIMIT_URL_PARAM = "limit"
-const OFFSET_URL_PARAM = "offset"
+const SearchURLParam = "query"
+const LimitURLParam = "limit"
+const OffsetURLParam = "offset"
 
 type VideoHandler struct {
 	VideoInteractor app.VideoService
@@ -35,10 +35,9 @@ func NewVideoHandler(userInteractor app.VideoService, idGen ports.IDGen, log *lo
 	return VideoHandler{VideoInteractor: userInteractor, IDGen: idGen, log: log}
 }
 
-// curl.exe -X POST "http://localhost:8081/v1/videos/pub/d9fa522f-0006-464f-8d68-356ba1d6ad7d" -H "Content-Type: application/json" -d '{"topic":"huy sosal","description":"sadasd"}'
 func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
 	// Required path variable
-	publisherID, err := h.extractUUIDFromPathVar(r, PUBLISHER_ID_PATH_VAR)
+	publisherID, err := h.extractUUIDFromPathVar(r, PublisherIDPathVar)
 	if err != nil {
 		h.writeJSON(w, http.StatusBadRequest, err)
 		return
@@ -73,9 +72,9 @@ func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
 	h.writeJSON(w, http.StatusOK, nil)
 }
 
-func (h *VideoHandler) GetById(w http.ResponseWriter, r *http.Request) {
+func (h *VideoHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	// Required path variable
-	videoID, err := h.extractUUIDFromPathVar(r, VIDEO_ID_PATH_VAR)
+	videoID, err := h.extractUUIDFromPathVar(r, VideoIDPathVar)
 	if err != nil {
 		h.writeJSON(w, http.StatusBadRequest, err)
 		return
@@ -98,18 +97,18 @@ func (h *VideoHandler) GetById(w http.ResponseWriter, r *http.Request) {
 
 func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 	// Required path variable
-	publisherID, err := h.extractUUIDFromPathVar(r, PUBLISHER_ID_PATH_VAR)
+	publisherID, err := h.extractUUIDFromPathVar(r, PublisherIDPathVar)
 	if err != nil {
 		h.writeJSON(w, http.StatusBadRequest, err)
 		return
 	}
 
 	// Optional url parameters
-	offset := h.extractOptionalIntFromURLVars(r.URL, OFFSET_URL_PARAM)
-	limit := h.extractOptionalIntFromURLVars(r.URL, LIMIT_URL_PARAM)
+	offset := h.extractOptionalIntFromURLVars(r.URL, OffsetURLParam)
+	limit := h.extractOptionalIntFromURLVars(r.URL, LimitURLParam)
 	offset, limit = app.ValidatePagination(offset, limit)
 	// Not length exceeded search string or empty string
-	search := h.extractOptionalStringFromURLVars(r.URL, SEARCH_URL_PARAM, policy.MAX_SEARCH_BYTES_SIZE)
+	search := h.extractOptionalStringFromURLVars(r.URL, SearchURLParam, policy.MaxSearchBytesSize)
 
 	var videos []domain.Video
 
@@ -138,7 +137,7 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 
 func (h *VideoHandler) SearchGlobal(w http.ResponseWriter, r *http.Request) {
 	// Required url parameters
-	search, err := h.extractStringFromURLVars(r.URL, SEARCH_URL_PARAM, policy.MAX_SEARCH_BYTES_SIZE)
+	search, err := h.extractStringFromURLVars(r.URL, SearchURLParam, policy.MaxSearchBytesSize)
 	if err != nil {
 		h.writeJSON(w, http.StatusInternalServerError, err)
 		return
@@ -150,8 +149,8 @@ func (h *VideoHandler) SearchGlobal(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Optional url parameters
-	offset := h.extractOptionalIntFromURLVars(r.URL, OFFSET_URL_PARAM)
-	limit := h.extractOptionalIntFromURLVars(r.URL, LIMIT_URL_PARAM)
+	offset := h.extractOptionalIntFromURLVars(r.URL, OffsetURLParam)
+	limit := h.extractOptionalIntFromURLVars(r.URL, LimitURLParam)
 	offset, limit = app.ValidatePagination(offset, limit)
 
 	// Calling the interactor
@@ -184,18 +183,18 @@ func (h VideoHandler) extractUUIDFromPathVar(r *http.Request, varName string) (u
 	idSize := len([]byte(id))
 	if idSize == 0 {
 		return uuid.UUID{}, ValidationError{
-			ErrorCode: ID_EMPTY, ErrorMessage: varName + " is empty",
+			ErrorCode: IDEmpty, ErrorMessage: varName + " is empty",
 		}
 	}
-	if idSize > policy.MAX_ID_BYTES_SIZE {
+	if idSize > policy.MaxIDBytesSize {
 		return uuid.UUID{}, ValidationError{
-			ErrorCode: ID_SIZE_EXCEEDED, ErrorMessage: varName + " len is more then expected",
+			ErrorCode: IDSizeExceeded, ErrorMessage: varName + " len is more then expected",
 		}
 	}
 	res, err := uuid.Parse(string(id))
 	if err != nil {
 		return uuid.UUID{}, ValidationError{
-			ErrorCode: ID_SIZE_EXCEEDED, ErrorMessage: varName + " len is more then expected",
+			ErrorCode: IDSizeExceeded, ErrorMessage: varName + " len is more then expected",
 		}
 	}
 

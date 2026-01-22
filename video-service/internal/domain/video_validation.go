@@ -14,10 +14,10 @@ func (v Video) Validate() error {
 	if v.Topic == "" {
 		return errors.New("topic is empty")
 	}
-	if !policy.GET_TEXTING_FORMAT_RE_128().MatchString(v.Topic) {
+	if !policy.GetTextingFormateRE128().MatchString(v.Topic) {
 		return errors.New("invalid topic text format")
 	}
-	if v.Description != nil && *v.Description != "" && !policy.GET_LARGE_TEXT_FORMAT_RE_512().MatchString(*v.Description) {
+	if v.Description != nil && *v.Description != "" && !policy.GetLargeTextFormatRE512().MatchString(*v.Description) {
 		return errors.New("invalid description text format")
 	}
 	return nil

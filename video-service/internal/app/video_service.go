@@ -7,13 +7,16 @@ import (
 	"video-service/internal/ports"
 )
 
-// mockgen -source="./internal/app/service.go" -destination="./internal/app/mock/service.go" -mock_names=("VideoInteractor")
-
 type VideoService interface {
 	Create(ctx context.Context, video domain.Video) error
 	GetByID(ctx context.Context, videoID domain.UUID) (domain.Video, error)
 	GetByPublisher(ctx context.Context, publisherID domain.UUID, offset, limit int32) ([]domain.Video, error)
-	SearchPublisher(ctx context.Context, publisherID domain.UUID, query string, offset, limit int32) ([]domain.Video, error)
+	SearchPublisher(
+		ctx context.Context,
+		publisherID domain.UUID,
+		query string,
+		offset, limit int32,
+	) ([]domain.Video, error)
 	SearchGlobal(ctx context.Context, query string, offset, limit int32) ([]domain.Video, error)
 }
 
@@ -32,7 +35,8 @@ func NewVideoInteractor(repo ports.VideoRepository) VideoService {
 	return &VideoInteractor{repo: repo}
 }
 
-func (vs *VideoInteractor) Create(ctx context.Context, video domain.Video) error {
+func (vs *VideoInteractor) Create(
+	ctx context.Context, video domain.Video) error {
 	if err := video.Validate(); err != nil {
 		return err
 	}
@@ -41,7 +45,11 @@ func (vs *VideoInteractor) Create(ctx context.Context, video domain.Video) error
 
 var nilUUID = domain.UUID{}
 
-func (vs *VideoInteractor) GetByID(ctx context.Context, videoID domain.UUID) (domain.Video, error) {
+func (vs *VideoInteractor) GetByID(
+	ctx context.Context,
+	videoID domain.UUID,
+) (domain.Video, error) {
+
 	if videoID == nilUUID {
 		return domain.Video{}, fmt.Errorf("empty video ID")
 	}
@@ -49,7 +57,13 @@ func (vs *VideoInteractor) GetByID(ctx context.Context, videoID domain.UUID) (do
 	return vs.repo.GetVideoByID(ctx, videoID)
 }
 
-func (vs *VideoInteractor) GetByPublisher(ctx context.Context, publisherID domain.UUID, offset, limit int32) ([]domain.Video, error) {
+func (vs *VideoInteractor) GetByPublisher(
+	ctx context.Context,
+	publisherID domain.UUID,
+	offset,
+	limit int32,
+) ([]domain.Video, error) {
+
 	if publisherID == nilUUID {
 		return nil, fmt.Errorf("empty publisher ID")
 	}
@@ -61,7 +75,13 @@ func (vs *VideoInteractor) GetByPublisher(ctx context.Context, publisherID domai
 	})
 }
 
-func (s *VideoInteractor) SearchPublisher(ctx context.Context, publisherID domain.UUID, query string, offset, limit int32) ([]domain.Video, error) {
+func (s *VideoInteractor) SearchPublisher(
+	ctx context.Context,
+	publisherID domain.UUID,
+	query string, offset,
+	limit int32,
+) ([]domain.Video, error) {
+
 	if publisherID == nilUUID {
 		return nil, fmt.Errorf("empty publisher ID")
 	}
@@ -79,7 +99,13 @@ func (s *VideoInteractor) SearchPublisher(ctx context.Context, publisherID domai
 		}})
 }
 
-func (s *VideoInteractor) SearchGlobal(ctx context.Context, query string, offset, limit int32) ([]domain.Video, error) {
+func (s *VideoInteractor) SearchGlobal(
+	ctx context.Context,
+	query string,
+	offset,
+	limit int32,
+) ([]domain.Video, error) {
+
 	query, err := ValidateSearchQuery(query)
 	if err != nil {
 		return nil, err
