@@ -23,11 +23,13 @@ tools:
 	go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.26.0
 
 lint:
+	$(GOLANGCI_LINT) fmt
 	$(GOLANGCI_LINT) run
 lint-fix:
+	$(GOLANGCI_LINT) fmt
 	$(GOLANGCI_LINT) run --fix
 fmt:
-	$(GOLANGCI_LINT) help
+	$(GOLANGCI_LINT) fmt
 
 ## Generate sqlc code
 sqlc:

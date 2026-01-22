@@ -35,7 +35,10 @@ func (r *VideoRepoPostgreSQL) CreateVideo(ctx context.Context, video domain.Vide
 	return nil
 }
 
-func (r *VideoRepoPostgreSQL) GetVideoByID(ctx context.Context, id domain.UUID) (domain.Video, error) {
+func (r *VideoRepoPostgreSQL) GetVideoByID(
+	ctx context.Context,
+	id domain.UUID,
+) (domain.Video, error) {
 	video, err := r.queries.GetVideoByID(ctx, id)
 	if err != nil {
 		return domain.Video{}, err
@@ -83,7 +86,10 @@ func (r *VideoRepoPostgreSQL) SearchPublisher(
 	return toDomainVideos(videos), nil
 }
 
-func (r *VideoRepoPostgreSQL) SearchGlobal(ctx context.Context, search ports.VideoSearch) ([]domain.Video, error) {
+func (r *VideoRepoPostgreSQL) SearchGlobal(
+	ctx context.Context,
+	search ports.VideoSearch,
+) ([]domain.Video, error) {
 	params := SearchGlobalParams{
 		Concat: search.Query,
 		Offset: search.Offset,

@@ -83,7 +83,13 @@ func TestVideoValidate(t *testing.T) {
 	for _, tt := range tests {
 		err := tt.video.Validate()
 		if tt.wantErr == (err == nil) {
-			t.Fatalf("name: %s; inputData%v; want error: %t; got error: %e", tt.name, tt.video, tt.wantErr, err)
+			t.Fatalf(
+				"name: %s; inputData%v; want error: %t; got error: %e",
+				tt.name,
+				tt.video,
+				tt.wantErr,
+				err,
+			)
 		}
 	}
 }

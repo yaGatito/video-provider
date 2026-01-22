@@ -10,7 +10,11 @@ import (
 type VideoService interface {
 	Create(ctx context.Context, video domain.Video) error
 	GetByID(ctx context.Context, videoID domain.UUID) (domain.Video, error)
-	GetByPublisher(ctx context.Context, publisherID domain.UUID, offset, limit int32) ([]domain.Video, error)
+	GetByPublisher(
+		ctx context.Context,
+		publisherID domain.UUID,
+		offset, limit int32,
+	) ([]domain.Video, error)
 	SearchPublisher(
 		ctx context.Context,
 		publisherID domain.UUID,

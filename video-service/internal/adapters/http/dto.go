@@ -64,8 +64,11 @@ func (r createVideoRequestBody) validate() error {
 	}
 	if descSize > policy.MaxDescriptionBytesSize {
 		return ValidationError{
-			ErrorCode:    DescriptionSizeExceeded,
-			ErrorMessage: fmt.Sprintf("description size is more then %d", policy.MaxDescriptionBytesSize),
+			ErrorCode: DescriptionSizeExceeded,
+			ErrorMessage: fmt.Sprintf(
+				"description size is more then %d",
+				policy.MaxDescriptionBytesSize,
+			),
 		}
 	}
 

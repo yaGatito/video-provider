@@ -32,7 +32,9 @@ func run() error {
 	// videoRepository := postgres.NewVideoRepoPostgreSQL(conn)
 
 	idGen := idgen.New()
-	mwLog := MiddlewareLogger{log: log.New(os.Stdout, "[VSRVC] ", log.Ldate|log.Ltime|log.Lmicroseconds|log.LUTC)}
+	mwLog := MiddlewareLogger{
+		log: log.New(os.Stdout, "[VSRVC] ", log.Ldate|log.Ltime|log.Lmicroseconds|log.LUTC),
+	}
 	store := make(map[uuid.UUID]domain.Video)
 
 	videoRepository := testdb.NewVideoRepoTestDB(store, mwLog.Log())

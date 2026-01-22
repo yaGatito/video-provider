@@ -57,7 +57,10 @@ func (r *VideoRepoTestDB) CreateVideo(ctx context.Context, video domain.Video) e
 	return nil
 }
 
-func (r *VideoRepoTestDB) GetVideoByID(ctx context.Context, videoID domain.UUID) (domain.Video, error) {
+func (r *VideoRepoTestDB) GetVideoByID(
+	ctx context.Context,
+	videoID domain.UUID,
+) (domain.Video, error) {
 	r.mu.Lock()
 	video := r.store[videoID]
 	r.log.Printf("%s retrieved video: %v\n", TAG, video)
@@ -106,12 +109,16 @@ func (r *VideoRepoTestDB) SearchPublisher(
 	return res, nil
 }
 
-func (r *VideoRepoTestDB) SearchGlobal(ctx context.Context, search ports.VideoSearch) ([]domain.Video, error) {
+func (r *VideoRepoTestDB) SearchGlobal(
+	ctx context.Context,
+	search ports.VideoSearch,
+) ([]domain.Video, error) {
 	res := make([]domain.Video, 1)
 
 	r.mu.Lock()
 	for _, v := range r.store {
-		if strings.Contains(v.Topic, string(search.Query)) || strings.Contains(*v.Description, string(search.Query)) {
+		if strings.Contains(v.Topic, string(search.Query)) ||
+			strings.Contains(*v.Description, string(search.Query)) {
 			res = append(res, v)
 		}
 	}

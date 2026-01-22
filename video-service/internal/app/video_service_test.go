@@ -201,7 +201,10 @@ func TestSearchVideoByPublisher(t *testing.T) {
 		{"ok", false, testPublisherID,
 			ports.VideoSearch{PageRequest: getPageRequest(5, 5), Query: "search"}},
 		{"ok with search surrounded spaces", false, testPublisherID,
-			ports.VideoSearch{PageRequest: getPageRequest(5, 5), Query: "   ok with spacing search    "}},
+			ports.VideoSearch{
+				PageRequest: getPageRequest(5, 5),
+				Query:       "   ok with spacing search    ",
+			}},
 		{"ok without offset", false, testPublisherID,
 			ports.VideoSearch{PageRequest: getPageRequest(0, 5), Query: "search"}},
 		{"limit less zero pagination", false, testPublisherID,
@@ -271,7 +274,10 @@ func TestValidSearchGlobal(t *testing.T) {
 		{"ok", false,
 			ports.VideoSearch{PageRequest: getPageRequest(5, 5), Query: "search global"}},
 		{"ok with search surrounded spaces", false,
-			ports.VideoSearch{PageRequest: getPageRequest(5, 5), Query: "   ok with spacing search    "}},
+			ports.VideoSearch{
+				PageRequest: getPageRequest(5, 5),
+				Query:       "   ok with spacing search    ",
+			}},
 		{"ok without offset", false,
 			ports.VideoSearch{PageRequest: getPageRequest(0, 5), Query: "search global"}},
 		{"limit less zero pagination", false,
@@ -328,7 +334,10 @@ func TestIncorrectSearchGlobal(t *testing.T) {
 		}{
 			name:    fmt.Sprintf("incorrect search: %d; symbol: %c", i+1, c),
 			wantErr: true,
-			search:  ports.VideoSearch{PageRequest: getPageRequest(5, 5), Query: fmt.Sprintf(format, c)},
+			search: ports.VideoSearch{
+				PageRequest: getPageRequest(5, 5),
+				Query:       fmt.Sprintf(format, c),
+			},
 		}
 
 		tests = append(tests, newtt)

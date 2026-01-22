@@ -31,7 +31,11 @@ type VideoHandler struct {
 	log             *log.Logger
 }
 
-func NewVideoHandler(userInteractor app.VideoService, idGen ports.IDGen, log *log.Logger) VideoHandler {
+func NewVideoHandler(
+	userInteractor app.VideoService,
+	idGen ports.IDGen,
+	log *log.Logger,
+) VideoHandler {
 	return VideoHandler{VideoInteractor: userInteractor, IDGen: idGen, log: log}
 }
 
@@ -45,7 +49,8 @@ func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	// Required request body
 	var createVideoRequestData createVideoRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&createVideoRequestData); !errors.Is(err, io.EOF) && err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&createVideoRequestData); !errors.Is(err, io.EOF) &&
+		err != nil {
 		h.log.Printf("Error decoding request body: %v", err)
 		h.writeJSON(w, http.StatusBadRequest, err)
 		return
@@ -83,13 +88,21 @@ func (h *VideoHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	// Calling the interactor
 	video, err := h.VideoInteractor.GetByID(r.Context(), domain.UUID(videoID))
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Error retrieving video: %v", err), http.StatusInternalServerError)
+		http.Error(
+			w,
+			fmt.Sprintf("Error retrieving video: %v", err),
+			http.StatusInternalServerError,
+		)
 		return
 	}
 
 	err = json.NewEncoder(w).Encode(h.toDtoVideo(video))
 	if err != nil {
-		http.Error(w, fmt.Sprintf("Error encoding video response: %v", err), http.StatusInternalServerError)
+		http.Error(
+			w,
+			fmt.Sprintf("Error encoding video response: %v", err),
+			http.StatusInternalServerError,
+		)
 		return
 	}
 	h.log.Println("Response were written successfully")
@@ -114,7 +127,13 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 
 	// Calling the interactor
 	if search != "" {
-		videos, err = h.VideoInteractor.SearchPublisher(r.Context(), publisherID, search, limit, offset)
+		videos, err = h.VideoInteractor.SearchPublisher(
+			r.Context(),
+			publisherID,
+			search,
+			limit,
+			offset,
+		)
 		if err != nil {
 			h.writeJSON(w, http.StatusInternalServerError, err)
 			return
@@ -206,7 +225,11 @@ func (h VideoHandler) extractOptionalIntFromURLVars(u *url.URL, paramName string
 	return int32(res)
 }
 
-func (h VideoHandler) extractOptionalStringFromURLVars(u *url.URL, paramName string, maxBytesLimit int) string {
+func (h VideoHandler) extractOptionalStringFromURLVars(
+	u *url.URL,
+	paramName string,
+	maxBytesLimit int,
+) string {
 	queryStr := u.Query().Get(paramName)
 
 	if len(queryStr) > maxBytesLimit {
@@ -216,7 +239,11 @@ func (h VideoHandler) extractOptionalStringFromURLVars(u *url.URL, paramName str
 	return queryStr
 }
 
-func (h VideoHandler) extractStringFromURLVars(u *url.URL, paramName string, maxBytesLimit int) (string, error) {
+func (h VideoHandler) extractStringFromURLVars(
+	u *url.URL,
+	paramName string,
+	maxBytesLimit int,
+) (string, error) {
 	queryStr := u.Query().Get(paramName)
 	if queryStr == "" {
 		return "", fmt.Errorf("%s empty", paramName)
