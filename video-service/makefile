@@ -25,7 +25,7 @@ tools:
 lint:
 	$(GOLANGCI_LINT) fmt
 	$(GOLANGCI_LINT) run
-lint-fix:
+fix:
 	$(GOLANGCI_LINT) fmt
 	$(GOLANGCI_LINT) run --fix
 fmt:
