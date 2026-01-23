@@ -18,12 +18,14 @@ import (
 	"github.com/gorilla/mux"
 )
 
-const PathVarVideoID = "videoID"
-const PathVarPublisherID = "publisherID"
+const (
+	PathVarVideoID     = "videoID"
+	PathVarPublisherID = "publisherID"
 
-const URLParamSearch = "query"
-const URLParamLimit = "limit"
-const URLParamOffset = "offset"
+	URLParamSearch = "query"
+	URLParamLimit  = "limit"
+	URLParamOffset = "offset"
+)
 
 type VideoHandler struct {
 	VideoInteractor app.VideoService
@@ -131,15 +133,15 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 			r.Context(),
 			publisherID,
 			search,
-			limit,
 			offset,
+			limit,
 		)
 		if err != nil {
 			h.writeJSON(w, http.StatusInternalServerError, err)
 			return
 		}
 	} else {
-		videos, err = h.VideoInteractor.GetByPublisher(r.Context(), publisherID, limit, offset)
+		videos, err = h.VideoInteractor.GetByPublisher(r.Context(), publisherID, offset, limit)
 		if err != nil {
 			h.writeJSON(w, http.StatusInternalServerError, err)
 			return
@@ -173,7 +175,7 @@ func (h *VideoHandler) SearchGlobal(w http.ResponseWriter, r *http.Request) {
 	offset, limit = app.ValidatePagination(offset, limit)
 
 	// Calling the interactor
-	videos, err := h.VideoInteractor.SearchGlobal(r.Context(), search, limit, offset)
+	videos, err := h.VideoInteractor.SearchGlobal(r.Context(), search, offset, limit)
 	if err != nil {
 		h.writeJSON(w, http.StatusInternalServerError, err)
 		return

@@ -74,8 +74,8 @@ func (vs *VideoInteractor) GetByPublisher(
 	offset, limit = ValidatePagination(offset, limit)
 
 	return vs.repo.GetPublisherVideos(ctx, publisherID, ports.PageRequest{
-		Offset: int32(offset),
-		Limit:  int32(limit),
+		Offset: offset,
+		Limit:  limit,
 	})
 }
 
@@ -98,8 +98,8 @@ func (s *VideoInteractor) SearchPublisher(
 	return s.repo.SearchPublisher(ctx, publisherID, ports.VideoSearch{
 		Query: query,
 		PageRequest: ports.PageRequest{
-			Offset: int32(offset),
-			Limit:  int32(limit),
+			Offset: offset,
+			Limit:  limit,
 		}})
 }
 
@@ -119,7 +119,7 @@ func (s *VideoInteractor) SearchGlobal(
 	return s.repo.SearchGlobal(ctx, ports.VideoSearch{
 		Query: query,
 		PageRequest: ports.PageRequest{
-			Offset: int32(offset),
-			Limit:  int32(limit),
+			Offset: offset,
+			Limit:  limit,
 		}})
 }

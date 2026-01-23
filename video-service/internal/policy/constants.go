@@ -7,9 +7,10 @@ const (
 	MaxTopicBytesSize       = 48
 	MaxDescriptionBytesSize = 512
 
-	MaxSearchBytesSize       = 100
-	MinSearchBytesSize       = 2
-	MaxVideosLimitPerRequest = 50
+	MaxSearchBytesSize           = 100
+	MinSearchBytesSize           = 2
+	DefaultVideosLimitPerRequest = 5
+	MaxVideosLimitPerRequest     = 50
 )
 
 func GetTextingFormateRE128() *regexp.Regexp {

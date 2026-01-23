@@ -133,11 +133,11 @@ func TestGetVideoByPublisher(t *testing.T) {
 		{"ok without offset", false,
 			testPublisherID, getPageRequest(0, 5), getPageRequest(0, 5)},
 		{"limit less zero pagination", false,
-			testPublisherID, getPageRequest(0, -1), getPageRequest(0, policy.MaxVideosLimitPerRequest)},
+			testPublisherID, getPageRequest(0, -1), getPageRequest(0, policy.DefaultVideosLimitPerRequest)},
 		{"offset less zero pagination", false,
 			testPublisherID, getPageRequest(-1, 5), getPageRequest(0, 5)},
 		{"limit zero pagination", false,
-			testPublisherID, getPageRequest(5, -1), getPageRequest(5, policy.MaxVideosLimitPerRequest)},
+			testPublisherID, getPageRequest(5, -1), getPageRequest(5, policy.DefaultVideosLimitPerRequest)},
 		{"nil publisher id", true,
 			emptyPublisherID, getPageRequest(5, 5), getPageRequest(0, 0) /* error */},
 	}

@@ -17,8 +17,8 @@ func TestValidatePagination(t *testing.T) {
 		expectedLimit  int32
 	}{
 		{"ok", 0, 5, 0, 5},
-		{"zero limit", 0, 0, 0, policy.MaxVideosLimitPerRequest},
-		{"negative limit", 5, -1, 5, policy.MaxVideosLimitPerRequest},
+		{"zero limit", 0, 0, 0, policy.DefaultVideosLimitPerRequest},
+		{"negative limit", 5, -1, 5, policy.DefaultVideosLimitPerRequest},
 		{"negative offset", -1, 5, 0, 5},
 	}
 

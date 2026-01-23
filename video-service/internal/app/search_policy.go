@@ -32,7 +32,7 @@ func ValidatePagination(offset, limit int32) (int32, int32) {
 		offset = 0
 	}
 	if limit <= 0 {
-		limit = policy.MaxVideosLimitPerRequest
+		limit = policy.DefaultVideosLimitPerRequest
 	}
 	if limit > policy.MaxVideosLimitPerRequest {
 		limit = policy.MaxVideosLimitPerRequest
