@@ -1,7 +1,6 @@
 package httpadapter_test
 
 import (
-	"fmt"
 	"io"
 	"log"
 	"net/http"
@@ -141,7 +140,7 @@ func TestGetVideoById(t *testing.T) {
 	}
 }
 
-func TestGetVideosByPublisher(t *testing.T) {
+func TestSearchPublisherVideos(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	s := mock_app.NewMockVideoService(ctrl)
 	h := httpadapter.NewVideoHandler(s, nil, log.New(io.Discard, "", 0))
@@ -153,20 +152,56 @@ func TestGetVideosByPublisher(t *testing.T) {
 	expDec := "description"
 
 	cases := []struct {
-		name    string
-		wantErr bool
-		pubID   string
-		offset  string
-		limit   string
+		name             string
+		wantErr          bool
+		pubID            string
+		urlParams        string
+		expCallByPub     int
+		expCallSearchPub int
 	}{
-		{"ok", false, pubID.String(), "0", "5"},
-		{"negative offset", false, pubID.String(), "-10", "5"},
-		{"invalid offset", false, pubID.String(), "A", "5"},
-		{"negative limit", false, pubID.String(), "0", "-5"},
-		{"zero limit", false, pubID.String(), "0", "0"},
-		{"invalid limit", false, pubID.String(), "0", "B"},
-		{"ivalid id", true, "1", "0", "5"},
-		{"empty id", true, "", "0", "5"},
+		// SearchPublisher
+		{"ok search", false,
+			pubID.String(), "?offset=0&limit=5&query=search", 0, 1},
+		{"few words search", false,
+			pubID.String(), "?offset=0&limit=5&query=search+lorem+ipsum+kitty+dolor", 0, 1},
+		{"negative offset search", false,
+			pubID.String(), "?offset=-10&limit=5&query=search", 0, 1},
+		{"invalid offset search", false,
+			pubID.String(), "?offset=H&limit=5&query=search", 0, 1},
+		{"negative limit search", false,
+			pubID.String(), "?offset=0&limit=-10&query=search", 0, 1},
+		{"zero limit search", false,
+			pubID.String(), "?offset=0&limit=0&query=search", 0, 1},
+		{"invalid limit search", false,
+			pubID.String(), "?offset=0&limit=H&query=search", 0, 1},
+
+		// GetByPublisher
+		{"ok", false,
+			pubID.String(), "?offset=0&limit=5", 1, 0},
+		{"negative offset", false,
+			pubID.String(), "?offset=-10&limit=5", 1, 0},
+		{"invalid offset", false,
+			pubID.String(), "?offset=H&limit=5", 1, 0},
+		{"negative limit", false,
+			pubID.String(), "?offset=0&limit=-10", 1, 0},
+		{"zero limit", false,
+			pubID.String(), "?offset=0&limit=0", 1, 0},
+		{"invalid limit", false,
+			pubID.String(), "?offset=0&limit=H", 1, 0},
+		{"wrong url params", false,
+			pubID.String(), "?affset=0&leemeet=5&kueree=search", 1, 0},
+		{"partial wrong url params", false,
+			pubID.String(), "?affset=0&leemeet=5&search=", 1, 0},
+
+		// Errors. TODO: test in real time
+		// {"invalid search", true,
+		// 	pubID.String(), "?offset=0&limit=5&query=search with spaces", 0, 0},
+		{"invalid search", true,
+			pubID.String(), "?offset=0&limit=5&query=,.<>?/;", 0, 0},
+		{"ivalid id", true,
+			"1", "?offset=0&limit=5&query=search", 0, 0},
+		{"empty id", true,
+			"", "?offset=0&limit=5&query=search", 0, 0},
 	}
 
 	for _, c := range cases {
@@ -176,10 +211,10 @@ func TestGetVideosByPublisher(t *testing.T) {
 			if c.wantErr {
 				s.EXPECT().
 					GetByPublisher(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					MaxTimes(0)
+					MaxTimes(c.expCallByPub)
 				s.EXPECT().
 					SearchPublisher(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					MaxTimes(0)
+					MaxTimes(c.expCallSearchPub)
 			} else {
 				s.EXPECT().GetByPublisher(
 					gomock.Any(),
@@ -192,27 +227,25 @@ func TestGetVideosByPublisher(t *testing.T) {
 						Topic:       expTop,
 						Description: &expDec,
 					}}, nil,
-				).MaxTimes(1)
-				s.EXPECT().
-					SearchPublisher(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					MaxTimes(0)
+				).MaxTimes(c.expCallByPub)
+
+				s.EXPECT().SearchPublisher(
+					gomock.Any(),
+					gomock.Eq(uuid.MustParse(c.pubID)),
+					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
+				).Return(
+					[]domain.Video{{
+						PublisherID: pubID,
+						Topic:       expTop,
+						Description: &expDec,
+					}}, nil,
+				).MaxTimes(c.expCallSearchPub)
 			}
 
-			req := httptest.NewRequest(
-				http.MethodGet,
-				strings.Replace(
-					httpadapter.RoutePublisherVideos,
-					"{"+httpadapter.PathVarPublisherID+"}",
-					fmt.Sprintf(
-						"%s?%s=%s&%s=%s",
-						c.pubID,
-						httpadapter.URLParamOffset,
-						c.offset,
-						httpadapter.URLParamLimit,
-						c.limit),
-					1),
-				nil)
-
+			url := strings.Replace(httpadapter.RoutePublisherVideos, "{"+httpadapter.PathVarPublisherID+"}", c.pubID+c.urlParams, 1)
+			req := httptest.NewRequest(http.MethodGet, url, nil)
 			rec := httptest.NewRecorder()
 			r.ServeHTTP(rec, req)
 
@@ -224,4 +257,3 @@ func TestGetVideosByPublisher(t *testing.T) {
 		})
 	}
 }
-
