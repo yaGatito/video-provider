@@ -14,7 +14,6 @@ import (
 	"video-service/internal/policy"
 	"video-service/internal/ports"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
@@ -41,9 +40,21 @@ func NewVideoHandler(
 	return VideoHandler{VideoInteractor: userInteractor, IDGen: idGen, log: log}
 }
 
+// Create godoc
+// @Summary      Створити нове відео
+// @Description  Створює новий запис відео для вказаного видавця
+// @Tags         videos
+// @Accept       json
+// @Produce      json
+// @Param        publisherID  path      string                 true  "ID видавця (UUID)"
+// @Param        video        body      createVideoRequestBody true  "Дані відео"
+// @Success      200          {object}  nil
+// @Failure      400          {object}  string "Invalid input"
+// @Failure      500          {object}  string "Internal error"
+// @Router       /v1/videos/pub/{publisherID} [post]
 func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
 	// Required path variable
-	publisherID, err := h.extractUUIDFromPathVar(r, PathVarPublisherID)
+	publisherID, err := h.extractValidUUIDFromPathVar(r, PathVarPublisherID)
 	if err != nil {
 		h.writeJSON(w, http.StatusBadRequest, fmt.Errorf("invalid pub id: %e", err))
 		return
@@ -79,9 +90,19 @@ func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
 	h.writeJSON(w, http.StatusOK, nil)
 }
 
+// GetByID godoc
+// @Summary      Отримати відео за ID
+// @Description  Повертає деталі одного відео за його унікальним ідентифікатором
+// @Tags         videos
+// @Produce      json
+// @Param        videoID  path      string  true  "ID відео (UUID)"
+// @Success      200      {object}  VideoResponseBody
+// @Failure      400      {object}  string
+// @Failure      500      {object}  string
+// @Router       /v1/videos/{videoID} [get]
 func (h *VideoHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	// Required path variable
-	videoID, err := h.extractUUIDFromPathVar(r, PathVarVideoID)
+	videoID, err := h.extractValidUUIDFromPathVar(r, PathVarVideoID)
 	if err != nil {
 		h.writeJSON(w, http.StatusBadRequest, fmt.Errorf("parse vid id param: %e", err))
 		return
@@ -110,9 +131,20 @@ func (h *VideoHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	h.log.Println("Response were written successfully")
 }
 
+// GetByPublisher godoc
+// @Summary      Отримати відео видавця
+// @Description  Повертає список відео конкретного видавця з підтримкою пагінації та пошуку
+// @Tags         videos
+// @Produce      json
+// @Param        publisherID  path      string  true   "ID видавця (UUID)"
+// @Param        query        query     string  false  "Пошуковий запит"
+// @Param        limit        query     int     false  "Ліміт (за замовчуванням 10)"
+// @Param        offset       query     int     false  "Зміщення (за замовчуванням 0)"
+// @Success      200          {array}   VideoResponseBody
+// @Router       /v1/videos/pub/{publisherID} [get]
 func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 	// Required path variable
-	publisherID, err := h.extractUUIDFromPathVar(r, PathVarPublisherID)
+	publisherID, err := h.extractValidUUIDFromPathVar(r, PathVarPublisherID)
 	if err != nil {
 		h.writeJSON(w, http.StatusBadRequest, fmt.Errorf("parse pub id param: %e", err))
 		return
@@ -124,9 +156,9 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 		h.writeJSON(w, http.StatusBadRequest, fmt.Errorf("parse query params: %e", err))
 		return
 	}
-	offset := h.extractOptionalIntFromURLVars(values, URLParamOffset)
-	limit := h.extractOptionalIntFromURLVars(values, URLParamLimit)
-	offset, limit = app.ValidatePagination(offset, limit)
+	offset, limit := app.ValidatePagination(
+		h.extractOptionalIntFromURLVars(values, URLParamOffset),
+		h.extractOptionalIntFromURLVars(values, URLParamLimit))
 
 	search, err := h.extractOptionalStringFromURLVars(
 		values,
@@ -177,6 +209,16 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 	h.log.Println("Response were written successfully")
 }
 
+// SearchGlobal godoc
+// @Summary      Глобальний пошук
+// @Description  Пошук відео по всій базі за ключовим словом
+// @Tags         videos
+// @Produce      json
+// @Param        query   query     string  true   "Рядок пошуку"
+// @Param        limit   query     int     false  "Ліміт"
+// @Param        offset  query     int     false  "Зміщення"
+// @Success      200     {array}   VideoResponseBody
+// @Router       /v1/videos/search [get]
 func (h *VideoHandler) SearchGlobal(w http.ResponseWriter, r *http.Request) {
 	// Required url parameters
 	values, err := url.ParseQuery(r.URL.RawQuery)
@@ -196,9 +238,9 @@ func (h *VideoHandler) SearchGlobal(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Optional url parameters
-	offset := h.extractOptionalIntFromURLVars(values, URLParamOffset)
-	limit := h.extractOptionalIntFromURLVars(values, URLParamLimit)
-	offset, limit = app.ValidatePagination(offset, limit)
+	offset, limit := app.ValidatePagination(
+		h.extractOptionalIntFromURLVars(values, URLParamOffset),
+		h.extractOptionalIntFromURLVars(values, URLParamLimit))
 
 	// Calling the interactor
 	videos, err := h.VideoInteractor.SearchGlobal(r.Context(), search, offset, limit)
@@ -222,25 +264,25 @@ func (h *VideoHandler) writeJSON(w http.ResponseWriter, status int, v any) {
 	_ = json.NewEncoder(w).Encode(v)
 }
 
-func (h VideoHandler) extractUUIDFromPathVar(r *http.Request, varName string) (uuid.UUID, error) {
+func (h VideoHandler) extractValidUUIDFromPathVar(r *http.Request, varName string) (domain.UUID, error) {
 	id, ok := mux.Vars(r)[varName]
 	if !ok {
-		return uuid.UUID{}, fmt.Errorf("no %s provided ", varName)
+		return domain.UUID{}, fmt.Errorf("no %s provided ", varName)
 	}
 	idSize := len([]byte(id))
 	if idSize == 0 {
-		return uuid.UUID{}, ValidationError{
+		return domain.UUID{}, ValidationError{
 			ErrorCode: IDEmpty, ErrorMessage: varName + " is empty",
 		}
 	}
 	if idSize > policy.MaxIDBytesSize {
-		return uuid.UUID{}, ValidationError{
+		return domain.UUID{}, ValidationError{
 			ErrorCode: IDSizeExceeded, ErrorMessage: varName + " len is more then expected",
 		}
 	}
-	res, err := uuid.Parse(string(id))
+	res, err := h.IDGen.Parse(string(id))
 	if err != nil {
-		return uuid.UUID{}, ValidationError{
+		return domain.UUID{}, ValidationError{
 			ErrorCode: IDSizeExceeded, ErrorMessage: varName + " len is more then expected",
 		}
 	}
