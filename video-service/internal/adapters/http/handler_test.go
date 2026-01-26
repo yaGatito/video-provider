@@ -244,7 +244,12 @@ func TestSearchPublisherVideos(t *testing.T) {
 				).MaxTimes(c.expCallSearchPub)
 			}
 
-			url := strings.Replace(httpadapter.RoutePublisherVideos, "{"+httpadapter.PathVarPublisherID+"}", c.pubID+c.urlParams, 1)
+			url := strings.Replace(
+				httpadapter.RoutePublisherVideos,
+				"{"+httpadapter.PathVarPublisherID+"}",
+				c.pubID+c.urlParams,
+				1,
+			)
 			req := httptest.NewRequest(http.MethodGet, url, nil)
 			rec := httptest.NewRecorder()
 			r.ServeHTTP(rec, req)

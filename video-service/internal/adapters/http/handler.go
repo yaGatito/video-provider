@@ -128,7 +128,11 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 	limit := h.extractOptionalIntFromURLVars(values, URLParamLimit)
 	offset, limit = app.ValidatePagination(offset, limit)
 
-	search, err := h.extractOptionalStringFromURLVars(values, URLParamSearch, policy.MaxSearchBytesSize)
+	search, err := h.extractOptionalStringFromURLVars(
+		values,
+		URLParamSearch,
+		policy.MaxSearchBytesSize,
+	)
 	if err != nil {
 		h.writeJSON(w, http.StatusBadRequest, fmt.Errorf("parse search param: %e", err))
 		return
@@ -140,7 +144,11 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 	if search == "" {
 		videos, err = h.VideoInteractor.GetByPublisher(r.Context(), publisherID, offset, limit)
 		if err != nil {
-			h.writeJSON(w, http.StatusInternalServerError, fmt.Errorf("interactor get by publisher error: %e", err))
+			h.writeJSON(
+				w,
+				http.StatusInternalServerError,
+				fmt.Errorf("interactor get by publisher error: %e", err),
+			)
 			return
 		}
 	} else {
@@ -159,7 +167,11 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 
 	err = json.NewEncoder(w).Encode(h.toDtoVideos(videos))
 	if err != nil {
-		h.writeJSON(w, http.StatusInternalServerError, fmt.Errorf("error encoding in response body: %e", err))
+		h.writeJSON(
+			w,
+			http.StatusInternalServerError,
+			fmt.Errorf("error encoding in response body: %e", err),
+		)
 		return
 	}
 	h.log.Println("Response were written successfully")
