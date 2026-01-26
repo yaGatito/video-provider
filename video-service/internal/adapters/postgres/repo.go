@@ -35,7 +35,10 @@ func (r *VideoRepoPostgreSQL) CreateVideo(ctx context.Context, video domain.Vide
 	return nil
 }
 
-func (r *VideoRepoPostgreSQL) GetVideoByID(ctx context.Context, id domain.UUID) (domain.Video, error) {
+func (r *VideoRepoPostgreSQL) GetVideoByID(
+	ctx context.Context,
+	id domain.UUID,
+) (domain.Video, error) {
 	video, err := r.queries.GetVideoByID(ctx, id)
 	if err != nil {
 		return domain.Video{}, err
@@ -44,7 +47,12 @@ func (r *VideoRepoPostgreSQL) GetVideoByID(ctx context.Context, id domain.UUID) 
 	return toDomainVideo(video), nil
 }
 
-func (r *VideoRepoPostgreSQL) GetPublisherVideos(ctx context.Context, publisherID domain.UUID, args ports.PageRequest) ([]domain.Video, error) {
+func (r *VideoRepoPostgreSQL) GetPublisherVideos(
+	ctx context.Context,
+	publisherID domain.UUID,
+	args ports.PageRequest,
+) ([]domain.Video, error) {
+
 	params := GetVideosByPublisherParams{
 		Publisherid: publisherID,
 		Offset:      args.Offset,
@@ -58,7 +66,12 @@ func (r *VideoRepoPostgreSQL) GetPublisherVideos(ctx context.Context, publisherI
 	return toDomainVideos(videos), nil
 }
 
-func (r *VideoRepoPostgreSQL) SearchPublisher(ctx context.Context, publisherID domain.UUID, search ports.VideoSearch) ([]domain.Video, error) {
+func (r *VideoRepoPostgreSQL) SearchPublisher(
+	ctx context.Context,
+	publisherID domain.UUID,
+	search ports.VideoSearch,
+) ([]domain.Video, error) {
+
 	params := SearchPublisherParams{
 		Publisherid: publisherID,
 		Concat:      search.Query,
@@ -73,7 +86,10 @@ func (r *VideoRepoPostgreSQL) SearchPublisher(ctx context.Context, publisherID d
 	return toDomainVideos(videos), nil
 }
 
-func (r *VideoRepoPostgreSQL) SearchGlobal(ctx context.Context, search ports.VideoSearch) ([]domain.Video, error) {
+func (r *VideoRepoPostgreSQL) SearchGlobal(
+	ctx context.Context,
+	search ports.VideoSearch,
+) ([]domain.Video, error) {
 	params := SearchGlobalParams{
 		Concat: search.Query,
 		Offset: search.Offset,

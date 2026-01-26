@@ -1,4 +1,4 @@
-package crypto
+package idgen
 
 import (
 	"video-service/internal/ports"

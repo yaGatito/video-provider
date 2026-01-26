@@ -3,14 +3,24 @@ package policy
 import "regexp"
 
 const (
-	MAX_ID_BYTES_SIZE          = 36
-	MAX_TOPIC_BYTES_SIZE       = 48
-	MAX_DESCRIPTION_BYTES_SIZE = 512
+	MaxIDBytesSize          = 36
+	MaxTopicBytesSize       = 48
+	MaxDescriptionBytesSize = 512
 
-	MAX_SEARCH_BYTES_SIZE        = 100
-	MIN_SEARCH_BYTES_SIZE        = 2
-	MAX_VIDEOS_LIMIT_PER_REQUEST = 50
+	MaxSearchBytesSize           = 100
+	MinSearchBytesSize           = 2
+	DefaultVideosLimitPerRequest = 5
+	MaxVideosLimitPerRequest     = 50
 )
 
-// var TextingFormatRe = regexp.MustCompile(`^[\p{L}\p{N}\s_-!?;.,]{1,100}$`)
-var WordsFormatRe = regexp.MustCompile(`^[\p{L}\p{N}\s]{1,100}$`)
+func GetTextingFormateRE128() *regexp.Regexp {
+	return regexp.MustCompile(`^[\pL\pN\s]{2}[_\-!?;.,\pL\pN\s]{0,126}$`)
+}
+
+func GetLargeTextFormatRE512() *regexp.Regexp {
+	return regexp.MustCompile(`^^[\pL\pN\s]{2}[_\-!?;.,\pL\pN\s]{0,510}$`)
+}
+
+func GetWordsFormatRE128() *regexp.Regexp {
+	return regexp.MustCompile(`^[\p{L}\p{N}\s]{2,128}$`)
+}

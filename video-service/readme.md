@@ -1,5 +1,11 @@
 # VIDEO PROVIDER
 
+TODO: Manual QE enpoints test.
+TODO: Autorization
+
+
+
+
 ## Models
 - Video Content
 - Users
@@ -40,5 +46,3 @@
 ## Technologies
 
 
---- 
-TODO: video repository

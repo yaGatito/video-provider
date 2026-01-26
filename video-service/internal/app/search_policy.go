@@ -13,13 +13,13 @@ func ValidateSearchQuery(query string) (string, error) {
 	if len(qBytes) == 0 {
 		return "", fmt.Errorf("query len is zero")
 	}
-	if len(qBytes) > policy.MAX_SEARCH_BYTES_SIZE {
-		return "", fmt.Errorf("query len more then limit %d bytes", policy.MAX_SEARCH_BYTES_SIZE)
+	if len(qBytes) > policy.MaxSearchBytesSize {
+		return "", fmt.Errorf("query len more then limit %d bytes", policy.MaxSearchBytesSize)
 	}
-	if len(qBytes) < policy.MIN_SEARCH_BYTES_SIZE {
-		return "", fmt.Errorf("query len less then limit %d bytes", policy.MIN_SEARCH_BYTES_SIZE)
+	if len(qBytes) < policy.MinSearchBytesSize {
+		return "", fmt.Errorf("query len less then limit %d bytes", policy.MinSearchBytesSize)
 	}
-	if !policy.WordsFormatRe.MatchString(string(qBytes)) {
+	if !policy.GetWordsFormatRE128().MatchString(string(qBytes)) {
 		return "", fmt.Errorf("query string contains prohibited characters")
 	}
 
@@ -32,10 +32,10 @@ func ValidatePagination(offset, limit int32) (int32, int32) {
 		offset = 0
 	}
 	if limit <= 0 {
-		limit = policy.MAX_VIDEOS_LIMIT_PER_REQUEST
+		limit = policy.DefaultVideosLimitPerRequest
 	}
-	if limit > policy.MAX_VIDEOS_LIMIT_PER_REQUEST {
-		limit = policy.MAX_VIDEOS_LIMIT_PER_REQUEST
+	if limit > policy.MaxVideosLimitPerRequest {
+		limit = policy.MaxVideosLimitPerRequest
 	}
 	return offset, limit
 }

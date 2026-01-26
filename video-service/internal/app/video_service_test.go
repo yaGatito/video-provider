@@ -1,123 +1,108 @@
-package app
+package app_test
 
 import (
 	"context"
-	"fmt"
 	"testing"
 	"time"
+	"video-service/internal/app"
 	"video-service/internal/domain"
 	"video-service/internal/policy"
 	"video-service/internal/ports"
 	mock_ports "video-service/internal/ports/mock"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
 )
 
-const WANT_NO_ERROR = false
-const WANT_ERROR = true
-
-var TEST_DATA_DESCRIPTION string = "TEST"
+var testTopic = "topic"
+var testDesc = "desc"
+var testPublisherID, _ = uuid.Parse("d9fa522f-0006-464f-8d68-356ba1d6ad7d")
+var testVideo = domain.Video{
+	PublisherID: testPublisherID,
+	Topic:       testTopic,
+	Description: &testDesc,
+}
+var testVideoID, _ = uuid.Parse("d9fa522f-0016-464f-8d68-356ba1d6ad7d")
 
 func TestCreateVideo(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	repo := mock_ports.NewMockVideoRepository(ctrl)
-	videoService := NewVideoInteractor(repo)
+	videoService := app.NewVideoInteractor(repo)
 
-	publisherID, _ := uuid.Parse("d9fa522f-0006-464f-8d68-356ba1d6ad7d")
+	repo.
+		EXPECT().
+		CreateVideo(gomock.Any(), gomock.Eq(testVideo)).
+		MaxTimes(1)
 
-	tests := []struct {
-		name    string
-		wantErr bool
-		video   domain.Video
-	}{
-		{"ok", WANT_NO_ERROR, domain.Video{
-			PublisherID: publisherID,
-			Topic:       "topic",
-			Description: &TEST_DATA_DESCRIPTION},
-		},
-		{"ok - no desc", WANT_NO_ERROR, domain.Video{
-			PublisherID: publisherID,
-			Topic:       "topic"},
-		},
-		{"no topic", WANT_ERROR, domain.Video{
-			PublisherID: publisherID},
-		},
-		{"no publisher id", WANT_ERROR, domain.Video{
-			Topic: "topic"},
-		},
-	}
+	require.NoError(t, videoService.Create(context.Background(), testVideo))
+}
 
-	for _, tt := range tests {
-		if tt.wantErr {
-			repo.
-				EXPECT().
-				CreateVideo(gomock.Any(), gomock.Any()).
-				MaxTimes(0)
-		} else {
-			repo.
-				EXPECT().
-				CreateVideo(gomock.Any(), gomock.Eq(tt.video)).
-				MaxTimes(1)
-		}
+func TestCreateInvalidVideo(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	repo := mock_ports.NewMockVideoRepository(ctrl)
+	videoService := app.NewVideoInteractor(repo)
+	invalidVideo := domain.Video{}
 
-		err := videoService.Create(context.Background(), tt.video)
+	repo.
+		EXPECT().
+		CreateVideo(gomock.Any(), gomock.Any()).
+		MaxTimes(0)
 
-		if (tt.wantErr && err == nil) || (!tt.wantErr && err != nil) {
-			t.Fatalf("tt.wantErr %t; res error %e\n", tt.wantErr, err)
-			return
-		}
-	}
+	require.Error(t, videoService.Create(context.Background(), invalidVideo))
 }
 
 func TestGetdVideoByID(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	repo := mock_ports.NewMockVideoRepository(ctrl)
-	videoService := NewVideoInteractor(repo)
-
-	videoID, _ := uuid.Parse("d9fa522f-0016-464f-8d68-356ba1d6ad7d")
-	publisherID, _ := uuid.Parse("464f522f-0106-d9fa-8d98-356bad96a56b")
+	videoService := app.NewVideoInteractor(repo)
 
 	expectedVideo := domain.Video{
-		ID:          videoID,
-		PublisherID: publisherID,
-		Topic:       "topic",
-		Description: &TEST_DATA_DESCRIPTION,
+		ID:          testVideoID,
+		PublisherID: testPublisherID,
+		Topic:       testTopic,
+		Description: &testDesc,
 		CreatedAt:   time.Now(),
 	}
 
-	tests := []struct {
+	cases := []struct {
 		name    string
 		videoID uuid.UUID
 		wantErr bool
 	}{
-		{"ok", videoID, WANT_NO_ERROR},
-		{"no video id", uuid.Nil, WANT_ERROR},
+		{"ok", testVideoID, false},
+		{"no video id", uuid.Nil, true},
 	}
 
-	for _, tt := range tests {
-		if tt.wantErr == WANT_ERROR {
-			repo.
-				EXPECT().
-				GetVideoByID(gomock.Any(), gomock.Any()).
-				MaxTimes(0)
-		} else {
-			repo.
-				EXPECT().
-				GetVideoByID(gomock.Any(), gomock.Eq(tt.videoID)).
-				Return(expectedVideo, nil).
-				MaxTimes(1)
-		}
-		res, err := videoService.GetByID(context.Background(), tt.videoID)
-		isEmptyError := err == nil
-		if tt.wantErr == isEmptyError {
-			t.Fatalf("want error:%t, error:%s", tt.wantErr, err)
-			return
-		}
-		if isEmptyError && !gomock.Eq(expectedVideo).Matches(res) {
-			t.Fatalf("res:%v, expected:%v", res, expectedVideo)
-			return
-		}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
+
+			if c.wantErr {
+				// Error scenario
+				repo.
+					EXPECT().
+					GetVideoByID(gomock.Any(), gomock.Any()).
+					MaxTimes(0)
+
+				_, err := videoService.GetByID(context.Background(), c.videoID)
+
+				require.Error(t, err)
+			} else {
+				// Non-Error scenario
+				repo.
+					EXPECT().
+					GetVideoByID(gomock.Any(), gomock.Eq(c.videoID)).
+					Return(expectedVideo, nil).
+					MaxTimes(1)
+
+				res, err := videoService.GetByID(context.Background(), c.videoID)
+
+				require.Equal(t, expectedVideo, res)
+				require.NoError(t, err)
+			}
+		})
 	}
 }
 
@@ -125,210 +110,210 @@ func TestGetdVideoByID(t *testing.T) {
 func TestGetVideoByPublisher(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	repo := mock_ports.NewMockVideoRepository(ctrl)
-	videoService := NewVideoInteractor(repo)
+	videoService := app.NewVideoInteractor(repo)
 
-	var publisherID, _ = uuid.Parse("464f522f-0106-d9fa-8d98-356bad96a56b")
 	var emptyPublisherID = uuid.Nil
-	var videoID, _ = uuid.Parse("d9fa522f-0016-464f-8d68-356ba1d6ad7d")
 	var expectedRes = []domain.Video{{
-		ID:          videoID,
-		PublisherID: publisherID,
-		Topic:       "topic",
-		Description: &TEST_DATA_DESCRIPTION,
+		ID:          testVideoID,
+		PublisherID: testPublisherID,
+		Topic:       testTopic,
+		Description: &testDesc,
 		CreatedAt:   time.Now(),
 	}}
 
-	tests := []struct {
+	cases := []struct {
 		name               string
 		wantErr            bool
 		publisherID        uuid.UUID
 		pagination         ports.PageRequest
 		expectedPagination ports.PageRequest
 	}{
-		{"ok", WANT_NO_ERROR, publisherID, getPageRequest(5, 5), getPageRequest(5, 5)},
-		{"ok without offset", WANT_NO_ERROR, publisherID, getPageRequest(0, 5), getPageRequest(0, 5)},
-		{"limit less zero pagination", WANT_NO_ERROR, publisherID, getPageRequest(0, -1), getPageRequest(0, policy.MAX_VIDEOS_LIMIT_PER_REQUEST)},
-		{"offset less zero pagination", WANT_NO_ERROR, publisherID, getPageRequest(-1, 5), getPageRequest(0, 5)},
-		{"limit zero pagination", WANT_NO_ERROR, publisherID, getPageRequest(5, -1), getPageRequest(5, policy.MAX_VIDEOS_LIMIT_PER_REQUEST)},
-
-		{"nil publisher id", WANT_ERROR, emptyPublisherID, getPageRequest(5, 5), getPageRequest(0, 0) /* error */},
+		{"ok", false,
+			testPublisherID, getPageRequest(5, 5), getPageRequest(5, 5)},
+		{"ok without offset", false,
+			testPublisherID, getPageRequest(0, 5), getPageRequest(0, 5)},
+		{"limit less zero pagination", false,
+			testPublisherID, getPageRequest(0, -1), getPageRequest(0, policy.DefaultVideosLimitPerRequest)},
+		{"offset less zero pagination", false,
+			testPublisherID, getPageRequest(-1, 5), getPageRequest(0, 5)},
+		{"limit zero pagination", false,
+			testPublisherID, getPageRequest(5, -1), getPageRequest(5, policy.DefaultVideosLimitPerRequest)},
+		{"nil publisher id", true,
+			emptyPublisherID, getPageRequest(5, 5), getPageRequest(0, 0) /* error */},
 	}
 
-	for _, tt := range tests {
-		if tt.wantErr {
-			repo.
-				EXPECT().
-				GetPublisherVideos(gomock.Any(), gomock.Any(), gomock.Any()).
-				MaxTimes(0)
-		} else {
-			repo.
-				EXPECT().
-				GetPublisherVideos(gomock.Any(), gomock.Eq(tt.publisherID), gomock.Eq(tt.expectedPagination)).
-				Return(expectedRes, nil).
-				MaxTimes(1)
-		}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
 
-		res, err := videoService.GetByPublisher(context.Background(), tt.publisherID, tt.pagination.Offset, tt.pagination.Limit)
-		isEmptyError := err == nil
-		if tt.wantErr == isEmptyError {
-			t.Fatalf("want error:%t, error:%s", tt.wantErr, err)
-			return
-		}
-		if isEmptyError && !gomock.Eq(expectedRes).Matches(res) {
-			t.Fatalf("res:%v, expected:%v", res, expectedRes)
-			return
-		}
+			if c.wantErr {
+				repo.
+					EXPECT().
+					GetPublisherVideos(gomock.Any(), gomock.Any(), gomock.Any()).
+					MaxTimes(0)
+				_, err := videoService.GetByPublisher(
+					context.Background(),
+					c.publisherID,
+					c.pagination.Offset,
+					c.pagination.Limit)
+				require.Error(t, err)
+			} else {
+				repo.
+					EXPECT().
+					GetPublisherVideos(gomock.Any(), gomock.Eq(c.publisherID), gomock.Eq(c.expectedPagination)).
+					Return(expectedRes, nil).
+					MaxTimes(1)
+				res, err := videoService.GetByPublisher(
+					context.Background(),
+					c.publisherID,
+					c.pagination.Offset,
+					c.pagination.Limit)
+				require.Exactly(t, expectedRes, res)
+				require.NoError(t, err)
+			}
+		})
 	}
 }
 
 func TestSearchVideoByPublisher(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	repo := mock_ports.NewMockVideoRepository(ctrl)
-	videoService := NewVideoInteractor(repo)
+	videoService := app.NewVideoInteractor(repo)
 
-	var publisherID, _ = uuid.Parse("464f522f-0106-d9fa-8d98-356bad96a56b")
 	var emptyPublisherID = uuid.Nil
-
-	var videoID, _ = uuid.Parse("d9fa522f-0016-464f-8d68-356ba1d6ad7d")
 	var expectedRes = []domain.Video{{
-		ID:          videoID,
-		PublisherID: publisherID,
-		Topic:       "topic",
-		Description: &TEST_DATA_DESCRIPTION,
+		ID:          testVideoID,
+		PublisherID: testPublisherID,
+		Topic:       testTopic,
+		Description: &testDesc,
 		CreatedAt:   time.Now(),
 	}}
 
-	tests := []struct {
+	cases := []struct {
 		name        string
 		wantErr     bool
 		publisherID uuid.UUID
 		search      ports.VideoSearch
 	}{
-		{"ok", WANT_NO_ERROR, publisherID, ports.VideoSearch{PageRequest: getPageRequest(5, 5), Query: "search"}},
-		{"ok with search surrounded spaces", WANT_NO_ERROR, publisherID, ports.VideoSearch{PageRequest: getPageRequest(5, 5), Query: "   ok with spacing search    "}},
-		{"ok without offset", WANT_NO_ERROR, publisherID, ports.VideoSearch{PageRequest: getPageRequest(0, 5), Query: "search"}},
-		{"limit less zero pagination", WANT_NO_ERROR, publisherID, ports.VideoSearch{PageRequest: getPageRequest(0, -1), Query: "search"}},
-		{"offset less zero pagination", WANT_NO_ERROR, publisherID, ports.VideoSearch{PageRequest: getPageRequest(-1, 5), Query: "search"}},
-		{"limit zero pagination", WANT_NO_ERROR, publisherID, ports.VideoSearch{PageRequest: getPageRequest(5, -1), Query: "search"}},
+		{"ok", false, testPublisherID,
+			ports.VideoSearch{PageRequest: getPageRequest(5, 5), Query: "search"}},
+		{"ok with search surrounded spaces", false, testPublisherID,
+			ports.VideoSearch{
+				PageRequest: getPageRequest(5, 5),
+				Query:       "   ok with spacing search    ",
+			}},
+		{"ok without offset", false, testPublisherID,
+			ports.VideoSearch{PageRequest: getPageRequest(0, 5), Query: "search"}},
+		{"limit less zero pagination", false, testPublisherID,
+			ports.VideoSearch{PageRequest: getPageRequest(0, -1), Query: "search"}},
+		{"offset less zero pagination", false, testPublisherID,
+			ports.VideoSearch{PageRequest: getPageRequest(-1, 5), Query: "search"}},
+		{"limit zero pagination", false, testPublisherID,
+			ports.VideoSearch{PageRequest: getPageRequest(5, -1), Query: "search"}},
 
-		{"nil publisher id", WANT_ERROR, emptyPublisherID, ports.VideoSearch{PageRequest: getPageRequest(5, 5), Query: "search"}},
-		{"incorrect search", WANT_ERROR, publisherID, ports.VideoSearch{PageRequest: getPageRequest(5, 5), Query: "se!arch"}},
+		{"nil publisher id", true, emptyPublisherID,
+			ports.VideoSearch{PageRequest: getPageRequest(5, 5), Query: "search"}},
+		{"incorrect search", true, testPublisherID,
+			ports.VideoSearch{PageRequest: getPageRequest(5, 5), Query: "se!arch"}},
 	}
 
-	for _, tt := range tests {
-		if tt.wantErr {
-			repo.
-				EXPECT().
-				SearchPublisher(gomock.Any(), gomock.Any(), gomock.Any()).
-				MaxTimes(0)
-		} else {
-			repo.
-				EXPECT().
-				SearchPublisher(gomock.Any(), gomock.Eq(tt.publisherID), gomock.Any()).
-				Return(expectedRes, nil).
-				MaxTimes(1)
-		}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
 
-		res, err := videoService.SearchPublisher(context.Background(), tt.publisherID, tt.search.Query, tt.search.Offset, tt.search.Limit)
-		isEmptyError := err == nil
-		if tt.wantErr == isEmptyError {
-			t.Fatalf("want error:%t, error:%s", tt.wantErr, err)
-			return
-		}
-		if isEmptyError && !gomock.Eq(expectedRes).Matches(res) {
-			t.Fatalf("res:%v, expected:%v", res, expectedRes)
-			return
-		}
+			if c.wantErr {
+				repo.
+					EXPECT().
+					SearchPublisher(gomock.Any(), gomock.Any(), gomock.Any()).
+					MaxTimes(0)
+				_, err := videoService.SearchPublisher(
+					context.Background(),
+					c.publisherID,
+					c.search.Query,
+					c.search.Offset,
+					c.search.Limit)
+				require.Error(t, err)
+			} else {
+				repo.
+					EXPECT().
+					SearchPublisher(gomock.Any(), gomock.Eq(c.publisherID), gomock.Any()).
+					Return(expectedRes, nil).
+					MaxTimes(1)
+				res, err := videoService.SearchPublisher(
+					context.Background(),
+					c.publisherID,
+					c.search.Query,
+					c.search.Offset,
+					c.search.Limit)
+				require.Exactly(t, expectedRes, res)
+				require.NoError(t, err)
+			}
+		})
 	}
 }
 
 func TestValidSearchGlobal(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	repo := mock_ports.NewMockVideoRepository(ctrl)
-	videoService := NewVideoInteractor(repo)
+	videoService := app.NewVideoInteractor(repo)
 
-	var publisherID, _ = uuid.Parse("464f522f-0106-d9fa-8d98-356bad96a56b")
-	var videoID, _ = uuid.Parse("d9fa522f-0016-464f-8d68-356ba1d6ad7d")
 	var expectedRes = []domain.Video{{
-		ID:          videoID,
-		PublisherID: publisherID,
-		Topic:       "topic",
-		Description: &TEST_DATA_DESCRIPTION,
+		ID:          testVideoID,
+		PublisherID: testPublisherID,
+		Topic:       testTopic,
+		Description: &testDesc,
 		CreatedAt:   time.Now(),
 	}}
 
-	tests := []struct {
+	cases := []struct {
 		name    string
 		wantErr bool
 		search  ports.VideoSearch
 	}{
-		{"ok", WANT_NO_ERROR, ports.VideoSearch{PageRequest: getPageRequest(5, 5), Query: "search global"}},
-		{"ok with search surrounded spaces", WANT_NO_ERROR, ports.VideoSearch{PageRequest: getPageRequest(5, 5), Query: "   ok with spacing search    "}},
-		{"ok without offset", WANT_NO_ERROR, ports.VideoSearch{PageRequest: getPageRequest(0, 5), Query: "search global"}},
-		{"limit less zero pagination", WANT_NO_ERROR, ports.VideoSearch{PageRequest: getPageRequest(0, -1), Query: "search global"}},
-		{"offset less zero pagination", WANT_NO_ERROR, ports.VideoSearch{PageRequest: getPageRequest(-1, 5), Query: "search global"}},
-		{"limit zero pagination", WANT_NO_ERROR, ports.VideoSearch{PageRequest: getPageRequest(5, -1), Query: "search global"}},
+		{"ok", false,
+			ports.VideoSearch{PageRequest: getPageRequest(5, 5), Query: "search global"}},
+		{"ok with search surrounded spaces", false,
+			ports.VideoSearch{PageRequest: getPageRequest(5, 5), Query: "   ok with spacing    "}},
+		{"ok without offset", false,
+			ports.VideoSearch{PageRequest: getPageRequest(0, 5), Query: "search global"}},
+		{"limit less zero pagination", false,
+			ports.VideoSearch{PageRequest: getPageRequest(0, -1), Query: "search global"}},
+		{"offset less zero pagination", false,
+			ports.VideoSearch{PageRequest: getPageRequest(-1, 5), Query: "search global"}},
+		{"limit zero pagination", false,
+			ports.VideoSearch{PageRequest: getPageRequest(5, -1), Query: "search global"}},
 	}
 
-	for _, tt := range tests {
-		repo.
-			EXPECT().
-			SearchGlobal(gomock.Any(), gomock.Any()).
-			Return(expectedRes, nil).
-			MaxTimes(1)
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			t.Parallel()
 
-		res, err := videoService.SearchGlobal(context.Background(), tt.search.Query, tt.search.Offset, tt.search.Limit)
-		isEmptyError := err == nil
-		if tt.wantErr == isEmptyError {
-			t.Fatalf("want error:%t, error:%s", tt.wantErr, err)
-			return
-		}
-		if isEmptyError && !gomock.Eq(expectedRes).Matches(res) {
-			t.Fatalf("res:%v, expected:%v", res, expectedRes)
-			return
-		}
-	}
-}
-
-func TestInvalidSearchGlobal(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	repo := mock_ports.NewMockVideoRepository(ctrl)
-	videoService := NewVideoInteractor(repo)
-
-	tests := []struct {
-		name    string
-		wantErr bool
-		search  ports.VideoSearch
-	}{}
-
-	var symbols = "@#$%^&*()+="
-	var format = "se%carch global"
-	for i, c := range symbols {
-		newtt := struct {
-			name    string
-			wantErr bool
-			search  ports.VideoSearch
-		}{
-			name:    fmt.Sprintf("incorrect search: %d; symbol: %c", i+1, c),
-			wantErr: WANT_ERROR,
-			search:  ports.VideoSearch{PageRequest: getPageRequest(5, 5), Query: fmt.Sprintf(format, c)},
-		}
-
-		tests = append(tests, newtt)
-	}
-
-	for _, tt := range tests {
-		repo.
-			EXPECT().
-			SearchGlobal(gomock.Any(), gomock.Any()).
-			MaxTimes(0)
-
-		_, err := videoService.SearchGlobal(context.Background(), tt.search.Query, tt.search.Offset, tt.search.Limit)
-		isEmptyError := err == nil
-		if isEmptyError {
-			t.Fatalf("want error:%t, error:%s", tt.wantErr, err)
-			return
-		}
+			if c.wantErr {
+				repo.
+					EXPECT().
+					SearchGlobal(gomock.Any(), gomock.Any()).
+					MaxTimes(0)
+				_, err := videoService.SearchGlobal(
+					context.Background(),
+					c.search.Query,
+					c.search.Offset,
+					c.search.Limit)
+				require.Error(t, err)
+			} else {
+				repo.
+					EXPECT().
+					SearchGlobal(gomock.Any(), gomock.Any()).
+					Return(expectedRes, nil).
+					MaxTimes(1)
+				res, err := videoService.SearchGlobal(
+					context.Background(),
+					c.search.Query,
+					c.search.Offset,
+					c.search.Limit)
+				require.NoError(t, err)
+				require.Exactly(t, expectedRes, res)
+			}
+		})
 	}
 }
 
