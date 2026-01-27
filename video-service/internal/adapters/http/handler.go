@@ -65,7 +65,7 @@ func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
 	// Required path variable
 	publisherID, err := h.extractValidUUIDFromPathVar(r, PathVarPublisherID)
 	if err != nil {
-		h.writeJSON(w, http.StatusBadRequest, fmt.Errorf("invalid pub id: %e", err))
+		h.writeJSON(w, http.StatusBadRequest, fmt.Errorf("invalid pub id: %w", err))
 		return
 	}
 
@@ -74,12 +74,12 @@ func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
 	if err := json.NewDecoder(r.Body).Decode(&createVideoRequestData); !errors.Is(err, io.EOF) &&
 		err != nil {
 		h.log.Printf("Error decoding request body: %v", err)
-		h.writeJSON(w, http.StatusBadRequest, fmt.Errorf("error decoding request body: %e", err))
+		h.writeJSON(w, http.StatusBadRequest, fmt.Errorf("error decoding request body: %w", err))
 		return
 	}
 	if err := createVideoRequestData.validate(); err != nil {
 		h.log.Printf("Error validating request body: %v", err)
-		h.writeJSON(w, http.StatusBadRequest, fmt.Errorf("error validating request body: %e", err))
+		h.writeJSON(w, http.StatusBadRequest, fmt.Errorf("error validating request body: %w", err))
 		return
 	}
 
@@ -90,6 +90,14 @@ func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Description: createVideoRequestData.Description,
 	}
 	video, err = h.VideoInteractor.Create(r.Context(), video)
+	if err != nil {
+		http.Error(
+			w,
+			fmt.Sprintf("Error creating video: %v", err),
+			http.StatusInternalServerError,
+		)
+		return
+	}
 
 	err = json.NewEncoder(w).Encode(h.toDtoVideo(video))
 	if err != nil {
@@ -119,7 +127,7 @@ func (h *VideoHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	// Required path variable
 	videoID, err := h.extractValidUUIDFromPathVar(r, PathVarVideoID)
 	if err != nil {
-		h.writeJSON(w, http.StatusBadRequest, fmt.Errorf("parse vid id param: %e", err))
+		h.writeJSON(w, http.StatusBadRequest, fmt.Errorf("parse vid id param: %w", err))
 		return
 	}
 
@@ -161,14 +169,14 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 	// Required path variable
 	publisherID, err := h.extractValidUUIDFromPathVar(r, PathVarPublisherID)
 	if err != nil {
-		h.writeJSON(w, http.StatusBadRequest, fmt.Errorf("parse pub id param: %e", err))
+		h.writeJSON(w, http.StatusBadRequest, fmt.Errorf("parse pub id param: %w", err))
 		return
 	}
 
 	// Url parameters
 	values, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
-		h.writeJSON(w, http.StatusBadRequest, fmt.Errorf("parse query params: %e", err))
+		h.writeJSON(w, http.StatusBadRequest, fmt.Errorf("parse query params: %w", err))
 		return
 	}
 	offset, limit := app.ValidatePagination(
@@ -181,7 +189,7 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 		policy.MaxSearchBytesSize,
 	)
 	if err != nil {
-		h.writeJSON(w, http.StatusBadRequest, fmt.Errorf("parse search param: %e", err))
+		h.writeJSON(w, http.StatusBadRequest, fmt.Errorf("parse search param: %w", err))
 		return
 	}
 
@@ -194,7 +202,7 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 			h.writeJSON(
 				w,
 				http.StatusInternalServerError,
-				fmt.Errorf("interactor get by publisher error: %e", err),
+				fmt.Errorf("interactor get by publisher error: %w", err),
 			)
 			return
 		}
@@ -207,7 +215,10 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 			limit,
 		)
 		if err != nil {
-			h.writeJSON(w, http.StatusInternalServerError, fmt.Errorf("interactor search publisher videos error: %e", err))
+			h.writeJSON(
+				w,
+				http.StatusInternalServerError,
+				fmt.Errorf("interactor search publisher videos error: %w", err))
 			return
 		}
 	}
@@ -217,7 +228,7 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 		h.writeJSON(
 			w,
 			http.StatusInternalServerError,
-			fmt.Errorf("error encoding in response body: %e", err),
+			fmt.Errorf("error encoding in response body: %w", err),
 		)
 		return
 	}
@@ -279,7 +290,10 @@ func (h *VideoHandler) writeJSON(w http.ResponseWriter, status int, v any) {
 	_ = json.NewEncoder(w).Encode(v)
 }
 
-func (h VideoHandler) extractValidUUIDFromPathVar(r *http.Request, varName string) (domain.UUID, error) {
+func (h VideoHandler) extractValidUUIDFromPathVar(
+	r *http.Request,
+	varName string,
+) (domain.UUID, error) {
 	id, ok := mux.Vars(r)[varName]
 	if !ok {
 		return domain.UUID{}, fmt.Errorf("no %s provided ", varName)
@@ -340,7 +354,7 @@ func (h VideoHandler) extractOptionalStringFromURLVars(
 	}
 	query, err := url.QueryUnescape(query)
 	if err != nil {
-		return "", fmt.Errorf("failed to unescape %s: %s; err: %e", paramName, query, err)
+		return "", fmt.Errorf("failed to unescape %s: %s; err: %w", paramName, query, err)
 	}
 
 	return query, nil

@@ -31,7 +31,10 @@ func NewVideoRepoTestDB(str map[domain.UUID]domain.Video, logger *log.Logger) *V
 	return repo
 }
 
-func (r *VideoRepoTestDB) CreateVideo(ctx context.Context, video domain.Video) (domain.Video, error) {
+func (r *VideoRepoTestDB) CreateVideo(
+	ctx context.Context,
+	video domain.Video,
+) (domain.Video, error) {
 	videoID, err := uuid.NewRandom()
 	if err != nil {
 		return domain.Video{}, err

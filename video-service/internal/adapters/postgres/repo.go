@@ -21,7 +21,10 @@ func NewVideoRepoPostgreSQL(db DBTX) ports.VideoRepository {
 	return &v
 }
 
-func (r *VideoRepoPostgreSQL) CreateVideo(ctx context.Context, video domain.Video) (domain.Video, error) {
+func (r *VideoRepoPostgreSQL) CreateVideo(
+	ctx context.Context,
+	video domain.Video,
+) (domain.Video, error) {
 	arg := CreateVideoParams{
 		Publisherid: video.PublisherID,
 		Topic:       video.Topic,
