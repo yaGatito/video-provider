@@ -36,11 +36,12 @@ func (m *MockVideoService) EXPECT() *MockVideoServiceMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockVideoService) Create(ctx context.Context, video domain.Video) error {
+func (m *MockVideoService) Create(ctx context.Context, video domain.Video) (domain.Video, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", ctx, video)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(domain.Video)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.

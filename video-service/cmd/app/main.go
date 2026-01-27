@@ -50,8 +50,6 @@ func run() error {
 
 	router := mux.NewRouter()
 	router.Use(mwLog.loggingMiddleware)
-	// router.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
-
 	httpadapter.SetupRouter(router, videoHandler)
 
 	mwLog.log.Printf("Server successfully started")

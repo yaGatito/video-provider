@@ -11,8 +11,7 @@ import (
 )
 
 type Querier interface {
-	CreateVideo(ctx context.Context, arg CreateVideoParams) error
-	// RETURNING *;
+	CreateVideo(ctx context.Context, arg CreateVideoParams) (Video, error)
 	GetVideoByID(ctx context.Context, id uuid.UUID) (Video, error)
 	GetVideosByPublisher(ctx context.Context, arg GetVideosByPublisherParams) ([]Video, error)
 	SearchGlobal(ctx context.Context, arg SearchGlobalParams) ([]Video, error)

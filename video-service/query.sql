@@ -1,10 +1,10 @@
--- name: CreateVideo :exec
+-- name: CreateVideo :one
 INSERT INTO videos (
   publisherid, topic, description, createdAt
 ) VALUES (
   $1, $2, $3, NOW()
-);
--- RETURNING *;
+)
+RETURNING *;
 
 -- name: GetVideoByID :one
 SELECT * FROM videos WHERE id = $1 LIMIT 1;

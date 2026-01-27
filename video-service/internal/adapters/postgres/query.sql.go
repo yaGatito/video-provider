@@ -12,12 +12,13 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createVideo = `-- name: CreateVideo :exec
+const createVideo = `-- name: CreateVideo :one
 INSERT INTO videos (
   publisherid, topic, description, createdAt
 ) VALUES (
   $1, $2, $3, NOW()
 )
+RETURNING id, publisherid, topic, description, createdat, status
 `
 
 type CreateVideoParams struct {
@@ -26,17 +27,24 @@ type CreateVideoParams struct {
 	Description pgtype.Text
 }
 
-func (q *Queries) CreateVideo(ctx context.Context, arg CreateVideoParams) error {
-	_, err := q.db.Exec(ctx, createVideo, arg.Publisherid, arg.Topic, arg.Description)
-	return err
+func (q *Queries) CreateVideo(ctx context.Context, arg CreateVideoParams) (Video, error) {
+	row := q.db.QueryRow(ctx, createVideo, arg.Publisherid, arg.Topic, arg.Description)
+	var i Video
+	err := row.Scan(
+		&i.ID,
+		&i.Publisherid,
+		&i.Topic,
+		&i.Description,
+		&i.Createdat,
+		&i.Status,
+	)
+	return i, err
 }
 
 const getVideoByID = `-- name: GetVideoByID :one
-
 SELECT id, publisherid, topic, description, createdat, status FROM videos WHERE id = $1 LIMIT 1
 `
 
-// RETURNING *;
 func (q *Queries) GetVideoByID(ctx context.Context, id uuid.UUID) (Video, error) {
 	row := q.db.QueryRow(ctx, getVideoByID, id)
 	var i Video

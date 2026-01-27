@@ -26,12 +26,21 @@ const (
 	URLParamOffset = "offset"
 )
 
+// VideoHandler handles HTTP requests for video operations.
+// It provides endpoints for creating, retrieving, and searching videos.
 type VideoHandler struct {
 	VideoInteractor app.VideoService
 	IDGen           ports.IDGen
 	log             *log.Logger
 }
 
+// NewVideoHandler creates and returns a new VideoHandler instance.
+// Parameters:
+//   - userInteractor: service for video operations
+//   - idGen: ID generator for parsing UUIDs
+//   - log: logger instance for recording events
+//
+// Returns a configured VideoHandler ready to handle HTTP requests.
 func NewVideoHandler(
 	userInteractor app.VideoService,
 	idGen ports.IDGen,
@@ -41,13 +50,13 @@ func NewVideoHandler(
 }
 
 // Create godoc
-// @Summary      Створити нове відео
-// @Description  Створює новий запис відео для вказаного видавця
+// @Summary      Creates new video
+// @Description  Creates a new video record for the specified publisher
 // @Tags         videos
 // @Accept       json
 // @Produce      json
-// @Param        publisherID  path      string                 true  "ID видавця (UUID)"
-// @Param        video        body      createVideoRequestBody true  "Дані відео"
+// @Param        publisherID  path      string                 true  "publisher ID (UUID)"
+// @Param        video        body      createVideoRequestBody true  "Video creation request body"
 // @Success      200          {object}  nil
 // @Failure      400          {object}  string "Invalid input"
 // @Failure      500          {object}  string "Internal error"
@@ -75,27 +84,33 @@ func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Calling the interactor
-	err = h.VideoInteractor.Create(r.Context(), domain.Video{
+	video := domain.Video{
 		PublisherID: domain.UUID(publisherID),
 		Topic:       createVideoRequestData.Topic,
-		Description: &createVideoRequestData.Description,
-	})
+		Description: createVideoRequestData.Description,
+	}
+	video, err = h.VideoInteractor.Create(r.Context(), video)
 
+	err = json.NewEncoder(w).Encode(h.toDtoVideo(video))
 	if err != nil {
-		h.log.Printf("Error creating video: %v", err)
-		h.writeJSON(w, http.StatusInternalServerError, fmt.Errorf("error creating video: %e", err))
+		http.Error(
+			w,
+			fmt.Sprintf("Error encoding video response: %v", err),
+			http.StatusInternalServerError,
+		)
 		return
 	}
+	h.log.Println("Response were written successfully")
 
 	h.writeJSON(w, http.StatusOK, nil)
 }
 
 // GetByID godoc
-// @Summary      Отримати відео за ID
-// @Description  Повертає деталі одного відео за його унікальним ідентифікатором
+// @Summary      Get video by ID
+// @Description  Returns details of a single video by its unique identifier
 // @Tags         videos
 // @Produce      json
-// @Param        videoID  path      string  true  "ID відео (UUID)"
+// @Param        videoID  path      string  true  "video ID (UUID)"
 // @Success      200      {object}  VideoResponseBody
 // @Failure      400      {object}  string
 // @Failure      500      {object}  string
@@ -132,14 +147,14 @@ func (h *VideoHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetByPublisher godoc
-// @Summary      Отримати відео видавця
-// @Description  Повертає список відео конкретного видавця з підтримкою пагінації та пошуку
+// @Summary      Get videos by publisher
+// @Description  Returns a list of videos for a specific publisher with pagination and search support
 // @Tags         videos
 // @Produce      json
-// @Param        publisherID  path      string  true   "ID видавця (UUID)"
-// @Param        query        query     string  false  "Пошуковий запит"
-// @Param        limit        query     int     false  "Ліміт (за замовчуванням 10)"
-// @Param        offset       query     int     false  "Зміщення (за замовчуванням 0)"
+// @Param        publisherID  path      string  true   "publisher ID (UUID)"
+// @Param        query        query     string  false  "Search query"
+// @Param        limit        query     int     false  "Limit (default 10)"
+// @Param        offset       query     int     false  "Offset (default 0)"
 // @Success      200          {array}   VideoResponseBody
 // @Router       /v1/videos/pub/{publisherID} [get]
 func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
@@ -210,13 +225,13 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 }
 
 // SearchGlobal godoc
-// @Summary      Глобальний пошук
-// @Description  Пошук відео по всій базі за ключовим словом
+// @Summary      Global search
+// @Description  Search videos in the entire database by a keyword
 // @Tags         videos
 // @Produce      json
-// @Param        query   query     string  true   "Рядок пошуку"
-// @Param        limit   query     int     false  "Ліміт"
-// @Param        offset  query     int     false  "Зміщення"
+// @Param        query   query     string  true   "Search query"
+// @Param        limit   query     int     false  "Limit (default 10)"
+// @Param        offset  query     int     false  "Offset (default 0)"
 // @Success      200     {array}   VideoResponseBody
 // @Router       /v1/videos/search [get]
 func (h *VideoHandler) SearchGlobal(w http.ResponseWriter, r *http.Request) {
@@ -334,9 +349,9 @@ func (h VideoHandler) extractOptionalStringFromURLVars(
 func (h VideoHandler) toDtoVideo(v domain.Video) VideoResponseBody {
 	return VideoResponseBody{
 		ID:          v.ID.String(),
-		PublisherID: v.ID.String(),
+		PublisherID: v.PublisherID.String(),
 		Topic:       v.Topic,
-		Description: *v.Description,
+		Description: v.Description,
 		CreatedAt:   v.CreatedAt,
 	}
 }
