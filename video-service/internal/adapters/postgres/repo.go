@@ -21,18 +21,17 @@ func NewVideoRepoPostgreSQL(db DBTX) ports.VideoRepository {
 	return &v
 }
 
-func (r *VideoRepoPostgreSQL) CreateVideo(ctx context.Context, video domain.Video) error {
+func (r *VideoRepoPostgreSQL) CreateVideo(ctx context.Context, video domain.Video) (domain.Video, error) {
 	arg := CreateVideoParams{
 		Publisherid: video.PublisherID,
 		Topic:       video.Topic,
-		Description: pgtype.Text{String: *video.Description, Valid: true},
+		Description: pgtype.Text{String: video.Description, Valid: true},
 	}
-	err := r.queries.CreateVideo(ctx, arg)
+	res, err := r.queries.CreateVideo(ctx, arg)
 	if err != nil {
-		return err
+		return domain.Video{}, err
 	}
-
-	return nil
+	return toDomainVideo(res), nil
 }
 
 func (r *VideoRepoPostgreSQL) GetVideoByID(
@@ -113,19 +112,12 @@ func toDomainVideos(videos []Video) []domain.Video {
 }
 
 func toDomainVideo(video Video) domain.Video {
-	var desc *string
-	if video.Description.Valid {
-		desc = &video.Description.String
-	}
-
-	res := domain.Video{
+	return domain.Video{
 		ID:          domain.UUID(video.ID),
 		PublisherID: domain.UUID(video.Publisherid),
 		Topic:       video.Topic,
-		Description: desc,
+		Description: video.Description.String,
 		CreatedAt:   time.UnixMicro(video.Createdat.Microseconds),
 		Status:      domain.Status(video.Status.String),
 	}
-
-	return res
 }

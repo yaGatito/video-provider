@@ -24,7 +24,7 @@ func TestCreateVideo(t *testing.T) {
 	r := mux.NewRouter()
 	httpadapter.SetupRouter(r, h)
 
-	pubID := uuid.New()
+	pubID := uuid.Must(uuid.NewRandom())
 	expTop := "topic"
 	expDec := "description"
 	reqBody := `{
@@ -52,7 +52,7 @@ func TestCreateVideo(t *testing.T) {
 			s.EXPECT().Create(gomock.Any(), gomock.Eq(domain.Video{
 				PublisherID: pubID,
 				Topic:       expTop,
-				Description: &expDec,
+				Description: expDec,
 			})).MaxTimes(1)
 		}
 
@@ -92,9 +92,9 @@ func TestGetVideoById(t *testing.T) {
 	r := mux.NewRouter()
 	httpadapter.SetupRouter(r, h)
 
-	vidID := uuid.New()
+	vidID := uuid.Must(uuid.NewRandom())
 
-	pubID := uuid.New()
+	pubID := uuid.Must(uuid.NewRandom())
 	expTop := "topic"
 	expDec := "description"
 
@@ -115,7 +115,7 @@ func TestGetVideoById(t *testing.T) {
 			s.EXPECT().GetByID(gomock.Any(), gomock.Eq(uuid.MustParse(c.vidID))).Return(domain.Video{
 				PublisherID: pubID,
 				Topic:       expTop,
-				Description: &expDec,
+				Description: expDec,
 			}, nil).MaxTimes(1)
 		}
 
@@ -147,7 +147,7 @@ func TestSearchPublisherVideos(t *testing.T) {
 	r := mux.NewRouter()
 	httpadapter.SetupRouter(r, h)
 
-	pubID := uuid.New()
+	pubID := uuid.Must(uuid.NewRandom())
 	expTop := "topic"
 	expDec := "description"
 
@@ -225,7 +225,7 @@ func TestSearchPublisherVideos(t *testing.T) {
 					[]domain.Video{{
 						PublisherID: pubID,
 						Topic:       expTop,
-						Description: &expDec,
+						Description: expDec,
 					}}, nil,
 				).MaxTimes(c.expCallByPub)
 
@@ -239,7 +239,7 @@ func TestSearchPublisherVideos(t *testing.T) {
 					[]domain.Video{{
 						PublisherID: pubID,
 						Topic:       expTop,
-						Description: &expDec,
+						Description: expDec,
 					}}, nil,
 				).MaxTimes(c.expCallSearchPub)
 			}

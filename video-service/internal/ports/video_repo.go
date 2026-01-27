@@ -6,7 +6,7 @@ import (
 )
 
 type VideoRepository interface {
-	CreateVideo(ctx context.Context, video domain.Video) error
+	CreateVideo(ctx context.Context, video domain.Video) (domain.Video, error)
 	GetVideoByID(ctx context.Context, id domain.UUID) (domain.Video, error)
 	GetPublisherVideos(
 		ctx context.Context,

@@ -21,7 +21,7 @@ func TestVideoValidate(t *testing.T) {
 		{"ok", false, domain.Video{
 			PublisherID: publisherID,
 			Topic:       "topic",
-			Description: &desc},
+			Description: desc},
 		},
 		{"ok - no desc", false, domain.Video{
 			PublisherID: publisherID,
@@ -30,47 +30,47 @@ func TestVideoValidate(t *testing.T) {
 		{"topic and desc with symbols", false, domain.Video{
 			PublisherID: publisherID,
 			Topic:       "top  1111i  c!?1  11",
-			Description: &specSymbolsDesc},
+			Description: specSymbolsDesc},
 		},
 		{"2 symbol topic", false, domain.Video{
 			PublisherID: publisherID,
 			Topic:       "aa",
-			Description: &desc},
+			Description: desc},
 		},
 		{"2 symbol and 1+ spec symbols topic", false, domain.Video{
 			PublisherID: publisherID,
 			Topic:       "aa!",
-			Description: &desc},
+			Description: desc},
 		},
 		{"words", false, domain.Video{
 			PublisherID: publisherID,
 			Topic:       "    Lorem ipsum dolor; lorem    ipsum dolor !!! LOREM ISPUM DOLOR.   ",
-			Description: &desc},
+			Description: desc},
 		},
-		{"2 spec symbol topic", true, domain.Video{ // TODO: fix
+		{"2 spec symbol topic", true, domain.Video{
 			PublisherID: publisherID,
 			Topic:       "!!",
-			Description: &desc},
+			Description: desc},
 		},
 		{"1 spec symbol topic", true, domain.Video{
 			PublisherID: publisherID,
 			Topic:       "!",
-			Description: &desc},
+			Description: desc},
 		},
 		{"1 symbol topic", true, domain.Video{
 			PublisherID: publisherID,
 			Topic:       "a",
-			Description: &desc},
+			Description: desc},
 		},
 		{"non-text topic", true, domain.Video{
 			PublisherID: publisherID,
 			Topic:       "top1111ic@$##$^$",
-			Description: &desc},
+			Description: desc},
 		},
 		{"non-text description", true, domain.Video{
 			PublisherID: publisherID,
 			Topic:       "topic",
-			Description: &wrongSpecSymbolsDesc},
+			Description: wrongSpecSymbolsDesc},
 		},
 		{"no topic", true, domain.Video{
 			PublisherID: publisherID},

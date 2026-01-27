@@ -16,7 +16,7 @@ func New() UUIDGen {
 }
 
 func (g UUIDGen) NewID() uuid.UUID {
-	return uuid.New()
+	return uuid.Must(uuid.NewRandom())
 }
 
 func (g UUIDGen) Parse(s string) (uuid.UUID, error) {

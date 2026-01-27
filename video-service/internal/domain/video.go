@@ -19,7 +19,7 @@ type Video struct {
 	ID          UUID
 	PublisherID UUID
 	Topic       string
-	Description *string
+	Description string
 	CreatedAt   time.Time
 	Status      Status
 }

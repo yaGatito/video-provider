@@ -11,10 +11,16 @@ import (
 	"video-service/internal/app"
 	"video-service/internal/domain"
 
-	"github.com/google/uuid"
+	_ "video-service/docs"
+
 	"github.com/gorilla/mux"
 )
 
+// @title           Video Service API
+// @version         1.0
+// @description     Сервіс для керування відео-контентом.
+// @host            localhost:8081
+// @BasePath        /
 func main() {
 	if err := run(); err != nil {
 		log.Fatal(err)
@@ -22,6 +28,7 @@ func main() {
 }
 
 func run() error {
+
 	// ctx := context.Background()
 	// conn, err := pgx.Connect(ctx, "user=pqgotest dbname=pqgotest sslmode=verify-full")
 	// if err != nil {
@@ -35,7 +42,7 @@ func run() error {
 	mwLog := MiddlewareLogger{
 		log: log.New(os.Stdout, "[VSRVC] ", log.Ldate|log.Ltime|log.Lmicroseconds|log.LUTC),
 	}
-	store := make(map[uuid.UUID]domain.Video)
+	store := make(map[domain.UUID]domain.Video)
 
 	videoRepository := testdb.NewVideoRepoTestDB(store, mwLog.Log())
 	videoService := app.NewVideoInteractor(videoRepository)

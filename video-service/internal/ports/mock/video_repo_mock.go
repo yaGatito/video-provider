@@ -37,11 +37,12 @@ func (m *MockVideoRepository) EXPECT() *MockVideoRepositoryMockRecorder {
 }
 
 // CreateVideo mocks base method.
-func (m *MockVideoRepository) CreateVideo(ctx context.Context, video domain.Video) error {
+func (m *MockVideoRepository) CreateVideo(ctx context.Context, video domain.Video) (domain.Video, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CreateVideo", ctx, video)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret0, _ := ret[0].(domain.Video)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // CreateVideo indicates an expected call of CreateVideo.

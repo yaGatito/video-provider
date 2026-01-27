@@ -4,6 +4,7 @@ import (
 	"net/http"
 
 	"github.com/gorilla/mux"
+	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 const (
@@ -24,4 +25,6 @@ func SetupRouter(r *mux.Router, h VideoHandler) {
 
 	r.HandleFunc(RouteVideoSearch, h.SearchGlobal).
 		Methods(http.MethodGet)
+
+	r.PathPrefix("/swagger/").HandlerFunc(httpSwagger.WrapHandler)
 }

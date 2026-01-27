@@ -8,7 +8,7 @@ import (
 )
 
 type VideoService interface {
-	Create(ctx context.Context, video domain.Video) error
+	Create(ctx context.Context, video domain.Video) (domain.Video, error)
 	GetByID(ctx context.Context, videoID domain.UUID) (domain.Video, error)
 	GetByPublisher(
 		ctx context.Context,
@@ -40,9 +40,9 @@ func NewVideoInteractor(repo ports.VideoRepository) VideoService {
 }
 
 func (vs *VideoInteractor) Create(
-	ctx context.Context, video domain.Video) error {
+	ctx context.Context, video domain.Video) (domain.Video, error) {
 	if err := video.Validate(); err != nil {
-		return err
+		return domain.Video{}, err
 	}
 	return vs.repo.CreateVideo(ctx, video)
 }

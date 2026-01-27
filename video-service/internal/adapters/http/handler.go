@@ -14,7 +14,6 @@ import (
 	"video-service/internal/policy"
 	"video-service/internal/ports"
 
-	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
@@ -27,12 +26,21 @@ const (
 	URLParamOffset = "offset"
 )
 
+// VideoHandler handles HTTP requests for video operations.
+// It provides endpoints for creating, retrieving, and searching videos.
 type VideoHandler struct {
 	VideoInteractor app.VideoService
 	IDGen           ports.IDGen
 	log             *log.Logger
 }
 
+// NewVideoHandler creates and returns a new VideoHandler instance.
+// Parameters:
+//   - userInteractor: service for video operations
+//   - idGen: ID generator for parsing UUIDs
+//   - log: logger instance for recording events
+//
+// Returns a configured VideoHandler ready to handle HTTP requests.
 func NewVideoHandler(
 	userInteractor app.VideoService,
 	idGen ports.IDGen,
@@ -41,9 +49,21 @@ func NewVideoHandler(
 	return VideoHandler{VideoInteractor: userInteractor, IDGen: idGen, log: log}
 }
 
+// Create godoc
+// @Summary      Creates new video
+// @Description  Creates a new video record for the specified publisher
+// @Tags         videos
+// @Accept       json
+// @Produce      json
+// @Param        publisherID  path      string                 true  "publisher ID (UUID)"
+// @Param        video        body      createVideoRequestBody true  "Video creation request body"
+// @Success      200          {object}  nil
+// @Failure      400          {object}  string "Invalid input"
+// @Failure      500          {object}  string "Internal error"
+// @Router       /v1/videos/pub/{publisherID} [post]
 func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
 	// Required path variable
-	publisherID, err := h.extractUUIDFromPathVar(r, PathVarPublisherID)
+	publisherID, err := h.extractValidUUIDFromPathVar(r, PathVarPublisherID)
 	if err != nil {
 		h.writeJSON(w, http.StatusBadRequest, fmt.Errorf("invalid pub id: %e", err))
 		return
@@ -64,24 +84,40 @@ func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Calling the interactor
-	err = h.VideoInteractor.Create(r.Context(), domain.Video{
+	video := domain.Video{
 		PublisherID: domain.UUID(publisherID),
 		Topic:       createVideoRequestData.Topic,
-		Description: &createVideoRequestData.Description,
-	})
+		Description: createVideoRequestData.Description,
+	}
+	video, err = h.VideoInteractor.Create(r.Context(), video)
 
+	err = json.NewEncoder(w).Encode(h.toDtoVideo(video))
 	if err != nil {
-		h.log.Printf("Error creating video: %v", err)
-		h.writeJSON(w, http.StatusInternalServerError, fmt.Errorf("error creating video: %e", err))
+		http.Error(
+			w,
+			fmt.Sprintf("Error encoding video response: %v", err),
+			http.StatusInternalServerError,
+		)
 		return
 	}
+	h.log.Println("Response were written successfully")
 
 	h.writeJSON(w, http.StatusOK, nil)
 }
 
+// GetByID godoc
+// @Summary      Get video by ID
+// @Description  Returns details of a single video by its unique identifier
+// @Tags         videos
+// @Produce      json
+// @Param        videoID  path      string  true  "video ID (UUID)"
+// @Success      200      {object}  VideoResponseBody
+// @Failure      400      {object}  string
+// @Failure      500      {object}  string
+// @Router       /v1/videos/{videoID} [get]
 func (h *VideoHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	// Required path variable
-	videoID, err := h.extractUUIDFromPathVar(r, PathVarVideoID)
+	videoID, err := h.extractValidUUIDFromPathVar(r, PathVarVideoID)
 	if err != nil {
 		h.writeJSON(w, http.StatusBadRequest, fmt.Errorf("parse vid id param: %e", err))
 		return
@@ -110,9 +146,20 @@ func (h *VideoHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	h.log.Println("Response were written successfully")
 }
 
+// GetByPublisher godoc
+// @Summary      Get videos by publisher
+// @Description  Returns a list of videos for a specific publisher with pagination and search support
+// @Tags         videos
+// @Produce      json
+// @Param        publisherID  path      string  true   "publisher ID (UUID)"
+// @Param        query        query     string  false  "Search query"
+// @Param        limit        query     int     false  "Limit (default 10)"
+// @Param        offset       query     int     false  "Offset (default 0)"
+// @Success      200          {array}   VideoResponseBody
+// @Router       /v1/videos/pub/{publisherID} [get]
 func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 	// Required path variable
-	publisherID, err := h.extractUUIDFromPathVar(r, PathVarPublisherID)
+	publisherID, err := h.extractValidUUIDFromPathVar(r, PathVarPublisherID)
 	if err != nil {
 		h.writeJSON(w, http.StatusBadRequest, fmt.Errorf("parse pub id param: %e", err))
 		return
@@ -124,9 +171,9 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 		h.writeJSON(w, http.StatusBadRequest, fmt.Errorf("parse query params: %e", err))
 		return
 	}
-	offset := h.extractOptionalIntFromURLVars(values, URLParamOffset)
-	limit := h.extractOptionalIntFromURLVars(values, URLParamLimit)
-	offset, limit = app.ValidatePagination(offset, limit)
+	offset, limit := app.ValidatePagination(
+		h.extractOptionalIntFromURLVars(values, URLParamOffset),
+		h.extractOptionalIntFromURLVars(values, URLParamLimit))
 
 	search, err := h.extractOptionalStringFromURLVars(
 		values,
@@ -177,6 +224,16 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 	h.log.Println("Response were written successfully")
 }
 
+// SearchGlobal godoc
+// @Summary      Global search
+// @Description  Search videos in the entire database by a keyword
+// @Tags         videos
+// @Produce      json
+// @Param        query   query     string  true   "Search query"
+// @Param        limit   query     int     false  "Limit (default 10)"
+// @Param        offset  query     int     false  "Offset (default 0)"
+// @Success      200     {array}   VideoResponseBody
+// @Router       /v1/videos/search [get]
 func (h *VideoHandler) SearchGlobal(w http.ResponseWriter, r *http.Request) {
 	// Required url parameters
 	values, err := url.ParseQuery(r.URL.RawQuery)
@@ -196,9 +253,9 @@ func (h *VideoHandler) SearchGlobal(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Optional url parameters
-	offset := h.extractOptionalIntFromURLVars(values, URLParamOffset)
-	limit := h.extractOptionalIntFromURLVars(values, URLParamLimit)
-	offset, limit = app.ValidatePagination(offset, limit)
+	offset, limit := app.ValidatePagination(
+		h.extractOptionalIntFromURLVars(values, URLParamOffset),
+		h.extractOptionalIntFromURLVars(values, URLParamLimit))
 
 	// Calling the interactor
 	videos, err := h.VideoInteractor.SearchGlobal(r.Context(), search, offset, limit)
@@ -222,25 +279,25 @@ func (h *VideoHandler) writeJSON(w http.ResponseWriter, status int, v any) {
 	_ = json.NewEncoder(w).Encode(v)
 }
 
-func (h VideoHandler) extractUUIDFromPathVar(r *http.Request, varName string) (uuid.UUID, error) {
+func (h VideoHandler) extractValidUUIDFromPathVar(r *http.Request, varName string) (domain.UUID, error) {
 	id, ok := mux.Vars(r)[varName]
 	if !ok {
-		return uuid.UUID{}, fmt.Errorf("no %s provided ", varName)
+		return domain.UUID{}, fmt.Errorf("no %s provided ", varName)
 	}
 	idSize := len([]byte(id))
 	if idSize == 0 {
-		return uuid.UUID{}, ValidationError{
+		return domain.UUID{}, ValidationError{
 			ErrorCode: IDEmpty, ErrorMessage: varName + " is empty",
 		}
 	}
 	if idSize > policy.MaxIDBytesSize {
-		return uuid.UUID{}, ValidationError{
+		return domain.UUID{}, ValidationError{
 			ErrorCode: IDSizeExceeded, ErrorMessage: varName + " len is more then expected",
 		}
 	}
-	res, err := uuid.Parse(string(id))
+	res, err := h.IDGen.Parse(string(id))
 	if err != nil {
-		return uuid.UUID{}, ValidationError{
+		return domain.UUID{}, ValidationError{
 			ErrorCode: IDSizeExceeded, ErrorMessage: varName + " len is more then expected",
 		}
 	}
@@ -292,9 +349,9 @@ func (h VideoHandler) extractOptionalStringFromURLVars(
 func (h VideoHandler) toDtoVideo(v domain.Video) VideoResponseBody {
 	return VideoResponseBody{
 		ID:          v.ID.String(),
-		PublisherID: v.ID.String(),
+		PublisherID: v.PublisherID.String(),
 		Topic:       v.Topic,
-		Description: *v.Description,
+		Description: v.Description,
 		CreatedAt:   v.CreatedAt,
 	}
 }

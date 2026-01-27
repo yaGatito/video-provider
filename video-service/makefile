@@ -1,4 +1,4 @@
-.PHONY: tests test mocks run sqlc lint lint-fix tools all  
+.PHONY: tests test mocks run sqlc lint lint-fix tools all swag  
 
 # Optional arguments
 PKG ?= app
@@ -8,6 +8,7 @@ TEST ?= .
 MOCKGEN := mockgen
 SQLC := sqlc
 GOLANGCI_LINT := golangci-lint
+SWAG := swag.exe
 
 # Paths
 MOCKS_DIR := internal/mocks
@@ -21,6 +22,7 @@ tools:
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.2
 	go install github.com/golang/mock/mockgen@v1.6.0
 	go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.26.0
+	go install github.com/swaggo/swag/cmd/swag@latest
 
 lint:
 	$(GOLANGCI_LINT) fmt
@@ -31,12 +33,15 @@ fix:
 fmt:
 	$(GOLANGCI_LINT) fmt
 
+swag: 
+	${SWAG} init -g cmd/app/main.go
+
 ## Generate sqlc code
 sqlc:
 	$(SQLC) generate
 
 ## Run service (sqlc -> go run)
-run: sqlc
+run: sqlc swag
 	go run $(MAIN)
 
 ## Default

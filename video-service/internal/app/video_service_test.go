@@ -2,6 +2,7 @@ package app_test
 
 import (
 	"context"
+	"fmt"
 	"testing"
 	"time"
 	"video-service/internal/app"
@@ -22,7 +23,7 @@ var testPublisherID, _ = uuid.Parse("d9fa522f-0006-464f-8d68-356ba1d6ad7d")
 var testVideo = domain.Video{
 	PublisherID: testPublisherID,
 	Topic:       testTopic,
-	Description: &testDesc,
+	Description: testDesc,
 }
 var testVideoID, _ = uuid.Parse("d9fa522f-0016-464f-8d68-356ba1d6ad7d")
 
@@ -36,7 +37,8 @@ func TestCreateVideo(t *testing.T) {
 		CreateVideo(gomock.Any(), gomock.Eq(testVideo)).
 		MaxTimes(1)
 
-	require.NoError(t, videoService.Create(context.Background(), testVideo))
+	_, err := videoService.Create(context.Background(), testVideo)
+	require.NoError(t, err)
 }
 
 func TestCreateInvalidVideo(t *testing.T) {
@@ -50,7 +52,9 @@ func TestCreateInvalidVideo(t *testing.T) {
 		CreateVideo(gomock.Any(), gomock.Any()).
 		MaxTimes(0)
 
-	require.Error(t, videoService.Create(context.Background(), invalidVideo))
+	res, err := videoService.Create(context.Background(), invalidVideo)
+	require.Error(t, err, "expected error for invalid video"+err.Error())
+	require.NotNil(t, res, fmt.Sprintf("expected empty video for invalid video: %v", res))
 }
 
 func TestGetdVideoByID(t *testing.T) {
@@ -62,7 +66,7 @@ func TestGetdVideoByID(t *testing.T) {
 		ID:          testVideoID,
 		PublisherID: testPublisherID,
 		Topic:       testTopic,
-		Description: &testDesc,
+		Description: testDesc,
 		CreatedAt:   time.Now(),
 	}
 
@@ -117,7 +121,7 @@ func TestGetVideoByPublisher(t *testing.T) {
 		ID:          testVideoID,
 		PublisherID: testPublisherID,
 		Topic:       testTopic,
-		Description: &testDesc,
+		Description: testDesc,
 		CreatedAt:   time.Now(),
 	}}
 
@@ -185,7 +189,7 @@ func TestSearchVideoByPublisher(t *testing.T) {
 		ID:          testVideoID,
 		PublisherID: testPublisherID,
 		Topic:       testTopic,
-		Description: &testDesc,
+		Description: testDesc,
 		CreatedAt:   time.Now(),
 	}}
 
@@ -261,7 +265,7 @@ func TestValidSearchGlobal(t *testing.T) {
 		ID:          testVideoID,
 		PublisherID: testPublisherID,
 		Topic:       testTopic,
-		Description: &testDesc,
+		Description: testDesc,
 		CreatedAt:   time.Now(),
 	}}
 

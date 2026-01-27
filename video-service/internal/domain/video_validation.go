@@ -17,8 +17,8 @@ func (v Video) Validate() error {
 	if !policy.GetTextingFormateRE128().MatchString(v.Topic) {
 		return errors.New("invalid topic text format")
 	}
-	if v.Description != nil && *v.Description != "" &&
-		!policy.GetLargeTextFormatRE512().MatchString(*v.Description) {
+	if v.Description != "" &&
+		!policy.GetLargeTextFormatRE512().MatchString(v.Description) {
 		return errors.New("invalid description text format")
 	}
 	return nil
