@@ -1,0 +1,3 @@
+storage:
+  migrations_dir: "internal/adapters/postgres/sql/migrations"
+  

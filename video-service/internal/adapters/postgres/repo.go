@@ -3,21 +3,23 @@ package postgres
 import (
 	"context"
 	"time"
+	postgres "video-service/internal/adapters/postgres/db"
 	"video-service/internal/domain"
 	"video-service/internal/ports"
 
 	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/jackc/pgx/v5/pgxpool"
 )
 
 type VideoRepoPostgreSQL struct {
-	queries *Queries
+	queries *postgres.Queries
 }
 
 var _ ports.VideoRepository = (*VideoRepoPostgreSQL)(nil)
 
-func NewVideoRepoPostgreSQL(db DBTX) ports.VideoRepository {
+func NewVideoRepoPostgreSQL(db *pgxpool.Pool) ports.VideoRepository {
 	v := VideoRepoPostgreSQL{}
-	v.queries = New(db)
+	v.queries = postgres.New(db)
 	return &v
 }
 
@@ -25,7 +27,7 @@ func (r *VideoRepoPostgreSQL) CreateVideo(
 	ctx context.Context,
 	video domain.Video,
 ) (domain.Video, error) {
-	arg := CreateVideoParams{
+	arg := postgres.CreateVideoParams{
 		Publisherid: video.PublisherID,
 		Topic:       video.Topic,
 		Description: pgtype.Text{String: video.Description, Valid: true},
@@ -55,7 +57,7 @@ func (r *VideoRepoPostgreSQL) GetPublisherVideos(
 	args ports.PageRequest,
 ) ([]domain.Video, error) {
 
-	params := GetVideosByPublisherParams{
+	params := postgres.GetVideosByPublisherParams{
 		Publisherid: publisherID,
 		Offset:      args.Offset,
 		Limit:       args.Limit,
@@ -74,7 +76,7 @@ func (r *VideoRepoPostgreSQL) SearchPublisher(
 	search ports.VideoSearch,
 ) ([]domain.Video, error) {
 
-	params := SearchPublisherParams{
+	params := postgres.SearchPublisherParams{
 		Publisherid: publisherID,
 		Concat:      search.Query,
 		Offset:      search.Offset,
@@ -92,7 +94,7 @@ func (r *VideoRepoPostgreSQL) SearchGlobal(
 	ctx context.Context,
 	search ports.VideoSearch,
 ) ([]domain.Video, error) {
-	params := SearchGlobalParams{
+	params := postgres.SearchGlobalParams{
 		Concat: search.Query,
 		Offset: search.Offset,
 		Limit:  search.Limit,
@@ -105,7 +107,7 @@ func (r *VideoRepoPostgreSQL) SearchGlobal(
 	return toDomainVideos(videos), nil
 }
 
-func toDomainVideos(videos []Video) []domain.Video {
+func toDomainVideos(videos []postgres.Video) []domain.Video {
 	res := make([]domain.Video, len(videos))
 	for _, v := range videos {
 		res = append(res, toDomainVideo(v))
@@ -114,7 +116,7 @@ func toDomainVideos(videos []Video) []domain.Video {
 
 }
 
-func toDomainVideo(video Video) domain.Video {
+func toDomainVideo(video postgres.Video) domain.Video {
 	return domain.Video{
 		ID:          domain.UUID(video.ID),
 		PublisherID: domain.UUID(video.Publisherid),
