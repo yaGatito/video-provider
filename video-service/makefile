@@ -5,7 +5,12 @@ endif
 
 MIGRATIONS_DIR := $(shell yq e '.storage.migrations_dir' config/app.yml)
 
-.PHONY: tests test mocks run sqlc lint lint-fix tools all swag db-up
+.PHONY: tools required-win-tools extra-win-tools
+		tests test mocks 
+		run lint lint-fix all 
+		swag sqlc 
+		db-up db-create db-drop db-init db-con
+		b-lin-arm64 b-lin-amd64 b-win-amd64 
 
 # Optional arguments
 PKG ?= app
@@ -28,6 +33,7 @@ define create_db_migration
 	goose -dir "$(MIGRATIONS_DIR)" -s create $(1) sql
 endef
 
+
 #########################################
 ############### Tools ###################
 #########################################
@@ -38,13 +44,17 @@ tools:
 	go install github.com/swaggo/swag/cmd/swag@latest
 	go install github.com/pressly/goose/v3/cmd/goose@latest
 
-win-tools:
-	scoop install eza
-	scoop install fd
-	scoop install golangci-lint
-	scoop install grep	
-	scoop install ripgrep
+required-win-tools:
+	scoop install pwsh
 	scoop install yq
+
+extra-win-tools:
+	scoop install fd
+	scoop install ripgrep
+# 	scoop install golangci-lint
+# 	scoop install llvm
+# 	scoop install eza
+# 	scoop install grep	
 
 lint:
 	$(GOLANGCI_LINT) fmt
@@ -62,6 +72,17 @@ swag:
 
 sqlc:
 	$(SQLC) generate
+
+#########################################
+######### Build artifacts ###############
+#########################################
+b-lin-arm64:
+	pwsh -Command '$$env:CGO_ENABLED="0"; $$env:GOOS="linux"; $$env:GOARCH="arm64"; go build -ldflags="-s -w" -o ./out/video-service-linux-arm64 ./cmd/app/main.go'
+b-lin-amd64:
+	pwsh -Command '$$env:CGO_ENABLED="0"; $$env:GOOS="linux"; $$env:GOARCH="amd64"; go build -ldflags="-s -w" -o ./out/video-service-linux-amd64 ./cmd/app/main.go'
+# debug build
+b-win-amd64:
+	pwsh -Command '$$env:GOOS="windows"; $$env:GOARCH="amd64"; go build -ldflags="-s -w" -o ./out/video-service-windows-amd64.exe ./cmd/app/main.go'
 
 #########################################
 ######### Docker commands ###############
