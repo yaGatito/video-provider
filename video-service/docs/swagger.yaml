@@ -1,0 +1,152 @@
+basePath: /
+definitions:
+  httpadapter.VideoResponseBody:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      publisherID:
+        type: string
+      topic:
+        type: string
+    type: object
+  httpadapter.createVideoRequestBody:
+    properties:
+      description:
+        type: string
+      topic:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Service for managing video content.
+  title: Video Service API
+  version: "1.0"
+paths:
+  /v1/videos/{videoID}:
+    get:
+      description: Returns details of a single video by its unique identifier
+      parameters:
+      - description: video ID (UUID)
+        in: path
+        name: videoID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/httpadapter.VideoResponseBody'
+        "400":
+          description: Bad Request
+          schema:
+            type: string
+        "500":
+          description: Internal Server Error
+          schema:
+            type: string
+      summary: Get video by ID
+      tags:
+      - videos
+  /v1/videos/pub/{publisherID}:
+    get:
+      description: Returns a list of videos for a specific publisher with pagination
+        and search support
+      parameters:
+      - description: publisher ID (UUID)
+        in: path
+        name: publisherID
+        required: true
+        type: string
+      - description: Search query
+        in: query
+        name: query
+        type: string
+      - description: Limit (default 10)
+        in: query
+        name: limit
+        type: integer
+      - description: Offset (default 0)
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/httpadapter.VideoResponseBody'
+            type: array
+      summary: Get videos by publisher
+      tags:
+      - videos
+    post:
+      consumes:
+      - application/json
+      description: Creates a new video record for the specified publisher
+      parameters:
+      - description: publisher ID (UUID)
+        in: path
+        name: publisherID
+        required: true
+        type: string
+      - description: Video creation request body
+        in: body
+        name: video
+        required: true
+        schema:
+          $ref: '#/definitions/httpadapter.createVideoRequestBody'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+        "400":
+          description: Invalid input
+          schema:
+            type: string
+        "500":
+          description: Internal error
+          schema:
+            type: string
+      summary: Creates new video
+      tags:
+      - videos
+  /v1/videos/search:
+    get:
+      description: Search videos in the entire database by a keyword
+      parameters:
+      - description: Search query
+        in: query
+        name: query
+        required: true
+        type: string
+      - description: Limit (default 10)
+        in: query
+        name: limit
+        type: integer
+      - description: Offset (default 0)
+        in: query
+        name: offset
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/httpadapter.VideoResponseBody'
+            type: array
+      summary: Global search
+      tags:
+      - videos
+swagger: "2.0"
