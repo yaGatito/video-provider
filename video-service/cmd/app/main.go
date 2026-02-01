@@ -1,25 +1,29 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
 	"time"
 	httpadapter "video-service/internal/adapters/http"
 	"video-service/internal/adapters/idgen"
-	"video-service/internal/adapters/testdb"
+	"video-service/internal/adapters/postgres"
 	"video-service/internal/app"
-	"video-service/internal/domain"
+
+	"github.com/joho/godotenv"
 
 	_ "video-service/docs"
 
 	"github.com/gorilla/mux"
+	"github.com/jackc/pgx/v5/pgxpool"
+	_ "github.com/jackc/pgx/v5/pgxpool"
 )
 
 // @title           Video Service API
 // @version         1.0
-// @description     Сервіс для керування відео-контентом.
-// @host            localhost:8081
+// @description     Service for managing video content.
+// @host            localhost:8080
 // @BasePath        /
 func main() {
 	if err := run(); err != nil {
@@ -28,23 +32,35 @@ func main() {
 }
 
 func run() error {
+	ctx := context.Background()
+	err := godotenv.Load()
+	if err != nil {
+		log.Fatal("Error loading .env file")
+	}
+	connString := os.Getenv("DATABASE_URL")
+	port := os.Getenv("API_PORT")
 
-	// ctx := context.Background()
-	// conn, err := pgx.Connect(ctx, "user=pqgotest dbname=pqgotest sslmode=verify-full")
-	// if err != nil {
-	// 	return err
-	// }
-	// defer conn.Close(ctx)
+	config, err := pgxpool.ParseConfig(connString)
+	config.MaxConns = 30
+	if err != nil {
+		log.Fatal(err)
+	}
+	config.HealthCheckPeriod = time.Minute * 90
+	pool, err := pgxpool.NewWithConfig(ctx, config)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer pool.Close()
 
-	// videoRepository := postgres.NewVideoRepoPostgreSQL(conn)
+	videoRepository := postgres.NewVideoRepoPostgreSQL(pool)
 
 	idGen := idgen.New()
 	mwLog := MiddlewareLogger{
-		log: log.New(os.Stdout, "[VSRVC] ", log.Ldate|log.Ltime|log.Lmicroseconds|log.LUTC),
+		log: log.New(os.Stdout, "[VIDSVC] ", log.Ldate|log.Ltime|log.Lmicroseconds|log.LUTC),
 	}
-	store := make(map[domain.UUID]domain.Video)
 
-	videoRepository := testdb.NewVideoRepoTestDB(store, mwLog.Log())
+	// store := make(map[domain.UUID]domain.Video)
+	// videoRepository := testdb.NewVideoRepoTestDB(store, mwLog.Log())
 	videoService := app.NewVideoInteractor(videoRepository)
 	videoHandler := httpadapter.NewVideoHandler(videoService, idGen, mwLog.log)
 
@@ -53,7 +69,7 @@ func run() error {
 	httpadapter.SetupRouter(router, videoHandler)
 
 	mwLog.log.Printf("Server successfully started")
-	err := http.ListenAndServe(":8081", router)
+	err = http.ListenAndServe(":"+port, router)
 	if err != nil {
 		return err
 	}

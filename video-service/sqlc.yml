@@ -1,13 +1,14 @@
 version: "2"
 sql:
   - engine: "postgresql"
-    queries: "query.sql"
-    schema: "schema.sql"
+    queries: "internal/adapters/postgres/sql/query.sql"
+    schema: "internal/adapters/postgres/sql/migrations"
     gen:
       go:
+        out: "internal/adapters/postgres/db"
         package: "postgres"
-        out: "internal/adapters/postgres"
         sql_package: "pgx/v5"
+        # TODO: remove line below after dev-phase
         emit_interface: true
         emit_prepared_queries: true
         emit_json_tags: false
