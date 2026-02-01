@@ -44,11 +44,11 @@ tools:
 	go install github.com/swaggo/swag/cmd/swag@latest
 	go install github.com/pressly/goose/v3/cmd/goose@latest
 
-required-win-tools:
+req-win-tools:
 	scoop install pwsh
 	scoop install yq
 
-extra-win-tools:
+opt-win-tools:
 	scoop install fd
 	scoop install ripgrep
 # 	scoop install golangci-lint
