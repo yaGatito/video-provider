@@ -17,7 +17,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
-	_ "github.com/jackc/pgx/v5/pgxpool"
 )
 
 // @title           Video Service API
@@ -31,12 +30,15 @@ func main() {
 	}
 }
 
+// TODO: Fix the problem 1: application should beign configured from one place. Or at least it should be separated.
+// TODO: Decide who should be responsible for migration. (the one who run service or the service itself)
+
 func run() error {
 	ctx := context.Background()
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	_ = godotenv.Load()
+	// if err != nil {
+	// 	log.Fatal("Error loading .env file")
+	// }
 	connString := os.Getenv("DATABASE_URL")
 	port := os.Getenv("API_PORT")
 

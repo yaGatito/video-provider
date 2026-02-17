@@ -7,7 +7,7 @@ MIGRATIONS_DIR := $(shell yq e '.storage.migrations_dir' config/app.yml)
 
 .PHONY: tools required-win-tools extra-win-tools
 		tests test mocks 
-		run lint lint-fix all 
+		run all 
 		swag sqlc 
 		db-up db-create db-drop db-init db-con
 		b-lin-arm64 b-lin-amd64 b-win-amd64 
@@ -34,10 +34,15 @@ define create_db_migration
 endef
 
 
+######### Service commands ##############
 #########################################
+run: lint sqlc swag
+	go run $(MAIN)
+#########################################
+
 ############### Tools ###################
-#########################################
 tools:
+	irm get.scoop.sh | iex
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.2
 	go install github.com/golang/mock/mockgen@v1.6.0
 	go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.26.0
@@ -51,21 +56,9 @@ req-win-tools:
 opt-win-tools:
 	scoop install fd
 	scoop install ripgrep
-# 	scoop install golangci-lint
 # 	scoop install llvm
 # 	scoop install eza
 # 	scoop install grep	
-
-lint:
-	$(GOLANGCI_LINT) fmt
-	$(GOLANGCI_LINT) run
-
-fix:
-	$(GOLANGCI_LINT) fmt
-	$(GOLANGCI_LINT) run --fix
-
-fmt:
-	$(GOLANGCI_LINT) fmt
 
 swag: 
 	${SWAG} init -g cmd/app/main.go
@@ -73,7 +66,11 @@ swag:
 sqlc:
 	$(SQLC) generate
 
+lint:
+	$(GOLANGCI_LINT) fmt
+	$(GOLANGCI_LINT) run
 #########################################
+
 ######### Build artifacts ###############
 #########################################
 b-lin-arm64:
@@ -83,14 +80,14 @@ b-lin-amd64:
 # debug build
 b-win-amd64:
 	pwsh -Command '$$env:GOOS="windows"; $$env:GOARCH="amd64"; go build -ldflags="-s -w" -o ./out/video-service-windows-amd64.exe ./cmd/app/main.go'
-
 #########################################
+
 ######### Docker commands ###############
 #########################################
 docker-db-up:
 	docker run -d --rm --name video-postgres18 -p 5432:5432 -e POSTGRES_USER=gato -e POSTGRES_PASSWORD=root postgres:18-alpine
-
 #########################################
+
 ######### Database commands #############
 #########################################
 db-up: docker-db-up 
@@ -113,11 +110,10 @@ db-con:
 ### Migration commands
 db-mig-create:
 	$(call create_db_migration,$(MIG_FILE_NAME))
+#########################################
 
-## Run service (sqlc -> go run)
-run: sqlc swag
-	go run $(MAIN)
-
+######### Test commands #################
+#########################################
 ## Default
 all: tests
 
@@ -133,3 +129,4 @@ tests: mocks
 
 test:
 	$(call go_test,$(PKG),$(TEST))
+#########################################
