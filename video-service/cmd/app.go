@@ -3,11 +3,11 @@ package main
 import (
 	"context"
 	"fmt"
-	"io"
 	"log"
 	"net/http"
 	"os"
 	"time"
+	logger "video-provider/pkg/middleware"
 	httpadapter "video-service/internal/adapters/http"
 	"video-service/internal/adapters/idgen"
 	"video-service/internal/adapters/postgres"
@@ -59,40 +59,19 @@ func run() error {
 	videoRepository := postgres.NewVideoRepoPostgreSQL(pool)
 
 	idGen := idgen.New()
-	mwLog := NewMiddlewareLogger(nil, "[VIDSVC]")
+	mwLog := logger.NewMiddlewareLogger(os.Stdout, "[VIDSVC]")
 
 	videoService := app.NewVideoInteractor(videoRepository)
-	videoHandler := httpadapter.NewVideoHandler(videoService, idGen, mwLog.log)
+	videoHandler := httpadapter.NewVideoHandler(videoService, idGen, mwLog.Log)
 
 	router := mux.NewRouter()
-	router.Use(mwLog.loggingMiddleware)
+	router.Use(mwLog.LoggingMiddleware)
 	httpadapter.SetupRouter(router, videoHandler)
 
-	mwLog.log.Printf("Server successfully started")
+	mwLog.Log.Printf("Server successfully started")
 	err = http.ListenAndServe(":"+port, router)
 	if err != nil {
 		return fmt.Errorf("failed to start server: %w", err)
 	}
 	return nil
-}
-
-type MiddlewareLogger struct {
-	log *log.Logger
-}
-
-func NewMiddlewareLogger(out io.Writer, tag string) *MiddlewareLogger {
-	return &MiddlewareLogger{
-		log: log.New(out, tag, log.Ldate|log.Ltime|log.Lmicroseconds|log.LUTC),
-	}
-}
-
-func (l *MiddlewareLogger) Log() *log.Logger {
-	return l.log
-}
-
-func (l *MiddlewareLogger) loggingMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		l.log.Printf("REQUEST: [%s] %s \"%s\"\n", time.Now().String(), r.Method, r.RequestURI)
-		next.ServeHTTP(w, r)
-	})
 }
