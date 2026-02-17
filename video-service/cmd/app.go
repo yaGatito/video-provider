@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"os"
@@ -35,31 +37,29 @@ func main() {
 
 func run() error {
 	ctx := context.Background()
-	_ = godotenv.Load()
-	// if err != nil {
-	// 	log.Fatal("Error loading .env file")
-	// }
+	err := godotenv.Load()
+	if err != nil {
+		return fmt.Errorf("failed to load .env file: %w", err)
+	}
 	connString := os.Getenv("DATABASE_URL")
 	port := os.Getenv("API_PORT")
 
 	config, err := pgxpool.ParseConfig(connString)
-	config.MaxConns = 30
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("failed to parse connection string: %w", err)
 	}
+	config.MaxConns = 30
 	config.HealthCheckPeriod = time.Minute * 90
 	pool, err := pgxpool.NewWithConfig(ctx, config)
 	if err != nil {
-		log.Fatal(err)
+		return fmt.Errorf("failed to create connection pool: %w", err)
 	}
 	defer pool.Close()
 
 	videoRepository := postgres.NewVideoRepoPostgreSQL(pool)
 
 	idGen := idgen.New()
-	mwLog := MiddlewareLogger{
-		log: log.New(os.Stdout, "[VIDSVC] ", log.Ldate|log.Ltime|log.Lmicroseconds|log.LUTC),
-	}
+	mwLog := NewMiddlewareLogger(nil, "[VIDSVC]")
 
 	videoService := app.NewVideoInteractor(videoRepository)
 	videoHandler := httpadapter.NewVideoHandler(videoService, idGen, mwLog.log)
@@ -71,7 +71,7 @@ func run() error {
 	mwLog.log.Printf("Server successfully started")
 	err = http.ListenAndServe(":"+port, router)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to start server: %w", err)
 	}
 	return nil
 }
@@ -80,13 +80,19 @@ type MiddlewareLogger struct {
 	log *log.Logger
 }
 
+func NewMiddlewareLogger(out io.Writer, tag string) *MiddlewareLogger {
+	return &MiddlewareLogger{
+		log: log.New(out, tag, log.Ldate|log.Ltime|log.Lmicroseconds|log.LUTC),
+	}
+}
+
 func (l *MiddlewareLogger) Log() *log.Logger {
 	return l.log
 }
 
 func (l *MiddlewareLogger) loggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		log.Printf("REQUEST: [%s] %s \"%s\"\n", time.Now().String(), r.Method, r.RequestURI)
+		l.log.Printf("REQUEST: [%s] %s \"%s\"\n", time.Now().String(), r.Method, r.RequestURI)
 		next.ServeHTTP(w, r)
 	})
 }
