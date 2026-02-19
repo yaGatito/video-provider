@@ -11,10 +11,10 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 
+	logger "video-provider/internal/pkg/middleware"
 	http2 "video-provider/internal/user-service/adapters/http"
 	"video-provider/internal/user-service/adapters/postgres"
 	usecase "video-provider/internal/user-service/app"
-	logger "video-provider/pkg/middleware"
 )
 
 const configName = "user-service"

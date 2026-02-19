@@ -6,11 +6,11 @@ import (
 	"log"
 	"net/http"
 	"os"
+	logger "video-provider/internal/pkg/middleware"
 	httpadapter "video-provider/internal/video-service/adapters/http"
 	"video-provider/internal/video-service/adapters/idgen"
 	"video-provider/internal/video-service/adapters/postgres"
 	"video-provider/internal/video-service/app"
-	logger "video-provider/pkg/middleware"
 
 	"github.com/joho/godotenv"
 

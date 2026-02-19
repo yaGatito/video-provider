@@ -28,8 +28,8 @@ DB_MAX_CONN 	:= $(call get-cfg, '.db.maxconns')
 MIGRATIONS_DIR 	:= $(call get-cfg, '.db.migrationdir')
 
 DB_CONTAINER_NAME := $(DB_NAME)-$(DB_VENDOR)-$(DB_VERSION)
+MAIN = cmd/$(CONFIG)-service/app.go
 
-MAIN = cmd/app.go
 PKG ?= app
 TEST ?= .
 MIG_FILE_NAME ?= init
@@ -58,12 +58,12 @@ lint:
 
 .PHONY: swag
 swag: 
-	${SWAG} init -g $(MAIN)
+	${SWAG} init -g $(MAIN) -o internal/$(CONFIG)-service/docs
 	@echo "Swagger docs generated"
 
 .PHONY: sqlc
 sqlc:
-	$(SQLC) generate
+	$(SQLC) generate -f "internal/$(CONFIG)-service/adapters/postgres/sqlc.yml
 	@echo "SQLC generated"
 
 

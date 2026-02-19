@@ -37,7 +37,6 @@ const (
 
 // GetURL must be called only after setup OS env variables.
 func (db Db) GetURL() string {
-	// vendor user pwd port db_name db_max_conn
 	url := strings.Replace(db.Url, "$1", db.Vendor, 1)
 	url = strings.Replace(url, "$2", os.Getenv(secretPgUser), 1)
 	url = strings.Replace(url, "$3", os.Getenv(secretPgPassword), 1)
