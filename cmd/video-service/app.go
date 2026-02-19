@@ -7,14 +7,14 @@ import (
 	"net/http"
 	"os"
 	httpadapter "video-provider/internal/video-service/adapters/http"
+	"video-provider/internal/video-service/adapters/idgen"
+	"video-provider/internal/video-service/adapters/postgres"
+	"video-provider/internal/video-service/app"
 	logger "video-provider/pkg/middleware"
-	"video-service/internal/adapters/idgen"
-	"video-service/internal/adapters/postgres"
-	"video-service/internal/app"
 
 	"github.com/joho/godotenv"
 
-	_ "video-service/docs"
+	_ "video-provider/internal/video-service/docs"
 
 	config "video-provider/internal/pkg/config"
 

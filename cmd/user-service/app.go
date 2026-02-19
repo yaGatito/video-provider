@@ -11,9 +11,9 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
 
-	http2 "user-service/internal/adapters/http"
-	"user-service/internal/adapters/postgres"
-	usecase "user-service/internal/app"
+	http2 "video-provider/internal/user-service/adapters/http"
+	"video-provider/internal/user-service/adapters/postgres"
+	usecase "video-provider/internal/user-service/app"
 	logger "video-provider/pkg/middleware"
 )
 
