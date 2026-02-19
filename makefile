@@ -5,7 +5,7 @@ endif
 
 # default config if not passed (example: make run CONFIG=dev)
 CONFIG ?= local
-CONFIG_PATH := config/$(CONFIG).yml
+CONFIG_PATH := config/$(CONFIG)-service.yml
 
 # ifeq (, $(shell which yq))
 # 	$(error "Tool not found: 'yq'.")
@@ -24,7 +24,7 @@ DB_VENDOR    	:= $(call get-cfg, '.db.vendor')
 DB_VERSION   	:= $(call get-cfg, '.db.version')
 DB_HOST      	:= $(call get-cfg, '.db.host')
 DB_PORT      	:= $(call get-cfg, '.db.port')
-DB_URL 		 	:= $(call get-cfg, '.db.url')
+DB_MAX_CONN 	:= $(call get-cfg, '.db.maxconns')
 MIGRATIONS_DIR 	:= $(call get-cfg, '.db.migrationdir')
 
 DB_CONTAINER_NAME := $(DB_NAME)-$(DB_VENDOR)-$(DB_VERSION)
@@ -45,7 +45,7 @@ run:
 	@echo "Checking config: $(CONFIG_PATH)..."
 	@echo "Starting service with DB: $(DB_NAME)"
 	@echo "Container name will be: $(DB_CONTAINER_NAME)"
-	go run cmd/$(CONFIG)/app.go -config=$(CONFIG_PATH)
+	go run cmd/$(CONFIG)-service/app.go -config=$(CONFIG_PATH)
 
 .PHONY: generate
 generate: sqlc swag
@@ -76,35 +76,34 @@ endef
 tests: mocks
 	go test ./...
 
+#   ---  Usage scanario --- 
+# make db-up CONFIG=video
+# make db-init CONFIG=video
+# make run CONFIG=video
+
 #   --- Database ---
-.PHONY: db-up db-status migrate-up db-init db-drop
+.PHONY: db-up 
 db-up:
-	@echo "calling db_up"
-	$(call db_up)
-	@echo "called"
-# 	docker run -d --rm --name $(DB_CONTAINER_NAME) -p $(DB_PORT):$(DB_PORT) -e POSTGRES_USER=$(POSTGRES_USER) -e POSTGRES_PASSWORD=$(POSTGRES_PWD) postgres:$(DB_VERSION)
-# 	docker exec -i $(DB_CONTAINER_NAME) createdb -U $(POSTGRES_USER) -h $(DB_HOST) -p $(DB_PORT) $(DB_NAME)
-# 	$(MAKE) db-init
+	docker run -d --rm --name $(DB_CONTAINER_NAME) -p $(DB_PORT):$(DB_PORT) -e POSTGRES_USER=$(POSTGRES_USER) -e POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) postgres:$(DB_VERSION)
+	@echo "Docker contained started with name $(DB_CONTAINER_NAME) on $(DB_PORT)"
 
-define db_up
-	docker run -d --rm --name $(DB_CONTAINER_NAME) -p $(DB_PORT):$(DB_PORT) -e POSTGRES_USER=$(POSTGRES_USER) -e POSTGRES_PASSWORD=$(POSTGRES_PWD) postgres:$(DB_VERSION)
+.PHONY: db-init
+db-init:
 	docker exec -i $(DB_CONTAINER_NAME) createdb -U $(POSTGRES_USER) -h $(DB_HOST) -p $(DB_PORT) $(DB_NAME)
-	goose -dir "$(MIGRATIONS_DIR)" postgres "$(DB_URL)" up
-endef
+	@echo "CreateDB for $(DB_NAME)"
+	$(MAKE) migrate-up
 
+.PHONY: db-status
 db-status:
-	@echo "--- Configuration: $(CONFIG) ---"
+	@echo "--- Configuration: $(CONFIG)-service ---"
 	@echo "Target DB: $(DB_NAME) on $(DB_HOST):$(DB_PORT)"
 	@echo "Container: $(DB_CONTAINER_NAME)"
 	@echo "Migrations: $(MIGRATIONS_DIR)"
 
+.PHONY: migrate-up  
 migrate-up:
-	migrate -path $(MIGRATIONS_DIR) -database "$(DB_VENDOR)://$(DB_HOST):$(DB_PORT)/$(DB_NAME)" up
-
-
-
-db-init:
-	goose -dir "$(MIGRATIONS_DIR)" postgres "$(DB_URL)" up
+	goose -dir "$(MIGRATIONS_DIR)" postgres "$(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)" up
+	@echo "Migration finished"
 
 # db-mig-create:
 # 	$(call create_db_migration,$(MIG_FILE_NAME))
@@ -113,6 +112,7 @@ db-init:
 # 	goose -dir "$(MIGRATIONS_DIR)" -s create $(1) sql
 # endef
 
+.PHONY: db-drop
 db-drop:
 	docker exec -i $(DB_CONTAINER_NAME) dropdb -U $(POSTGRES_USER) $(DB_NAME)
 

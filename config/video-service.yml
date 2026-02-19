@@ -10,7 +10,7 @@ db:
   maxconns: 30
   vendor: postgres
   version: 18-alpine
-  migrationdir: "internal/adapters/postgres/sql/migrations"
+  migrationdir: "internal/video-service/adapters/postgres/sql/migrations"
   #  vendor user pwd host port db_name db_max_conn  
   url: "$1://$2:$3@$4:$5/$6?sslmode=disable&pool_max_conns=$7&pool_max_conn_lifetime=1h30m"
   

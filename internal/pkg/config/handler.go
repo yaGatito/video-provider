@@ -32,7 +32,7 @@ type Db struct {
 const (
 	congfigFolder    = "./config"
 	secretPgUser     = "POSTGRES_USER"
-	secretPgPassword = "POSTGRES_PWD"
+	secretPgPassword = "POSTGRES_PASSWORD"
 )
 
 // GetURL must be called only after setup OS env variables.
