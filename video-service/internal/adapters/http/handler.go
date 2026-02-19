@@ -50,7 +50,7 @@ func NewVideoHandler(
 }
 
 // Create godoc
-// @Summary      Creates new video
+// @Summary      Creates new video. Publisher id example: d9fa522f-0006-464f-8d68-356ba1d6ad7d
 // @Description  Creates a new video record for the specified publisher
 // @Tags         videos
 // @Accept       json

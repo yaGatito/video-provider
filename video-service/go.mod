@@ -1,6 +1,6 @@
 module video-service
 
-go 1.25
+go 1.25.0
 
 require (
 	github.com/golang/mock v1.6.0
@@ -11,7 +11,10 @@ require (
 	github.com/stretchr/testify v1.11.0
 	github.com/swaggo/http-swagger v1.3.4
 	github.com/swaggo/swag v1.16.6
+	video-provider v0.0.0
 )
+
+replace video-provider => ../
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect

@@ -69,7 +69,7 @@
                 "tags": [
                     "videos"
                 ],
-                "summary": "Creates new video",
+                "summary": "Creates new video. Publisher id example: d9fa522f-0006-464f-8d68-356ba1d6ad7d",
                 "parameters": [
                     {
                         "type": "string",
