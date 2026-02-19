@@ -21,6 +21,20 @@ func NewUserHandler(userInteractor app.UserService) UserHandler {
 	return UserHandler{UserInteractor: userInteractor}
 }
 
+// Create godoc
+// @Summary      Create a new user
+// @Tags         Users
+// @Description  Create a new user and return the created user's ID. Example ID
+//
+//	format (UUID): 123e4567-e89b-12d3-a456-426614174000
+//
+// @Accept       json
+// @Produce      json
+// @Param        user  body    createUserRequest  true  "Create user payload"
+// @Success      200   {string}  string  "created user id (example: 123e4567-e89b-12d3-a456-426614174000)"
+// @Failure      400   {object}  serviceErrorResponse
+// @Failure      500   {object}  serviceErrorResponse
+// @Router       /v1/users [post]
 func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var createUserRequestData createUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&createUserRequestData); err != nil {
@@ -63,6 +77,20 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// Get godoc
+// @Summary      Get user by ID
+// @Tags         Users
+// @Description  Retrieve user details by ID. The ID can be provided as a
+//
+//	UUID string (example: 123e4567-e89b-12d3-a456-426614174000) or
+//	numeric identifier depending on the deployment.
+//
+// @Produce      json
+// @Param        id   path    string  true  "User ID (example: 123e4567-e89b-12d3-a456-426614174000)"
+// @Success      200  {object}  interface{}
+// @Failure      400  {object}  serviceErrorResponse
+// @Failure      500  {object}  serviceErrorResponse
+// @Router       /v1/users/{id} [get]
 func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
 	idStr := mux.Vars(r)["id"]
 	id, _ := strconv.ParseInt(idStr, 10, 64)
