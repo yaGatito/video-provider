@@ -6,65 +6,80 @@ import (
 	"log"
 	"net/http"
 	"os"
+	logger "video-provider/pkg/middleware"
+	httpadapter "video-service/internal/adapters/http"
+	"video-service/internal/adapters/idgen"
+	"video-service/internal/adapters/postgres"
+	"video-service/internal/app"
+
+	"github.com/joho/godotenv"
+
+	_ "video-service/docs"
+
+	config "video-provider/pkg/config"
 
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/joho/godotenv"
-
-	http2 "user-service/internal/adapters/http"
-	"user-service/internal/adapters/postgres"
-	usecase "user-service/internal/app"
-	logger "video-provider/pkg/middleware"
 )
 
+// @title           Video Service API
+// @version         1.0
+// @description     Service for managing video content.
+// @host            localhost:8080
+// @BasePath        /
 func main() {
 	if err := run(); err != nil {
-		log.Println(err)
+		log.Fatal(err)
 	}
 }
 
+// TODO: Fix the problem 1: application should beign configured from one place. Or at least it should be separated.
+// TODO: Decide who should be responsible for migration. (the one who run service or the service itself)
+
 func run() error {
-	if err := godotenv.Load(); err != nil {
-		log.Println("No .env file found")
-	}
-
-	dbUrl := os.Getenv("DATABASE_URL")
-	if dbUrl == "" {
-		// Default to localhost:5433 (mapped in Makefile/Docker)
-		dbUrl = "postgres://gato:root@localhost:5433/userdb?sslmode=disable"
-	}
-
-	dbPool, err := pgxpool.New(context.Background(), dbUrl)
+	ctx := context.Background()
+	err := godotenv.Load()
 	if err != nil {
-		return fmt.Errorf("Failed to connect to the database: %v", err)
+		return fmt.Errorf("failed to load .env file: %w", err)
 	}
-	defer dbPool.Close()
 
-	if err := dbPool.Ping(context.Background()); err != nil {
-		return fmt.Errorf("Failed to ping the database: %v", err)
+	fileCfg, err := os.ReadFile(config.СonfigPath)
+	if err != nil {
+		return fmt.Errorf("failed to read file from %s: %w", config.СonfigPath, err)
 	}
-	log.Printf("Connected to the database successfully")
+	cfg, err := config.ParseConfig(fileCfg)
+	if err != nil {
+		return fmt.Errorf("failed to parse config bytes: %w", err)
+	}
 
-	userRepository := postgres.NewPostgresUserRepository(dbPool)
-	userInteractor := usecase.NewUserService(userRepository)
-	userHandler := http2.NewUserHandler(userInteractor)
+	pgConfig, err := pgxpool.ParseConfig(cfg.Db.GetURL())
+	if err != nil {
+		return fmt.Errorf("failed to parse connection string: %w", err)
+	}
+	// cfg.MaxConns = 30
+	// cfg.HealthCheckPeriod = time.Minute * 90
+	pool, err := pgxpool.NewWithConfig(ctx, pgConfig)
+	if err != nil {
+		return fmt.Errorf("failed to create connection pool: %w", err)
+	}
+	defer pool.Close()
 
-	mwLog := logger.NewMiddlewareLogger(os.Stdout, "[USRSVC]")
+	videoRepository := postgres.NewVideoRepoPostgreSQL(pool)
+
+	idGen := idgen.New()
+	mwLog := logger.NewMiddlewareLogger(os.Stdout, "[VIDSVC]")
+
+	videoService := app.NewVideoInteractor(videoRepository)
+	videoHandler := httpadapter.NewVideoHandler(videoService, idGen, mwLog.Log)
+
 	router := mux.NewRouter()
 	router.Use(mwLog.LoggingMiddleware)
-	router.HandleFunc("/v1/users", userHandler.Create).Methods("POST")
-	router.HandleFunc("/v1/users/{id}", userHandler.Get).Methods("GET")
+	httpadapter.SetupRouter(router, videoHandler)
 
-	port := os.Getenv("PORT")
-	if port == "" {
-		port = "8081"
-	}
-
-	log.Printf("Server starting on port %s", port)
-	err = http.ListenAndServe(":"+port, router)
+	mwLog.Log.Printf("Server successfully started")
+	err = http.ListenAndServe(":"+cfg.Api.Port, router)
 	if err != nil {
-		return fmt.Errorf("Failed to start the server: %v", err)
+		return fmt.Errorf("failed to start server: %w", err)
 	}
-	fmt.Printf("Server successfully started")
 	return nil
 }
