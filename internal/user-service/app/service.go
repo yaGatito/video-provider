@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"log"
 	"time"
-	"user-service/internal/domain"
-	"user-service/internal/ports"
+	"video-provider/internal/user-service/domain"
+	"video-provider/internal/user-service/ports"
 )
 
 type RegisterUserCommand struct {

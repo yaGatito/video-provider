@@ -2,7 +2,7 @@ package domain
 
 import (
 	"errors"
-	"video-service/internal/policy"
+	"video-provider/internal/video-service/policy"
 
 	"github.com/google/uuid"
 )

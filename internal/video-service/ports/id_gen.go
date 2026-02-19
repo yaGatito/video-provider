@@ -1,7 +1,7 @@
 package ports
 
 import (
-	"video-service/internal/domain"
+	"video-provider/internal/video-service/domain"
 )
 
 type IDGen interface {

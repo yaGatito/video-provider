@@ -2,7 +2,7 @@ package domain_test
 
 import (
 	"testing"
-	"video-service/internal/domain"
+	"video-provider/internal/video-service/domain"
 
 	"github.com/google/uuid"
 )

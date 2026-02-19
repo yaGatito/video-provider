@@ -3,7 +3,7 @@ package app
 import (
 	"fmt"
 	"testing"
-	"video-service/internal/policy"
+	"video-provider/internal/video-service/policy"
 
 	"github.com/stretchr/testify/require"
 )

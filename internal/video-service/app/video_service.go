@@ -3,8 +3,8 @@ package app
 import (
 	"context"
 	"fmt"
-	"video-service/internal/domain"
-	"video-service/internal/ports"
+	"video-provider/internal/video-service/domain"
+	"video-provider/internal/video-service/ports"
 )
 
 type VideoService interface {

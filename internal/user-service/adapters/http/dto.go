@@ -2,7 +2,7 @@ package httpadp
 
 import (
 	"strings"
-	"user-service/internal/shared"
+	"video-provider/internal/user-service/shared"
 )
 
 // createUserRequest represents the data needed to create a new user.

@@ -3,7 +3,7 @@ package httpadapter
 import (
 	"fmt"
 	"time"
-	"video-service/internal/policy"
+	"video-provider/internal/video-service/policy"
 )
 
 const (

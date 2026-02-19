@@ -5,11 +5,11 @@ import (
 	"fmt"
 	"testing"
 	"time"
-	"video-service/internal/app"
-	"video-service/internal/domain"
-	"video-service/internal/policy"
-	"video-service/internal/ports"
-	mock_ports "video-service/internal/ports/mock"
+	"video-provider/internal/video-service/app"
+	"video-provider/internal/video-service/domain"
+	"video-provider/internal/video-service/policy"
+	"video-provider/internal/video-service/ports"
+	mock_ports "video-provider/internal/video-service/ports/mock"
 
 	"github.com/stretchr/testify/require"
 

@@ -9,10 +9,10 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"video-service/internal/app"
-	"video-service/internal/domain"
-	"video-service/internal/policy"
-	"video-service/internal/ports"
+	"video-provider/internal/video-service/app"
+	"video-provider/internal/video-service/domain"
+	"video-provider/internal/video-service/policy"
+	"video-provider/internal/video-service/ports"
 
 	"github.com/gorilla/mux"
 )

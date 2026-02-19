@@ -1,7 +1,7 @@
 package idgen
 
 import (
-	"video-service/internal/ports"
+	"video-provider/internal/video-service/ports"
 
 	"github.com/google/uuid"
 )

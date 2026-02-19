@@ -3,9 +3,9 @@ package postgres
 import (
 	"context"
 	"time"
-	postgres "video-service/internal/adapters/postgres/db"
-	"video-service/internal/domain"
-	"video-service/internal/ports"
+	postgres "video-provider/internal/video-service/adapters/postgres/db"
+	"video-provider/internal/video-service/domain"
+	"video-provider/internal/video-service/ports"
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"

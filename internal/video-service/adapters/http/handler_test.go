@@ -7,9 +7,9 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	httpadapter "video-service/internal/adapters/http"
-	mock_app "video-service/internal/app/mock"
-	"video-service/internal/domain"
+	httpadapter "video-provider/internal/video-service/adapters/http"
+	mock_app "video-provider/internal/video-service/app/mock"
+	"video-provider/internal/video-service/domain"
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"

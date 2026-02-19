@@ -1,7 +1,7 @@
 package ports
 
 import (
-	"user-service/internal/domain"
+	"video-provider/internal/user-service/domain"
 )
 
 type UserRepository interface {

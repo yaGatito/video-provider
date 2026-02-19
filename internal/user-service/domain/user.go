@@ -3,7 +3,7 @@ package domain
 import (
 	"regexp"
 	"time"
-	"user-service/internal/shared"
+	"video-provider/internal/user-service/shared"
 )
 
 type User struct {

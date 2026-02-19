@@ -6,7 +6,7 @@ package mock_ports
 
 import (
 	reflect "reflect"
-	domain "video-service/internal/domain"
+	domain "video-provider/internal/video-service/domain"
 
 	gomock "github.com/golang/mock/gomock"
 )

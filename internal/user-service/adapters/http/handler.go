@@ -7,8 +7,8 @@ import (
 	"log"
 	"net/http"
 	"strconv"
-	"user-service/internal/app"
-	"user-service/internal/shared"
+	"video-provider/internal/user-service/app"
+	"video-provider/internal/user-service/shared"
 
 	"github.com/gorilla/mux"
 )

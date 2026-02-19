@@ -2,7 +2,7 @@ package ports
 
 import (
 	"context"
-	"video-service/internal/domain"
+	"video-provider/internal/video-service/domain"
 )
 
 type VideoRepository interface {

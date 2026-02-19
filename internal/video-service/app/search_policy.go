@@ -3,7 +3,7 @@ package app
 import (
 	"fmt"
 	"strings"
-	"video-service/internal/policy"
+	"video-provider/internal/video-service/policy"
 )
 
 // ValidateSearchQuery Returns trimmed version of query.

@@ -4,9 +4,9 @@ import (
 	"context"
 	"log"
 
-	postgres "user-service/internal/adapters/postgres/db"
-	"user-service/internal/domain"
-	"user-service/internal/ports"
+	postgres "video-provider/internal/user-service/adapters/postgres/db"
+	"video-provider/internal/user-service/domain"
+	"video-provider/internal/user-service/ports"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
