@@ -54,14 +54,17 @@ generate: sqlc swag
 lint:
 	$(GOLANGCI_LINT) fmt
 	$(GOLANGCI_LINT) run
+	@echo "Formatted"
 
 .PHONY: swag
 swag: 
 	${SWAG} init -g $(MAIN)
+	@echo "Swagger docs generated"
 
 .PHONY: sqlc
 sqlc:
 	$(SQLC) generate
+	@echo "SQLC generated"
 
 
 .PHONY: test
@@ -81,7 +84,7 @@ tests: mocks
 # make db-init CONFIG=video
 # make run CONFIG=video
 
-#   --- Database ---
+#   --- Docker ---
 .PHONY: db-up 
 db-up:
 	docker run -d --rm --name $(DB_CONTAINER_NAME) -p $(DB_PORT):$(DB_PORT) -e POSTGRES_USER=$(POSTGRES_USER) -e POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) postgres:$(DB_VERSION)
@@ -93,28 +96,22 @@ db-init:
 	@echo "CreateDB for $(DB_NAME)"
 	$(MAKE) migrate-up
 
+.PHONY: migrate-up
+migrate-up:
+	goose -dir "$(MIGRATIONS_DIR)" postgres "$(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)" up
+	@echo "Migrate-up finished"
+
+.PHONY: migrate-down
+migrate-down:
+	goose -dir "$(MIGRATIONS_DIR)" postgres "$(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)" down
+	@echo "Migrate-down finished"
+
 .PHONY: db-status
 db-status:
 	@echo "--- Configuration: $(CONFIG)-service ---"
 	@echo "Target DB: $(DB_NAME) on $(DB_HOST):$(DB_PORT)"
 	@echo "Container: $(DB_CONTAINER_NAME)"
 	@echo "Migrations: $(MIGRATIONS_DIR)"
-
-.PHONY: migrate-up  
-migrate-up:
-	goose -dir "$(MIGRATIONS_DIR)" postgres "$(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)" up
-	@echo "Migration finished"
-
-# db-mig-create:
-# 	$(call create_db_migration,$(MIG_FILE_NAME))
-
-# define create_db_migration
-# 	goose -dir "$(MIGRATIONS_DIR)" -s create $(1) sql
-# endef
-
-.PHONY: db-drop
-db-drop:
-	docker exec -i $(DB_CONTAINER_NAME) dropdb -U $(POSTGRES_USER) $(DB_NAME)
 
 # 	--- Tools ---
 .PHONY: tools  req-win-tools opt-win-tools
