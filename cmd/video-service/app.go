@@ -22,6 +22,8 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+const configName = "videoservice"
+
 // @title           Video Service API
 // @version         1.0
 // @description     Service for managing video content.
@@ -43,11 +45,7 @@ func run() error {
 		return fmt.Errorf("failed to load .env file: %w", err)
 	}
 
-	fileCfg, err := os.ReadFile(config.СonfigPath)
-	if err != nil {
-		return fmt.Errorf("failed to read file from %s: %w", config.СonfigPath, err)
-	}
-	cfg, err := config.ParseConfig(fileCfg)
+	cfg, err := config.ParseFromFS(configName)
 	if err != nil {
 		return fmt.Errorf("failed to parse config bytes: %w", err)
 	}

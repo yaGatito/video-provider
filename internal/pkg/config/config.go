@@ -30,7 +30,7 @@ type Db struct {
 }
 
 const (
-	СonfigPath       = "./config/app.yml"
+	congfigFolder    = "./config"
 	secretPgUser     = "POSTGRES_USER"
 	secretPgPassword = "POSTGRES_PWD"
 )
@@ -46,6 +46,14 @@ func (db Db) GetURL() string {
 	url = strings.Replace(url, "$6", db.Name, 1)
 	url = strings.Replace(url, "$7", db.MaxConns, 1)
 	return url
+}
+
+func ParseFromFS(name string) (Config, error) {
+	file, err := os.ReadFile(fmt.Sprintf("%s/%s.yml", congfigFolder, name))
+	if err != nil {
+		return Config{}, fmt.Errorf("failed to load file %w", err)
+	}
+	return ParseConfig(file)
 }
 
 func ParseConfig(cfg []byte) (Config, error) {
