@@ -6,8 +6,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	httpadapter "video-provider/internal/video-service/adapters/http"
 	logger "video-provider/pkg/middleware"
-	httpadapter "video-service/internal/adapters/http"
 	"video-service/internal/adapters/idgen"
 	"video-service/internal/adapters/postgres"
 	"video-service/internal/app"
@@ -16,7 +16,7 @@ import (
 
 	_ "video-service/docs"
 
-	config "video-provider/pkg/config"
+	config "video-provider/internal/pkg/config"
 
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
