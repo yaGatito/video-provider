@@ -8,7 +8,6 @@ sql:
         out: "internal/adapters/postgres/db"
         package: "postgres"
         sql_package: "pgx/v5"
-        # TODO: remove line below after dev-phase
         emit_interface: true
         emit_prepared_queries: true
         emit_json_tags: false

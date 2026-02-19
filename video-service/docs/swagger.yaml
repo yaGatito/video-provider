@@ -117,7 +117,7 @@ paths:
           description: Internal error
           schema:
             type: string
-      summary: Creates new video
+      summary: 'Creates new video. Publisher id example: d9fa522f-0006-464f-8d68-356ba1d6ad7d'
       tags:
       - videos
   /v1/videos/search:

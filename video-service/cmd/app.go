@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"time"
 	logger "video-provider/pkg/middleware"
 	httpadapter "video-service/internal/adapters/http"
 	"video-service/internal/adapters/idgen"
@@ -16,6 +15,8 @@ import (
 	"github.com/joho/godotenv"
 
 	_ "video-service/docs"
+
+	config "video-provider/pkg/config"
 
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -41,16 +42,23 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("failed to load .env file: %w", err)
 	}
-	connString := os.Getenv("DATABASE_URL")
-	port := os.Getenv("API_PORT")
 
-	config, err := pgxpool.ParseConfig(connString)
+	fileCfg, err := os.ReadFile(config.СonfigPath)
+	if err != nil {
+		return fmt.Errorf("failed to read file from %s: %w", config.СonfigPath, err)
+	}
+	cfg, err := config.ParseConfig(fileCfg)
+	if err != nil {
+		return fmt.Errorf("failed to parse config bytes: %w", err)
+	}
+
+	pgConfig, err := pgxpool.ParseConfig(cfg.Db.GetURL())
 	if err != nil {
 		return fmt.Errorf("failed to parse connection string: %w", err)
 	}
-	config.MaxConns = 30
-	config.HealthCheckPeriod = time.Minute * 90
-	pool, err := pgxpool.NewWithConfig(ctx, config)
+	// cfg.MaxConns = 30
+	// cfg.HealthCheckPeriod = time.Minute * 90
+	pool, err := pgxpool.NewWithConfig(ctx, pgConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create connection pool: %w", err)
 	}
@@ -69,7 +77,7 @@ func run() error {
 	httpadapter.SetupRouter(router, videoHandler)
 
 	mwLog.Log.Printf("Server successfully started")
-	err = http.ListenAndServe(":"+port, router)
+	err = http.ListenAndServe(":"+cfg.Api.Port, router)
 	if err != nil {
 		return fmt.Errorf("failed to start server: %w", err)
 	}
