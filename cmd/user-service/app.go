@@ -19,6 +19,11 @@ import (
 
 const configName = "user-service"
 
+// @title           User Service API
+// @version         1.0
+// @description     Service for managing users.
+// @host            localhost:8081
+// @BasePath        /
 func main() {
 	if err := run(); err != nil {
 		log.Println(err)
