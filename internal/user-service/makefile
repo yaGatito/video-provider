@@ -1,9 +1,6 @@
-SERVICE_NAME := user-service
-DB_PORT := 5433
-DB_NAME := userdb
-CONTAINER_NAME := user-postgres18
+CONFIG_NAME = userservice
 
-include ../makefile
+include ../../makefile
 
 ## Generate mocks (Specific to user-service)
 mocks:

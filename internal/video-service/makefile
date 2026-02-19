@@ -1,4 +1,6 @@
-include ../makefile
+CONFIG_NAME = videoservice
+
+include ../../makefile
 
 ## Generate mocks (Specific to video-service)
 mocks:

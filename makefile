@@ -3,20 +3,31 @@ ifneq (,$(wildcard ./.env))
     export
 endif
 
-# API_NAME ?= $(shell yq e '.api.name' config/app.yml)
-# API_HOST ?= $(shell yq e '.api.host' config/app.yml)	
-# API_PORT ?= $(shell yq e '.api.port' config/app.yml)
+# default config if not passed (example: make run CONFIG=dev)
+CONFIG ?= local
+CONFIG_PATH := config/$(CONFIG).yml
 
-DB_NAME := $(shell yq e '.db.name' config/app.yml)
-DB_HOST := $(shell yq e '.db.host' config/app.yml)
-DB_PORT := $(shell yq e '.db.port' config/app.yml)
-DB_MAX_CONNS := $(shell yq e '.db.maxconns' config/app.yml)
-DB_VERSION := $(shell yq e '.db.version' config/app.yml)
+# ifeq (, $(shell which yq))
+# 	$(error "Tool not found: 'yq'.")
+# endif
+
+ifeq ("$(wildcard $(CONFIG_PATH))","")
+	$(error "Config not found: $(CONFIG_PATH)!")
+endif
+
+# func to call yq
+get-cfg = $(shell yq e $(1) $(CONFIG_PATH))
+
+# load everything
+DB_NAME      	:= $(call get-cfg, '.db.name')
+DB_VENDOR    	:= $(call get-cfg, '.db.vendor')
+DB_VERSION   	:= $(call get-cfg, '.db.version')
+DB_HOST      	:= $(call get-cfg, '.db.host')
+DB_PORT      	:= $(call get-cfg, '.db.port')
+DB_URL 		 	:= $(call get-cfg, '.db.url')
+MIGRATIONS_DIR 	:= $(call get-cfg, '.db.migrationdir')
+
 DB_CONTAINER_NAME := $(DB_NAME)-$(DB_VENDOR)-$(DB_VERSION)
-DB_VENDOR := $(shell yq e '.db.vendor' config/app.yml)
-MIGRATIONS_DIR := $(shell yq e '.db.migrationdir' config/app.yml)
-
-DATABASE_URL ?= "$(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PWD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable&pool_max_conns=$(DB_MAX_CONNS)&pool_max_conn_lifetime=1h30m"
 
 MAIN = cmd/app.go
 PKG ?= app
@@ -28,25 +39,32 @@ SQLC := sqlc
 GOLANGCI_LINT := golangci-lint
 SWAG := swag.exe
 
-.PHONY: tools run test tests swag sqlc db-up db-drop db-init lint # db-mig-create
-
 #   --- Common Commands ---
-run: lint
-	go run $(MAIN)
+.PHONY: run
+run:
+	@echo "Checking config: $(CONFIG_PATH)..."
+	@echo "Starting service with DB: $(DB_NAME)"
+	@echo "Container name will be: $(DB_CONTAINER_NAME)"
+	go run cmd/$(CONFIG)/app.go -config=$(CONFIG_PATH)
 
+.PHONY: generate
 generate: sqlc swag
 
+.PHONY: lint
 lint:
 	$(GOLANGCI_LINT) fmt
 	$(GOLANGCI_LINT) run
 
+.PHONY: swag
 swag: 
 	${SWAG} init -g $(MAIN)
 
+.PHONY: sqlc
 sqlc:
 	$(SQLC) generate
 
 
+.PHONY: test
 test:
 	$(call go_test,$(PKG),$(TEST))
 
@@ -54,14 +72,16 @@ define go_test
 	go test ./internal/$(1) -run $(2)
 endef
 
+.PHONY: tests
 tests: mocks
 	go test ./...
 
 #   --- Database ---
+.PHONY: db-up db-status migrate-up db-init db-drop
 db-up:
-	@echo calling  db_up
+	@echo "calling db_up"
 	$(call db_up)
-	@echo called
+	@echo "called"
 # 	docker run -d --rm --name $(DB_CONTAINER_NAME) -p $(DB_PORT):$(DB_PORT) -e POSTGRES_USER=$(POSTGRES_USER) -e POSTGRES_PASSWORD=$(POSTGRES_PWD) postgres:$(DB_VERSION)
 # 	docker exec -i $(DB_CONTAINER_NAME) createdb -U $(POSTGRES_USER) -h $(DB_HOST) -p $(DB_PORT) $(DB_NAME)
 # 	$(MAKE) db-init
@@ -69,12 +89,22 @@ db-up:
 define db_up
 	docker run -d --rm --name $(DB_CONTAINER_NAME) -p $(DB_PORT):$(DB_PORT) -e POSTGRES_USER=$(POSTGRES_USER) -e POSTGRES_PASSWORD=$(POSTGRES_PWD) postgres:$(DB_VERSION)
 	docker exec -i $(DB_CONTAINER_NAME) createdb -U $(POSTGRES_USER) -h $(DB_HOST) -p $(DB_PORT) $(DB_NAME)
-	goose -dir "$(MIGRATIONS_DIR)" postgres "$(DATABASE_URL)" up
+	goose -dir "$(MIGRATIONS_DIR)" postgres "$(DB_URL)" up
 endef
+
+db-status:
+	@echo "--- Configuration: $(CONFIG) ---"
+	@echo "Target DB: $(DB_NAME) on $(DB_HOST):$(DB_PORT)"
+	@echo "Container: $(DB_CONTAINER_NAME)"
+	@echo "Migrations: $(MIGRATIONS_DIR)"
+
+migrate-up:
+	migrate -path $(MIGRATIONS_DIR) -database "$(DB_VENDOR)://$(DB_HOST):$(DB_PORT)/$(DB_NAME)" up
+
 
 
 db-init:
-	goose -dir "$(MIGRATIONS_DIR)" postgres "$(DATABASE_URL)" up
+	goose -dir "$(MIGRATIONS_DIR)" postgres "$(DB_URL)" up
 
 # db-mig-create:
 # 	$(call create_db_migration,$(MIG_FILE_NAME))
@@ -86,8 +116,8 @@ db-init:
 db-drop:
 	docker exec -i $(DB_CONTAINER_NAME) dropdb -U $(POSTGRES_USER) $(DB_NAME)
 
-
 # 	--- Tools ---
+.PHONY: tools  req-win-tools opt-win-tools
 tools:
 	irm get.scoop.sh | iex
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.2

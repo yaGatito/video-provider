@@ -22,7 +22,7 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-const configName = "videoservice"
+const configName = "video-service"
 
 // @title           Video Service API
 // @version         1.0
