@@ -48,7 +48,7 @@ run:
 	go run cmd/$(CONFIG)-service/app.go -config=$(CONFIG_PATH)
 
 .PHONY: generate
-generate: sqlc swag
+generate: sqlc swag mocks
 
 .PHONY: lint
 lint:
@@ -66,6 +66,19 @@ sqlc:
 	$(SQLC) generate -f "internal/$(CONFIG)-service/adapters/postgres/sqlc.yml
 	@echo "SQLC generated"
 
+.PHONY: mocks
+mocks:
+ifeq ("$(CONFIG)","video")
+	$(MOCKGEN) -source="./internal/$(CONFIG)-service/app/video_service.go" -destination="./internal/app/mock/video_service_mock.go" -mock_names=VideoService=MockVideoService
+	$(MOCKGEN) -source="./internal/$(CONFIG)-service/ports/video_repo.go" -destination="./internal/ports/mock/video_repo_mock.go" -mock_names=VideoRepository=MockVideoRepository
+	$(MOCKGEN) -source="./internal/$(CONFIG)-service/ports/id_gen.go" -destination="./internal/ports/mock/id_gen_mock.go" -mock_names=IDGen=MockIDGen
+	@echo "Video-service mocks generated"
+endif
+
+ifeq ("$(CONFIG)","user")
+	$(MOCKGEN) -source="./internal/$(CONFIG)-service/ports/user_repo.go" -destination="./internal/ports/mock/user_repo_mock.go" -mock_names=UserRepository=MockUserRepository
+	@echo "User-service mocks generated"
+endif
 
 .PHONY: test
 test:
