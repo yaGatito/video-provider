@@ -58,8 +58,8 @@ lint:
 .PHONY: swag
 swag: 
 	@echo "Swagger generate: $(MAIN)"
-	@echo "Swagger output: internal/$(CONFIG)-service/docs"
-	${SWAG} init -g $(MAIN) -o internal/$(CONFIG)-service/docs
+	@echo "Swagger output: docs"
+	${SWAG} init -g $(MAIN) -o docs
 
 .PHONY: sqlc
 sqlc:

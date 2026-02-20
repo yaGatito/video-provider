@@ -29,5 +29,5 @@ func SetupRouter(r *mux.Router, h VideoHandler) {
 	r.HandleFunc(RouteVideoSearch, h.SearchGlobal).
 		Methods(http.MethodGet)
 
-	r.PathPrefix("/v1/videos/swagger/").HandlerFunc(httpSwagger.WrapHandler)
+	r.PathPrefix("/v1/swagger/").HandlerFunc(httpSwagger.WrapHandler)
 }
