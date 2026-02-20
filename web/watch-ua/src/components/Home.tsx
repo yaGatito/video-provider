@@ -34,6 +34,13 @@ const Home: React.FC = () => {
     <div className="home">
       <h1>🎬 Watch UA</h1>
       <p>Discover amazing video content</p>
+      <nav className="menu">
+        <ul>
+          <li><a href="/">Home</a></li>
+          <li><a href="/search">Search</a></li>
+          <li><a href="/register">Register</a></li> {/* Add this line */}
+        </ul>
+      </nav>
       <div className="video-list">
         {videos.map(video => (
           <div key={video.id} className="video-card" onClick={() => window.location.href = `/video/${video.id}`}>

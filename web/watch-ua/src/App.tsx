@@ -1,21 +1,20 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import Home from './components/Home';
-import VideoPage from './components/VideoPage';
-import './App.css';
+import SearchPage from './components/SearchPage';
+import Register from './components/Register'; // Import the new registration page
 
 const App: React.FC = () => {
   return (
     <Router>
-      <div className="app">
-        <Routes>
-          <Route path="/" element={<Home />} />
-          <Route path="/video/:id" element={<VideoPage />} />
-        </Routes>
-      </div>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/search" element={<SearchPage />} />
+        <Route path="/register" element={<Register />} />
+        {/* Add this route */}
+      </Routes>
     </Router>
   );
 };
 
 export default App;
-
