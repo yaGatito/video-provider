@@ -34,8 +34,8 @@ type UserService struct {
 	log  log.Logger
 }
 
-func NewUserService(repo ports.UserRepository) UserService {
-	return UserService{Repo: repo}
+func NewUserService(repo ports.UserRepository) *UserService {
+	return &UserService{Repo: repo}
 }
 
 func (us *UserService) Register(cmd RegisterUserCommand) (uuid.UUID, error) {
