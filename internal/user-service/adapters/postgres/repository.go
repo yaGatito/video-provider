@@ -25,7 +25,7 @@ func NewPostgresUserRepository(dbConn postgres.DBTX) *PostgresUserRepository {
 	}
 }
 
-func (r *PostgresUserRepository) Create(user *domain.User, passwordHash string, passwordSalt string) (uuid.UUID, error) {
+func (r *PostgresUserRepository) Create(user domain.User, passwordHash string, passwordSalt string) (uuid.UUID, error) {
 	params := postgres.CreateUserParams{
 		Name:         user.Name,
 		Lastname:     user.LastName,

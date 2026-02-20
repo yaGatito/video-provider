@@ -38,20 +38,12 @@ func NewUserHandler(userInteractor *app.UserService) UserHandler {
 func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var createUserRequestData createUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&createUserRequestData); err != nil {
-		log.Printf("Error decoding request body: %v", err)
-		writeJSON(w, http.StatusBadRequest, serviceErrorResponse{Code: shared.ServiceErrorCodeInvalidFormat})
+		writeError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	if err := createUserRequestData.validate(); err != nil {
-		var vErr shared.ValidationError
-		if errors.As(err, &vErr) {
-			log.Printf("createUserRequestData validation error: %v", err)
-			writeJSON(w, http.StatusBadRequest, serviceErrorResponse{Code: shared.ServiceErrorCodeValidationError, Payload: vErr})
-			return
-		}
-		log.Printf("createUserRequestData validation unknown error: %v", err)
-		writeJSON(w, http.StatusBadRequest, serviceErrorResponse{Code: shared.ServiceErrorCodeInvalidRequest})
+		writeError(w, http.StatusBadRequest, err)
 		return
 	}
 
@@ -65,21 +57,21 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		var vErr shared.ValidationError
+		var vErr shared.ServiceError
 		if errors.As(err, &vErr) {
 			log.Printf("Error registering user (validation): %v", err)
-			writeJSON(w, http.StatusBadRequest, serviceErrorResponse{Code: shared.ServiceErrorCodeValidationError, Payload: vErr})
+			writeJSON(w, http.StatusBadRequest, serviceErrorResponse{Code: shared.ValidationErr, Payload: vErr})
 			return
 		}
 		log.Printf("Error registering user: %v", err)
-		writeJSON(w, http.StatusInternalServerError, serviceErrorResponse{Code: shared.ServiceErrorCodeInternalError})
+		writeJSON(w, http.StatusInternalServerError, serviceErrorResponse{Code: shared.InternalErr})
 		return
 	}
 
 	err = json.NewEncoder(w).Encode(userId)
 	if err != nil {
 		log.Printf("Error encoding user response: %v", err)
-		writeJSON(w, http.StatusInternalServerError, serviceErrorResponse{Code: shared.ServiceErrorCodeInternalError})
+		writeJSON(w, http.StatusInternalServerError, serviceErrorResponse{Code: shared.InternalErr})
 		return
 	}
 }
@@ -102,7 +94,7 @@ func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
 	idStr := mux.Vars(r)["id"]
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, serviceErrorResponse{Code: shared.ServiceErrorCodeInvalidRequest})
+		writeJSON(w, http.StatusBadRequest, serviceErrorResponse{Code: shared.InvalidRequestErr})
 		log.Printf("Invalid user id in path: %v", err)
 		return
 	}
@@ -110,7 +102,7 @@ func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 	getUserResult, err := h.UserInteractor.Get(id)
 	if err != nil {
-		writeJSON(w, http.StatusNotFound, serviceErrorResponse{Code: shared.ServiceErrorCodeNotFound})
+		writeJSON(w, http.StatusNotFound, serviceErrorResponse{Code: shared.NotFoundErr})
 		log.Printf("Error retrieving user: %v", err)
 		return
 	}
@@ -118,7 +110,7 @@ func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
 
 	err = json.NewEncoder(w).Encode(getUserResult)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, serviceErrorResponse{Code: shared.ServiceErrorCodeInternalError})
+		writeJSON(w, http.StatusInternalServerError, serviceErrorResponse{Code: shared.InternalErr})
 		log.Printf("Error encoding user response: %v", err)
 		return
 	}
@@ -129,4 +121,20 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(v)
+}
+
+func writeError(w http.ResponseWriter, status int, err error) {
+	var vErr shared.ServiceError
+	resp := serviceErrorResponse{}
+	if errors.As(err, &vErr) {
+		resp.Code = vErr.Code
+		resp.Payload = vErr.Msg
+	} else {
+		resp.Code = shared.InternalErr
+		// Verbose way. TODO: change next on complete
+		resp.Payload = err.Error()
+		// resp.Payload = "internal error"
+	}
+	log.Printf("Error writing response: %v", err)
+	writeJSON(w, status, resp)
 }
