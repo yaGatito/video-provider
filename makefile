@@ -5,7 +5,8 @@ endif
 
 # default config if not passed (example: make run CONFIG=dev)
 CONFIG ?= local
-CONFIG_PATH := config/$(CONFIG)-service.yml
+SERVICE_NAME = $(CONFIG)-service
+CONFIG_PATH := config/$(SERVICE_NAME).yml
 
 # ifeq (, $(shell which yq))
 # 	$(error "Tool not found: 'yq'.")
@@ -15,24 +16,25 @@ ifeq ("$(wildcard $(CONFIG_PATH))","")
 	$(error "Config not found: $(CONFIG_PATH)!")
 endif
 
-# func to call yq
+# funcs
 get-cfg = $(shell yq e $(1) $(CONFIG_PATH))
+log = @echo [::MAKEFILE::] $(1)
 
-# load everything
+### BE AWARE BEFORE ANY CHANGES HERE
 DB_NAME      	:= $(call get-cfg, '.db.name')
 DB_VENDOR    	:= $(call get-cfg, '.db.vendor')
 DB_VERSION   	:= $(call get-cfg, '.db.version')
 DB_HOST      	:= $(call get-cfg, '.db.host')
 DB_PORT      	:= $(call get-cfg, '.db.port')
-DB_MAX_CONN 	:= $(call get-cfg, '.db.maxconns')
+# DB_MAX_CONN 	:= $(call get-cfg, '.db.maxconns')
 MIGRATIONS_DIR 	:= $(call get-cfg, '.db.migrationdir')
+DB_URL := $(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
 
 DB_CONTAINER_NAME := $(DB_NAME)-$(DB_VENDOR)-$(DB_VERSION)
-MAIN = cmd/$(CONFIG)-service/app.go
+MAIN = cmd/$(SERVICE_NAME)/app.go
 
 PKG ?= app
 TEST ?= .
-MIG_FILE_NAME ?= init
 
 MOCKGEN := mockgen
 SQLC := sqlc
@@ -42,10 +44,8 @@ SWAG := swag.exe
 #   --- Common Commands ---
 .PHONY: run
 run:
-	@echo "Checking config: $(CONFIG_PATH)..."
-	@echo "Starting service with DB: $(DB_NAME)"
-	@echo "Container name will be: $(DB_CONTAINER_NAME)"
-	go run cmd/$(CONFIG)-service/app.go -config=$(CONFIG_PATH)
+	$(call log, "Checking config: $(CONFIG_PATH)...")
+	go run cmd/$(SERVICE_NAME)/app.go -config=$(CONFIG_PATH)
 
 .PHONY: generate
 generate: sqlc swag mocks
@@ -54,30 +54,31 @@ generate: sqlc swag mocks
 lint:
 	$(GOLANGCI_LINT) fmt
 	$(GOLANGCI_LINT) run
-	@echo "Formatted"
+	$(call log, "Formatted")
 
 .PHONY: swag
 swag: 
-	${SWAG} init -g $(MAIN) -o internal/$(CONFIG)-service/docs
-	@echo "Swagger docs generated"
+	$(call log, "Swagger generate: $(MAIN)")
+	$(call log, "Swagger output: docs")
+	${SWAG} init -g $(MAIN) -o docs
 
 .PHONY: sqlc
 sqlc:
-	$(SQLC) generate -f "internal/$(CONFIG)-service/adapters/postgres/sqlc.yml
-	@echo "SQLC generated"
+	$(call log, "SQLC generate by file: internal/$(SERVICE_NAME)/adapters/postgres/sqlc.yml")
+	$(SQLC) generate -f "internal/$(SERVICE_NAME)/adapters/postgres/sqlc.yml
 
 .PHONY: mocks
 mocks:
 ifeq ("$(CONFIG)","video")
-	$(MOCKGEN) -source="./internal/$(CONFIG)-service/app/video_service.go" -destination="./internal/app/mock/video_service_mock.go" -mock_names=VideoService=MockVideoService
-	$(MOCKGEN) -source="./internal/$(CONFIG)-service/ports/video_repo.go" -destination="./internal/ports/mock/video_repo_mock.go" -mock_names=VideoRepository=MockVideoRepository
-	$(MOCKGEN) -source="./internal/$(CONFIG)-service/ports/id_gen.go" -destination="./internal/ports/mock/id_gen_mock.go" -mock_names=IDGen=MockIDGen
-	@echo "Video-service mocks generated"
+	$(MOCKGEN) -source="./internal/$(SERVICE_NAME)/app/video_service.go" -destination="./internal/$(SERVICE_NAME)/app/mock/video_service_mock.go" -mock_names=VideoService=MockVideoService
+	$(MOCKGEN) -source="./internal/$(SERVICE_NAME)/ports/video_repo.go" -destination="./internal/$(SERVICE_NAME)/ports/mock/video_repo_mock.go" -mock_names=VideoRepository=MockVideoRepository
+	$(MOCKGEN) -source="./internal/$(SERVICE_NAME)/ports/id_gen.go" -destination="./internal/$(SERVICE_NAME)/ports/mock/id_gen_mock.go" -mock_names=IDGen=MockIDGen
+	$(call log, "$(SERVICE_NAME) mocks generated")
 endif
 
 ifeq ("$(CONFIG)","user")
-	$(MOCKGEN) -source="./internal/$(CONFIG)-service/ports/user_repo.go" -destination="./internal/ports/mock/user_repo_mock.go" -mock_names=UserRepository=MockUserRepository
-	@echo "User-service mocks generated"
+	$(MOCKGEN) -source="./internal/$(SERVICE_NAME)/ports/user_repo.go" -destination="./internal/$(SERVICE_NAME)/ports/mock/user_repo_mock.go" -mock_names=UserRepository=MockUserRepository
+	$(call log, "$(SERVICE_NAME) mocks generated")
 endif
 
 .PHONY: test
@@ -100,36 +101,42 @@ tests: mocks
 #   --- Docker ---
 .PHONY: db-up 
 db-up:
-	docker run -d --rm --name $(DB_CONTAINER_NAME) -p $(DB_PORT):$(DB_PORT) -e POSTGRES_USER=$(POSTGRES_USER) -e POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) postgres:$(DB_VERSION)
-	@echo "Docker contained started with name $(DB_CONTAINER_NAME) on $(DB_PORT)"
+	docker run --rm --name $(DB_CONTAINER_NAME) -p $(DB_PORT):$(DB_PORT) -e POSTGRES_USER=$(POSTGRES_USER) -e POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) postgres:$(DB_VERSION) -p $(DB_PORT)
+	$(call log, "Docker contained started with name $(DB_CONTAINER_NAME) on $(DB_PORT)")
 
 .PHONY: db-init
 db-init:
-	docker exec -i $(DB_CONTAINER_NAME) createdb -U $(POSTGRES_USER) -h $(DB_HOST) -p $(DB_PORT) $(DB_NAME)
-	@echo "CreateDB for $(DB_NAME)"
-	$(MAKE) migrate-up
+	docker exec -it $(DB_CONTAINER_NAME) createdb --username=$(POSTGRES_USER) --owner=$(POSTGRES_USER) $(DB_NAME) -p $(DB_PORT)
+	$(call log, "CreateDB for $(DB_NAME)")
+# 	$(MAKE) migrate-up
 
+#   --- Database migrations ---
 .PHONY: migrate-up
 migrate-up:
-	goose -dir "$(MIGRATIONS_DIR)" postgres "$(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)" up
-	@echo "Migrate-up finished"
+	$(call log, "goose -dir "$(MIGRATIONS_DIR)" postgres "$(DB_URL)" up")
+	goose -dir "$(MIGRATIONS_DIR)" postgres "$(DB_URL)" up
+	$(call log, "Migrate-up finished")
 
 .PHONY: migrate-down
 migrate-down:
-	goose -dir "$(MIGRATIONS_DIR)" postgres "$(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)" down
-	@echo "Migrate-down finished"
+	goose -dir "$(MIGRATIONS_DIR)" postgres "$(DB_URL)" down
+	$(call log, "Migrate-down finished")
+
+.PHONY: migrate-init
+migrate-init:	
+	goose -dir "$(MIGRATIONS_DIR)" -s create init sql
+	$(call log, "Migrate-init finished")
 
 .PHONY: db-status
 db-status:
-	@echo "--- Configuration: $(CONFIG)-service ---"
-	@echo "Target DB: $(DB_NAME) on $(DB_HOST):$(DB_PORT)"
-	@echo "Container: $(DB_CONTAINER_NAME)"
-	@echo "Migrations: $(MIGRATIONS_DIR)"
+	$(call log, "Configuration: $(SERVICE_NAME) ---")
+	$(call log, "Target DB: $(DB_NAME) on $(DB_HOST):$(DB_PORT)")
+	$(call log, "Container: $(DB_CONTAINER_NAME)")
+	$(call log, "Migrations: $(MIGRATIONS_DIR)")
 
-# 	--- Tools ---
-.PHONY: tools  req-win-tools opt-win-tools
-tools:
-	irm get.scoop.sh | iex
+# 	--- Tools --- 
+.PHONY: go-win-tools req-win-tools opt-win-tools
+go-win-tools:
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.2
 	go install github.com/golang/mock/mockgen@v1.6.0
 	go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.26.0
@@ -137,6 +144,7 @@ tools:
 	go install github.com/pressly/goose/v3/cmd/goose@latest
 
 req-win-tools:
+	irm get.scoop.sh | iex
 	scoop install pwsh
 	scoop install yq
 

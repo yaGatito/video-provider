@@ -6,20 +6,17 @@ import (
 	"log"
 	"net/http"
 	"os"
+	_ "video-provider/docs"
+	config "video-provider/internal/pkg/config"
 	logger "video-provider/internal/pkg/middleware"
 	httpadapter "video-provider/internal/video-service/adapters/http"
 	"video-provider/internal/video-service/adapters/idgen"
 	"video-provider/internal/video-service/adapters/postgres"
 	"video-provider/internal/video-service/app"
 
-	"github.com/joho/godotenv"
-
-	_ "video-provider/internal/video-service/docs"
-
-	config "video-provider/internal/pkg/config"
-
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/joho/godotenv"
 )
 
 const configName = "video-service"
@@ -62,11 +59,10 @@ func run() error {
 	}
 	defer pool.Close()
 
-	videoRepository := postgres.NewVideoRepoPostgreSQL(pool)
-
 	idGen := idgen.New()
 	mwLog := logger.NewMiddlewareLogger(os.Stdout, "[VIDSVC]")
 
+	videoRepository := postgres.NewVideoRepoPostgreSQL(pool)
 	videoService := app.NewVideoInteractor(videoRepository)
 	videoHandler := httpadapter.NewVideoHandler(videoService, idGen, mwLog.Log)
 
@@ -74,7 +70,7 @@ func run() error {
 	router.Use(mwLog.LoggingMiddleware)
 	httpadapter.SetupRouter(router, videoHandler)
 
-	mwLog.Log.Printf("Server successfully started")
+	log.Printf("ideos-service starting on port %s", cfg.Api.Port)
 	err = http.ListenAndServe(":"+cfg.Api.Port, router)
 	if err != nil {
 		return fmt.Errorf("failed to start server: %w", err)

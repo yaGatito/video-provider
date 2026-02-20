@@ -6,6 +6,8 @@ import (
 	"time"
 	"video-provider/internal/user-service/domain"
 	"video-provider/internal/user-service/ports"
+
+	"github.com/google/uuid"
 )
 
 type SQLUserRepository struct {
@@ -19,15 +21,15 @@ func NewSQLUserRepository(db *sql.DB) *SQLUserRepository {
 	return &SQLUserRepository{DB: db}
 }
 
-func (r *SQLUserRepository) Create(user *domain.User, password string, passwordSalt string) (int64, error) {
+func (r *SQLUserRepository) Create(user *domain.User, password string, passwordSalt string) (uuid.UUID, error) {
 	res, err := r.DB.Exec(`INSERT INTO users (name, lastname, email, passwordHash, passwordSalt, createdAt, status, isAdmin) VALUES(?, ?, ?, ?, ?, NOW(), ?, ?)`, user.Name, user.LastName, user.Email, password, passwordSalt, user.Status, user.IsAdmin)
 	if err != nil {
-		return 0, err
+		return uuid.UUID{}, err
 	}
 	return res.LastInsertId()
 }
 
-func (r *SQLUserRepository) FindByID(id int64) (*domain.User, error) {
+func (r *SQLUserRepository) FindByID(id uuid.UUID) (*domain.User, error) {
 	var user domain.User
 	var createdAt string
 	err := r.DB.QueryRow(`SELECT name, lastname, email, createdAt FROM users WHERE id = ?`, id).Scan(&user.Name, &user.LastName, &user.Email, &createdAt)

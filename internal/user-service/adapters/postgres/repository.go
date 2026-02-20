@@ -8,6 +8,7 @@ import (
 	"video-provider/internal/user-service/domain"
 	"video-provider/internal/user-service/ports"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -24,7 +25,7 @@ func NewPostgresUserRepository(dbConn postgres.DBTX) *PostgresUserRepository {
 	}
 }
 
-func (r *PostgresUserRepository) Create(user *domain.User, passwordHash string, passwordSalt string) (int64, error) {
+func (r *PostgresUserRepository) Create(user domain.User, passwordHash string, passwordSalt string) (uuid.UUID, error) {
 	params := postgres.CreateUserParams{
 		Name:         user.Name,
 		Lastname:     user.LastName,
@@ -39,12 +40,12 @@ func (r *PostgresUserRepository) Create(user *domain.User, passwordHash string, 
 	id, err := r.q.CreateUser(context.Background(), params)
 	if err != nil {
 		log.Printf("Error creating user: %v", err)
-		return 0, err
+		return uuid.UUID{}, err
 	}
 	return id, nil
 }
 
-func (r *PostgresUserRepository) FindByID(id int64) (*domain.User, error) {
+func (r *PostgresUserRepository) FindByID(id uuid.UUID) (*domain.User, error) {
 	row, err := r.q.GetUser(context.Background(), id)
 	if err != nil {
 		log.Printf("Error finding user by ID: %v", err)

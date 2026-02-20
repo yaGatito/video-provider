@@ -13,12 +13,12 @@ FROM alpine:latest
 
 WORKDIR /app
 
-COPY --from=builder /app/user-service .
+COPY --from=builder /app/video-service .
 COPY config/app.yml config/app.yml
 # Optional if env is used
 COPY .env .env
 
 # Expose port (adjust if needed after checking app.go)
-EXPOSE 8081
+EXPOSE 8080
 
-CMD ["./user-service"]
+CMD ["./cmd/video-service"]

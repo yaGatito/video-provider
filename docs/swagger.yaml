@@ -20,13 +20,86 @@ definitions:
       topic:
         type: string
     type: object
-host: localhost:8080
+  httpadp.createUserRequest:
+    properties:
+      email:
+        type: string
+      lastname:
+        type: string
+      name:
+        type: string
+      password:
+        type: string
+    type: object
+  httpadp.serviceErrorResponse:
+    properties:
+      code:
+        type: string
+      payload: {}
+    type: object
+host: localhost:8081
 info:
   contact: {}
-  description: Service for managing video content.
-  title: Video Service API
+  description: Service for managing users.
+  title: User Service API
   version: "1.0"
 paths:
+  /v1/users:
+    post:
+      consumes:
+      - application/json
+      description: Create a new user and return the created user's ID. Example ID
+      parameters:
+      - description: Create user payload
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/httpadp.createUserRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: 'created user id (example: 123e4567-e89b-12d3-a456-426614174000)'
+          schema:
+            type: string
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpadp.serviceErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httpadp.serviceErrorResponse'
+      summary: Create a new user
+      tags:
+      - Users
+  /v1/users/{id}:
+    get:
+      description: Retrieve user details by ID. The ID can be provided as a
+      parameters:
+      - description: 'User ID (example: 123e4567-e89b-12d3-a456-426614174000)'
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema: {}
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/httpadp.serviceErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/httpadp.serviceErrorResponse'
+      summary: Get user by ID
+      tags:
+      - Users
   /v1/videos/{videoID}:
     get:
       description: Returns details of a single video by its unique identifier

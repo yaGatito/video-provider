@@ -18,9 +18,6 @@ import (
 )
 
 const (
-	PathVarVideoID     = "videoID"
-	PathVarPublisherID = "publisherID"
-
 	URLParamSearch = "query"
 	URLParamLimit  = "limit"
 	URLParamOffset = "offset"
