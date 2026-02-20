@@ -4,10 +4,12 @@ import (
 	"regexp"
 	"time"
 	"video-provider/internal/user-service/shared"
+
+	"github.com/google/uuid"
 )
 
 type User struct {
-	ID        int64
+	ID        uuid.UUID
 	Email     string
 	Name      string
 	LastName  string
@@ -66,11 +68,10 @@ func (p Password) Validate() error {
 	passRegex := regexp.MustCompile(`^[a-zA-Z0-9]{8,255}$`)
 
 	matchString := passRegex.MatchString(string(p))
-	if matchString == true {
+	if matchString {
 		return nil
 	} else {
 		return shared.ValidationError{
-			//Code:       shared.ServiceErrorCodeInvalidFormat,
 			Violations: []shared.FieldViolationError{{ViolationCode: shared.ViolationCodeInvalidFormat, ViolatedField: shared.ViolatedFieldPassword}},
 		}
 	}

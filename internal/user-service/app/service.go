@@ -6,6 +6,8 @@ import (
 	"time"
 	"video-provider/internal/user-service/domain"
 	"video-provider/internal/user-service/ports"
+
+	"github.com/google/uuid"
 )
 
 type RegisterUserCommand struct {
@@ -29,40 +31,40 @@ type UserInteractor interface {
 
 type UserService struct {
 	Repo ports.UserRepository
+	log  log.Logger
 }
 
 func NewUserService(repo ports.UserRepository) UserService {
 	return UserService{Repo: repo}
 }
 
-func (ui UserService) Register(cmd RegisterUserCommand) (int64, error) {
+func (us *UserService) Register(cmd RegisterUserCommand) (uuid.UUID, error) {
 	user, err := domain.NewUser(cmd.Email, cmd.Name, cmd.Lastname)
 	if err != nil {
-		return -1, err
+		return uuid.UUID{}, err
 	}
 	fmt.Println("Received RegisterUserCommand with valid email", user.Email)
 
 	pass := domain.Password(cmd.Password)
 	if err = pass.Validate(); err != nil {
-		return -1, err
+		return uuid.UUID{}, fmt.Errorf("error validating user: %w", err)
 	}
 
-	// TODO: use caching mechanism
+	// TODO: use hashing mechanism
 	var passHash = string(pass)
 	var passSalt = string(pass)
 
-	id, err := ui.Repo.Create(user, passHash, passSalt)
+	id, err := us.Repo.Create(user, passHash, passSalt)
 	if err != nil {
-		log.Printf("Error creating user: %v\n", err)
-		return 0, err
+		return uuid.UUID{}, fmt.Errorf("error creating user: %w", err)
 	}
 
 	log.Printf("User created and saved into DB with ID: %d\n", id)
 	return id, nil
 }
 
-func (ui UserService) Get(id int64) (GetUserResult, error) {
-	user, err := ui.Repo.FindByID(id)
+func (us *UserService) Get(id uuid.UUID) (GetUserResult, error) {
+	user, err := us.Repo.FindByID(id)
 	if err != nil {
 		log.Printf("Error retrieving user with ID %d: %v\n", id, err)
 		return GetUserResult{}, err
