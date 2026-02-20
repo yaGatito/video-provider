@@ -44,8 +44,6 @@ SWAG := swag.exe
 .PHONY: run
 run:
 	@echo "Checking config: $(CONFIG_PATH)..."
-	@echo "Starting service with DB: $(DB_NAME)"
-	@echo "Container name will be: $(DB_CONTAINER_NAME)"
 	go run cmd/$(CONFIG)-service/app.go -config=$(CONFIG_PATH)
 
 .PHONY: generate
@@ -59,13 +57,14 @@ lint:
 
 .PHONY: swag
 swag: 
+	@echo "Swagger generate: $(MAIN)"
+	@echo "Swagger output: internal/$(CONFIG)-service/docs"
 	${SWAG} init -g $(MAIN) -o internal/$(CONFIG)-service/docs
-	@echo "Swagger docs generated"
 
 .PHONY: sqlc
 sqlc:
+	@echo "SQLC generate by file: internal/$(CONFIG)-service/adapters/postgres/sqlc.yml"
 	$(SQLC) generate -f "internal/$(CONFIG)-service/adapters/postgres/sqlc.yml
-	@echo "SQLC generated"
 
 .PHONY: mocks
 mocks:
