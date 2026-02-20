@@ -20,7 +20,8 @@ const Home: React.FC = () => {
   const [videos, setVideos] = useState<Video[]>([]);
 
   useEffect(() => {
-    axios.get<VideoResponse>('/api/videos')
+    const apiUrl = process.env.REACT_APP_API_URL;
+    axios.get<VideoResponse>(`${apiUrl}/api/videos`)
       .then((response: AxiosResponse<VideoResponse>) => {
         setVideos(response.data.videos);
       })
@@ -31,17 +32,20 @@ const Home: React.FC = () => {
 
   return (
     <div className="home">
-      <h1>Watch UA</h1>
+      <h1>🎬 Watch UA</h1>
+      <p>Discover amazing video content</p>
       <div className="video-list">
         {videos.map(video => (
           <div key={video.id} className="video-card" onClick={() => window.location.href = `/video/${video.id}`}>
             <img src={video.previewImage} alt={video.title} />
-            <h2>{video.title}</h2>
-            <p>{video.description}</p>
-            <div className="video-stats">
-              <span>{video.likes} Likes</span>
-              <span>{video.dislikes} Dislikes</span>
-              <span>{video.comments} Comments</span>
+            <div className="video-content">
+              <h2>{video.title}</h2>
+              <p>{video.description}</p>
+              <div className="video-stats">
+                <span>👍 {video.likes}</span>
+                <span>👎 {video.dislikes}</span>
+                <span>💬 {video.comments}</span>
+              </div>
             </div>
           </div>
         ))}

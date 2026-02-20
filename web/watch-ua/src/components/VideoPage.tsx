@@ -18,7 +18,8 @@ const VideoPage: React.FC = () => {
     const [video, setVideo] = useState<Video | null>(null);
 
     useEffect(() => {
-        axios.get<Video>(`/api/videos/${id}`)
+        const apiUrl = process.env.REACT_APP_API_URL;
+        axios.get<Video>(`${apiUrl}/api/videos/${id}`)
             .then((response: AxiosResponse<Video>) => {
                 setVideo(response.data);
             })
@@ -27,17 +28,24 @@ const VideoPage: React.FC = () => {
             });
     }, [id]);
 
-    if (!video) return <div>Loading...</div>;
+    if (!video) return <div className="loading">Loading video...</div>;
 
     return (
         <div className="video-page">
-            <h1>{video.title}</h1>
-            <img src={video.previewImage} alt={video.title} />
-            <p>{video.description}</p>
-            <div className="video-stats">
-                <span>{video.likes} Likes</span>
-                <span>{video.dislikes} Dislikes</span>
-                <span>{video.comments} Comments</span>
+            <div className="video-page-container">
+                <div className="video-page-header">
+                    <a href="/" className="back-button">← Back to Videos</a>
+                    <h1>{video.title}</h1>
+                </div>
+                <div className="video-page-content">
+                    <img src={video.previewImage} alt={video.title} />
+                    <p>{video.description}</p>
+                    <div className="video-stats">
+                        <span>👍 {video.likes} Likes</span>
+                        <span>👎 {video.dislikes} Dislikes</span>
+                        <span>💬 {video.comments} Comments</span>
+                    </div>
+                </div>
             </div>
         </div>
     );
