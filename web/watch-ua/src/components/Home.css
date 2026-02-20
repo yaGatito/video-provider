@@ -1,0 +1,46 @@
+.home {
+  text-align: center;
+  margin-top: 50px;
+}
+
+.video-list {
+  display: flex;
+  justify-content: space-around;
+  flex-wrap: wrap;
+}
+
+.video-card {
+  width: 25%;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  margin-bottom: 20px;
+  padding: 10px;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.video-card:hover {
+  transform: translateY(-5px);
+}
+
+.video-card img {
+  width: 100%;
+  border-radius: 8px;
+  margin-bottom: 10px;
+}
+
+.video-card h2 {
+  font-size: 1.5rem;
+  margin-bottom: 10px;
+}
+
+.video-card p {
+  font-size: 1rem;
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.video-stats span {
+  margin-right: 20px;
+  font-weight: bold;
+}

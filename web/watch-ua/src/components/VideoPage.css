@@ -1,0 +1,26 @@
+.video-page {
+  text-align: center;
+  margin-top: 50px;
+}
+
+.video-page img {
+  width: 80%;
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+
+.video-page h1 {
+  font-size: 2rem;
+  margin-bottom: 20px;
+}
+
+.video-page p {
+  font-size: 1.2rem;
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.video-stats span {
+  margin-right: 20px;
+  font-weight: bold;
+}
