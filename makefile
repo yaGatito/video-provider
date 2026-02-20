@@ -132,10 +132,9 @@ db-status:
 	@echo "Container: $(DB_CONTAINER_NAME)"
 	@echo "Migrations: $(MIGRATIONS_DIR)"
 
-# 	--- Tools ---
-.PHONY: tools  req-win-tools opt-win-tools
-tools:
-	irm get.scoop.sh | iex
+# 	--- Tools --- 
+.PHONY: go-win-tools req-win-tools opt-win-tools
+go-win-tools:
 	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.2
 	go install github.com/golang/mock/mockgen@v1.6.0
 	go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.26.0
@@ -143,6 +142,7 @@ tools:
 	go install github.com/pressly/goose/v3/cmd/goose@latest
 
 req-win-tools:
+	irm get.scoop.sh | iex
 	scoop install pwsh
 	scoop install yq
 
