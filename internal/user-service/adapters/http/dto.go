@@ -48,7 +48,7 @@ func (r createUserRequest) validate() error {
 	return nil
 }
 
-// normalize normalizes the user request data. 
+// normalize normalizes the user request data.
 func (r createUserRequest) normalize() {
 	r.Email = strings.TrimSpace(strings.ToLower(r.Email))
 	r.Name = strings.TrimSpace(r.Name)
@@ -61,4 +61,3 @@ type serviceErrorResponse struct {
 	Code    string `json:"code"`
 	Payload any    `json:"payload,omitempty"`
 }
-
