@@ -6,11 +6,13 @@ package postgres
 
 import (
 	"context"
+
+	"github.com/google/uuid"
 )
 
 type Querier interface {
-	CreateUser(ctx context.Context, arg CreateUserParams) (int64, error)
-	GetUser(ctx context.Context, id int64) (User, error)
+	CreateUser(ctx context.Context, arg CreateUserParams) (uuid.UUID, error)
+	GetUser(ctx context.Context, id uuid.UUID) (User, error)
 }
 
 var _ Querier = (*Queries)(nil)

@@ -26,6 +26,7 @@ DB_HOST      	:= $(call get-cfg, '.db.host')
 DB_PORT      	:= $(call get-cfg, '.db.port')
 DB_MAX_CONN 	:= $(call get-cfg, '.db.maxconns')
 MIGRATIONS_DIR 	:= $(call get-cfg, '.db.migrationdir')
+DB_URL := $(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)
 
 DB_CONTAINER_NAME := $(DB_NAME)-$(DB_VENDOR)-$(DB_VERSION)
 MAIN = cmd/$(CONFIG)-service/app.go
@@ -69,14 +70,14 @@ sqlc:
 .PHONY: mocks
 mocks:
 ifeq ("$(CONFIG)","video")
-	$(MOCKGEN) -source="./internal/$(CONFIG)-service/app/video_service.go" -destination="./internal/app/mock/video_service_mock.go" -mock_names=VideoService=MockVideoService
-	$(MOCKGEN) -source="./internal/$(CONFIG)-service/ports/video_repo.go" -destination="./internal/ports/mock/video_repo_mock.go" -mock_names=VideoRepository=MockVideoRepository
-	$(MOCKGEN) -source="./internal/$(CONFIG)-service/ports/id_gen.go" -destination="./internal/ports/mock/id_gen_mock.go" -mock_names=IDGen=MockIDGen
+	$(MOCKGEN) -source="./internal/$(CONFIG)-service/app/video_service.go" -destination="./internal/$(CONFIG)-service/app/mock/video_service_mock.go" -mock_names=VideoService=MockVideoService
+	$(MOCKGEN) -source="./internal/$(CONFIG)-service/ports/video_repo.go" -destination="./internal/$(CONFIG)-service/ports/mock/video_repo_mock.go" -mock_names=VideoRepository=MockVideoRepository
+	$(MOCKGEN) -source="./internal/$(CONFIG)-service/ports/id_gen.go" -destination="./internal/$(CONFIG)-service/ports/mock/id_gen_mock.go" -mock_names=IDGen=MockIDGen
 	@echo "Video-service mocks generated"
 endif
 
 ifeq ("$(CONFIG)","user")
-	$(MOCKGEN) -source="./internal/$(CONFIG)-service/ports/user_repo.go" -destination="./internal/ports/mock/user_repo_mock.go" -mock_names=UserRepository=MockUserRepository
+	$(MOCKGEN) -source="./internal/$(CONFIG)-service/ports/user_repo.go" -destination="./internal/$(CONFIG)-service/ports/mock/user_repo_mock.go" -mock_names=UserRepository=MockUserRepository
 	@echo "User-service mocks generated"
 endif
 
@@ -109,15 +110,21 @@ db-init:
 	@echo "CreateDB for $(DB_NAME)"
 	$(MAKE) migrate-up
 
+#   --- Database migrations ---
 .PHONY: migrate-up
 migrate-up:
-	goose -dir "$(MIGRATIONS_DIR)" postgres "$(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)" up
+	goose -dir "$(MIGRATIONS_DIR)" postgres "" up
 	@echo "Migrate-up finished"
 
 .PHONY: migrate-down
 migrate-down:
 	goose -dir "$(MIGRATIONS_DIR)" postgres "$(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)" down
 	@echo "Migrate-down finished"
+
+.PHONY: migrate-init
+migrate-init:	
+	goose -dir "$(MIGRATIONS_DIR)" -s create init sql
+	@echo "Migrate-init finished"
 
 .PHONY: db-status
 db-status:
