@@ -11,3 +11,5 @@ db:
   vendor: postgres
   version: 18-alpine
   migrationdir: "internal/user-service/adapters/postgres/sql/migrations"
+  # used by the service to connect to the database
+  url: "$1://$2:$3@$4:$5/$6?sslmode=disable&pool_max_conns=$7&pool_max_conn_lifetime=1h30m"
