@@ -9,6 +9,7 @@ import (
 	domain "video-provider/internal/user-service/domain"
 
 	gomock "github.com/golang/mock/gomock"
+	uuid "github.com/google/uuid"
 )
 
 // MockUserRepository is a mock of UserRepository interface.
@@ -35,10 +36,10 @@ func (m *MockUserRepository) EXPECT() *MockUserRepositoryMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockUserRepository) Create(user *domain.User, passwordHash, passwordSalt string) (int64, error) {
+func (m *MockUserRepository) Create(user *domain.User, passwordHash, passwordSalt string) (uuid.UUID, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", user, passwordHash, passwordSalt)
-	ret0, _ := ret[0].(int64)
+	ret0, _ := ret[0].(uuid.UUID)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -50,7 +51,7 @@ func (mr *MockUserRepositoryMockRecorder) Create(user, passwordHash, passwordSal
 }
 
 // FindByID mocks base method.
-func (m *MockUserRepository) FindByID(id int64) (*domain.User, error) {
+func (m *MockUserRepository) FindByID(id uuid.UUID) (*domain.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FindByID", id)
 	ret0, _ := ret[0].(*domain.User)

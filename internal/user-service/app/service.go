@@ -25,8 +25,8 @@ type GetUserResult struct {
 }
 
 type UserInteractor interface {
-	Register(cmd RegisterUserCommand) (int64, error)
-	Get(id int64) (GetUserResult, error)
+	Register(cmd RegisterUserCommand) (uuid.UUID, error)
+	Get(id uuid.UUID) (GetUserResult, error)
 }
 
 type UserService struct {
@@ -59,14 +59,14 @@ func (us *UserService) Register(cmd RegisterUserCommand) (uuid.UUID, error) {
 		return uuid.UUID{}, fmt.Errorf("error creating user: %w", err)
 	}
 
-	log.Printf("User created and saved into DB with ID: %d\n", id)
+	log.Printf("User created and saved into DB with ID: %s\n", id.String())
 	return id, nil
 }
 
 func (us *UserService) Get(id uuid.UUID) (GetUserResult, error) {
 	user, err := us.Repo.FindByID(id)
 	if err != nil {
-		log.Printf("Error retrieving user with ID %d: %v\n", id, err)
+		log.Printf("Error retrieving user with ID %s: %v\n", id.String(), err)
 		return GetUserResult{}, err
 	}
 	return GetUserResult{

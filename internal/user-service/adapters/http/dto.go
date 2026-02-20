@@ -17,57 +17,39 @@ type createUserRequest struct {
 // validate createUserRequest validates the createUserRequest fields.
 // It checks for empty fields, length constraints, and returns a validationError
 func (r createUserRequest) validate() error {
-	var v []shared.FieldViolationError
-
 	emailLen := len(r.Email)
 	nameLen := len(r.Name)
 	lastNameLen := len(r.LastName)
 	passwordLen := len(r.Password)
 
+	msgs := map[string][]string{}
+
 	if emailLen == 0 {
-		v = append(v, shared.FieldViolationError{
-			ViolatedField: shared.ViolatedFieldEmail, ViolationCode: shared.ViolationCodeEmpty, Message: "Email не може бути порожнім",
-		})
+		msgs["email"] = append(msgs["email"], "Email не може бути порожнім")
 	}
 	if emailLen > 100 {
-		v = append(v, shared.FieldViolationError{
-			ViolatedField: shared.ViolatedFieldEmail, ViolationCode: shared.ViolationCodeTooLong, Message: "Email не може бути довшим за 100 символів",
-		})
+		msgs["email"] = append(msgs["email"], "Email не може бути довшим за 100 символів")
 	}
 	if nameLen == 0 {
-		v = append(v, shared.FieldViolationError{
-			ViolatedField: shared.ViolatedFieldName, ViolationCode: shared.ViolationCodeEmpty, Message: "Ім'я не може бути порожнім",
-		})
+		msgs["name"] = append(msgs["name"], "Ім'я не може бути порожнім")
 	}
 	if nameLen > 50 {
-		v = append(v, shared.FieldViolationError{
-			ViolatedField: shared.ViolatedFieldName, ViolationCode: shared.ViolationCodeTooLong, Message: "Ім'я не може бути довшим за 50 символів",
-		})
+		msgs["name"] = append(msgs["name"], "Ім'я не може бути довшим за 50 символів")
 	}
 	if lastNameLen == 0 {
-		v = append(v, shared.FieldViolationError{
-			ViolatedField: shared.ViolatedFieldLastName, ViolationCode: shared.ViolationCodeEmpty, Message: "Прізвище не може бути порожнім",
-		})
+		msgs["lastname"] = append(msgs["lastname"], "Прізвище не може бути порожнім")
 	}
 	if lastNameLen > 100 {
-		v = append(v, shared.FieldViolationError{
-			ViolatedField: shared.ViolatedFieldLastName, ViolationCode: shared.ViolationCodeTooLong, Message: "Прізвище не може бути довшим за 100 символів",
-		})
+		msgs["lastname"] = append(msgs["lastname"], "Прізвище не може бути довшим за 100 символів")
 	}
 	if passwordLen < 8 {
-		v = append(v, shared.FieldViolationError{
-			ViolatedField: shared.ViolatedFieldPassword, ViolationCode: shared.ViolationCodeTooShort, Message: "Пароль має бути не менше 8 символів",
-		})
+		msgs["password"] = append(msgs["password"], "Пароль має бути не менше 8 символів")
 	}
 	if passwordLen > 100 {
-		v = append(v, shared.FieldViolationError{
-			ViolatedField: shared.ViolatedFieldPassword, ViolationCode: shared.ViolationCodeTooLong, Message: "Пароль не може бути довшим за 100 символів",
-		})
+		msgs["password"] = append(msgs["password"], "Пароль не може бути довшим за 100 символів")
 	}
-	if len(v) > 0 {
-		return shared.ValidationError{
-			Violations: v,
-		}
+	if len(msgs) > 0 {
+		return shared.ValidationError{Messages: msgs}
 	}
 	return nil
 }

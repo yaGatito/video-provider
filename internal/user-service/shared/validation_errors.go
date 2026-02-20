@@ -1,18 +1,13 @@
 package shared
 
 type ValidationError struct {
-	Violations []FieldViolationError `json:"violations"`
+	// Messages maps field names to a list of human-readable error messages.
+	Messages map[string][]string `json:"messages"`
 }
 
-// Error implements the error interface for validationError.
+// Error implements the error interface for ValidationError.
 func (e ValidationError) Error() string {
 	return ServiceErrorCodeValidationError
-}
-
-type FieldViolationError struct {
-	ViolatedField string `json:"field"`
-	ViolationCode string `json:"code"`
-	Message       string `json:"message"`
 }
 
 const (
@@ -30,18 +25,4 @@ const (
 
 	// ServiceErrorCodeValidationError represents a validation error.
 	ServiceErrorCodeValidationError string = "VALIDATION_ERROR"
-)
-
-const (
-	ViolatedFieldEmail    string = "email"
-	ViolatedFieldName     string = "name"
-	ViolatedFieldLastName string = "lastname"
-	ViolatedFieldPassword string = "password"
-)
-
-const (
-	ViolationCodeEmpty         string = "EMPTY"
-	ViolationCodeTooShort      string = "TOO_SHORT"
-	ViolationCodeTooLong       string = "TOO_LONG"
-	ViolationCodeInvalidFormat string = "INVALID_FORMAT"
 )

@@ -43,9 +43,14 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var vErr shared.ValidationError
-	if err := createUserRequestData.validate(); err != nil && errors.As(err, &vErr) {
-		log.Printf("createUserRequestData validation error: %v", err)
+	if err := createUserRequestData.validate(); err != nil {
+		var vErr shared.ValidationError
+		if errors.As(err, &vErr) {
+			log.Printf("createUserRequestData validation error: %v", err)
+			writeJSON(w, http.StatusBadRequest, serviceErrorResponse{Code: shared.ServiceErrorCodeValidationError, Payload: vErr})
+			return
+		}
+		log.Printf("createUserRequestData validation unknown error: %v", err)
 		writeJSON(w, http.StatusBadRequest, serviceErrorResponse{Code: shared.ServiceErrorCodeInvalidRequest})
 		return
 	}
@@ -60,12 +65,14 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	})
 
 	if err != nil {
-		// if errors.As(err, http.ErrLineTooLong) {
+		var vErr shared.ValidationError
+		if errors.As(err, &vErr) {
+			log.Printf("Error registering user (validation): %v", err)
+			writeJSON(w, http.StatusBadRequest, serviceErrorResponse{Code: shared.ServiceErrorCodeValidationError, Payload: vErr})
+			return
+		}
 		log.Printf("Error registering user: %v", err)
-		writeJSON(w, http.StatusBadRequest, serviceErrorResponse{Code: shared.ServiceErrorCodeInvalidRequest})
-		// } else {
-		// writeJSON(w, http.StatusInternalServerError, serviceErrorResponse{Code: shared.ServiceErrorCodeInternalError})
-		// }
+		writeJSON(w, http.StatusInternalServerError, serviceErrorResponse{Code: shared.ServiceErrorCodeInternalError})
 		return
 	}
 
@@ -96,23 +103,23 @@ func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
 	id, err := uuid.Parse(idStr)
 	if err != nil {
 		writeJSON(w, http.StatusBadRequest, serviceErrorResponse{Code: shared.ServiceErrorCodeInvalidRequest})
-		log.Printf("Error encoding user response: %v", err)
+		log.Printf("Invalid user id in path: %v", err)
 		return
 	}
-	log.Printf("Find by id: %d", id)
+	log.Printf("Find by id: %s", id.String())
 
 	getUserResult, err := h.UserInteractor.Get(id)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, serviceErrorResponse{Code: shared.ServiceErrorCodeNotFound})
+		writeJSON(w, http.StatusNotFound, serviceErrorResponse{Code: shared.ServiceErrorCodeNotFound})
 		log.Printf("Error retrieving user: %v", err)
 		return
 	}
-	log.Printf("User by id: %d found! - name: %s, lastname: %s\n", id, getUserResult.Name, getUserResult.Lastname)
+	log.Printf("User by id: %s found! - name: %s, lastname: %s\n", id.String(), getUserResult.Name, getUserResult.Lastname)
 
 	err = json.NewEncoder(w).Encode(getUserResult)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, serviceErrorResponse{Code: shared.ServiceErrorCodeNotFound})
-		log.Printf("Error retrieving user: %v", err)
+		writeJSON(w, http.StatusInternalServerError, serviceErrorResponse{Code: shared.ServiceErrorCodeInternalError})
+		log.Printf("Error encoding user response: %v", err)
 		return
 	}
 	log.Println("Response were written successfully")

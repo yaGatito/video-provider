@@ -8,6 +8,9 @@ import (
 )
 
 const (
+	PathVarVideoID     = "videoID"
+	PathVarPublisherID = "publisherID"
+
 	RouteVideo           = "/v1/videos/{" + PathVarVideoID + "}"
 	RoutePublisherVideos = "/v1/videos/pub/{" + PathVarPublisherID + "}"
 	RouteVideoSearch     = "/v1/videos/search/"
@@ -26,5 +29,5 @@ func SetupRouter(r *mux.Router, h VideoHandler) {
 	r.HandleFunc(RouteVideoSearch, h.SearchGlobal).
 		Methods(http.MethodGet)
 
-	r.PathPrefix("/swagger/").HandlerFunc(httpSwagger.WrapHandler)
+	r.PathPrefix("/v1/videos/swagger/").HandlerFunc(httpSwagger.WrapHandler)
 }

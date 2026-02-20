@@ -19,10 +19,7 @@ type User struct {
 }
 
 func NewUser(email string, name string, lastname string) (*User, error) {
-	var valError = shared.ValidationError{
-		//	Code:       shared.ServiceErrorCodeValidationError,
-		Violations: []shared.FieldViolationError{},
-	}
+	msgs := map[string][]string{}
 
 	// Regex validation
 	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
@@ -30,36 +27,27 @@ func NewUser(email string, name string, lastname string) (*User, error) {
 	lastNameRegex := regexp.MustCompile(`^[a-zA-Z]+$`) // only letters
 
 	if !emailRegex.MatchString(email) {
-		valError.Violations = append(valError.Violations, shared.FieldViolationError{
-			ViolatedField: shared.ViolatedFieldEmail,
-			ViolationCode: shared.ViolationCodeInvalidFormat,
-		})
+		msgs["email"] = append(msgs["email"], "invalid_format")
 	}
 	if !nameRegex.MatchString(name) {
-		valError.Violations = append(valError.Violations, shared.FieldViolationError{
-			ViolatedField: shared.ViolatedFieldName,
-			ViolationCode: shared.ServiceErrorCodeInvalidFormat,
-		})
+		msgs["name"] = append(msgs["name"], "invalid_format")
 	}
 	if !lastNameRegex.MatchString(lastname) {
-		valError.Violations = append(valError.Violations, shared.FieldViolationError{
-			ViolatedField: shared.ViolatedFieldLastName,
-			ViolationCode: shared.ViolationCodeInvalidFormat,
-		})
+		msgs["lastname"] = append(msgs["lastname"], "invalid_format")
 	}
 
-	if len(valError.Violations) > 0 {
-		return &User{
-			Email:     email,
-			Name:      name,
-			LastName:  lastname,
-			CreatedAt: time.Now(),
-			IsAdmin:   false,
-			Status:    "active",
-		}, nil
-	} else {
-		return nil, valError
+	if len(msgs) > 0 {
+		return nil, shared.ValidationError{Messages: msgs}
 	}
+
+	return &User{
+		Email:     email,
+		Name:      name,
+		LastName:  lastname,
+		CreatedAt: time.Now(),
+		IsAdmin:   false,
+		Status:    "active",
+	}, nil
 }
 
 type Password string
@@ -71,8 +59,6 @@ func (p Password) Validate() error {
 	if matchString {
 		return nil
 	} else {
-		return shared.ValidationError{
-			Violations: []shared.FieldViolationError{{ViolationCode: shared.ViolationCodeInvalidFormat, ViolatedField: shared.ViolatedFieldPassword}},
-		}
+		return shared.ValidationError{Messages: map[string][]string{"password": {"invalid_format"}}}
 	}
 }
