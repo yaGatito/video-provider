@@ -36,7 +36,7 @@ func (m *MockUserRepository) EXPECT() *MockUserRepositoryMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockUserRepository) Create(user *domain.User, passwordHash, passwordSalt string) (uuid.UUID, error) {
+func (m *MockUserRepository) Create(user domain.User, passwordHash, passwordSalt string) (uuid.UUID, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Create", user, passwordHash, passwordSalt)
 	ret0, _ := ret[0].(uuid.UUID)

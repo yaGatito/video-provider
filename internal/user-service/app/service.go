@@ -46,7 +46,7 @@ func (us *UserService) Register(cmd RegisterUserCommand) (uuid.UUID, error) {
 	fmt.Println("Received RegisterUserCommand with valid email", user.Email)
 
 	pass := domain.Password(cmd.Password)
-	if err = pass.Validate(); err != nil {
+	if err = pass.ValidatePassword(); err != nil {
 		return uuid.UUID{}, fmt.Errorf("error validating user: %w", err)
 	}
 
