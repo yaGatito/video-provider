@@ -4,10 +4,12 @@ import (
 	"regexp"
 	"time"
 	"video-provider/internal/user-service/shared"
+
+	"github.com/google/uuid"
 )
 
 type User struct {
-	ID        int64
+	ID        uuid.UUID
 	Email     string
 	Name      string
 	LastName  string
@@ -16,62 +18,48 @@ type User struct {
 	Status    string    // "active", "disabled"
 }
 
-func NewUser(email string, name string, lastname string) (*User, error) {
-	var valError = shared.ValidationError{
-		//	Code:       shared.ServiceErrorCodeValidationError,
-		Violations: []shared.FieldViolationError{},
-	}
-
+func NewUser(email string, name string, lastname string) (User, error) {
 	// Regex validation
 	emailRegex := regexp.MustCompile(`^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}$`)
 	nameRegex := regexp.MustCompile(`^[a-zA-Z]+$`)     // only letters
 	lastNameRegex := regexp.MustCompile(`^[a-zA-Z]+$`) // only letters
 
 	if !emailRegex.MatchString(email) {
-		valError.Violations = append(valError.Violations, shared.FieldViolationError{
-			ViolatedField: shared.ViolatedFieldEmail,
-			ViolationCode: shared.ViolationCodeInvalidFormat,
-		})
+		return User{}, shared.ServiceError{
+			Code: shared.InvalidFormatErr,
+			Msg:  "invalid email format"}
 	}
 	if !nameRegex.MatchString(name) {
-		valError.Violations = append(valError.Violations, shared.FieldViolationError{
-			ViolatedField: shared.ViolatedFieldName,
-			ViolationCode: shared.ServiceErrorCodeInvalidFormat,
-		})
+		return User{}, shared.ServiceError{
+			Code: shared.InvalidFormatErr,
+			Msg:  "invalid name format",
+		}
 	}
 	if !lastNameRegex.MatchString(lastname) {
-		valError.Violations = append(valError.Violations, shared.FieldViolationError{
-			ViolatedField: shared.ViolatedFieldLastName,
-			ViolationCode: shared.ViolationCodeInvalidFormat,
-		})
+		return User{}, shared.ServiceError{
+			Code: shared.InvalidFormatErr,
+			Msg:  "invalid lastname format"}
 	}
 
-	if len(valError.Violations) > 0 {
-		return &User{
-			Email:     email,
-			Name:      name,
-			LastName:  lastname,
-			CreatedAt: time.Now(),
-			IsAdmin:   false,
-			Status:    "active",
-		}, nil
-	} else {
-		return nil, valError
-	}
+	return User{
+		Email:     email,
+		Name:      name,
+		LastName:  lastname,
+		CreatedAt: time.Now(),
+		IsAdmin:   false,
+		Status:    "active",
+	}, nil
 }
 
 type Password string
 
-func (p Password) Validate() error {
+func (p Password) ValidatePassword() error {
 	passRegex := regexp.MustCompile(`^[a-zA-Z0-9]{8,255}$`)
 
 	matchString := passRegex.MatchString(string(p))
-	if matchString == true {
+	if matchString {
 		return nil
 	} else {
-		return shared.ValidationError{
-			//Code:       shared.ServiceErrorCodeInvalidFormat,
-			Violations: []shared.FieldViolationError{{ViolationCode: shared.ViolationCodeInvalidFormat, ViolatedField: shared.ViolatedFieldPassword}},
-		}
+		return shared.ServiceError{Code: shared.InvalidFormatErr, Msg: "password must be 8 characters long and contain at least one uppercase letter and "}
 	}
 }
