@@ -1,7 +1,7 @@
+// src/components/Home.js
+
 import React, { useEffect, useState } from 'react';
 import axios, { AxiosResponse } from 'axios';
-import './Home.css';
-
 interface Video {
   id: number;
   title: string;
@@ -31,16 +31,9 @@ const Home: React.FC = () => {
   }, []);
 
   return (
-    <div className="home">
-      <h1>🎬 Watch UA</h1>
+    <div className="home" style={{backgroundColor: '#f7d2c4', backgroundImage: 'linear-gradient(to bottom, #f7d2c4, #ffe6cc)'}}>
+      <h1> Watch UA</h1>
       <p>Discover amazing video content</p>
-      <nav className="menu">
-        <ul>
-          <li><a href="/">Home</a></li>
-          <li><a href="/search">Search</a></li>
-          <li><a href="/register">Register</a></li> {/* Add this line */}
-        </ul>
-      </nav>
       <div className="video-list">
         {videos.map(video => (
           <div key={video.id} className="video-card" onClick={() => window.location.href = `/video/${video.id}`}>
@@ -49,9 +42,9 @@ const Home: React.FC = () => {
               <h2>{video.title}</h2>
               <p>{video.description}</p>
               <div className="video-stats">
-                <span>👍 {video.likes}</span>
-                <span>👎 {video.dislikes}</span>
-                <span>💬 {video.comments}</span>
+                <span> 👍 {video.likes}</span>
+                <span> 👎 {video.dislikes}</span>
+                <span> 💬 {video.comments}</span>
               </div>
             </div>
           </div>
@@ -62,3 +55,4 @@ const Home: React.FC = () => {
 };
 
 export default Home;
+

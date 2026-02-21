@@ -1,4 +1,4 @@
-.register-page {
+.login-page {
   min-height: 100vh;
   background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
   padding: 40px 20px;
@@ -9,7 +9,7 @@
   align-items: center;
 }
 
-.register-page h1 {
+.login-page h1 {
   text-align: center;
   color: #333;
   font-size: 2.5rem;
@@ -18,7 +18,7 @@
   font-weight: 700;
 }
 
-.register-page form {
+.login-page form {
   display: flex;
   flex-direction: column;
   max-width: 400px;
@@ -29,7 +29,7 @@
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
-.register-page input {
+.login-page input {
   width: 100%;
   padding: 12px;
   margin-bottom: 15px;
@@ -42,13 +42,13 @@
   box-sizing: border-box;
 }
 
-.register-page input:focus {
+.login-page input:focus {
   outline: none;
   border-color: #0066cc;
   box-shadow: 0 0 4px rgba(0, 102, 204, 0.3);
 }
 
-.register-page button {
+.login-page button {
   width: 100%;
   padding: 14px;
   border: none;
@@ -61,7 +61,7 @@
   transition: background-color 0.3s ease;
 }
 
-.register-page button:hover {
+.login-page button:hover {
   background-color: #0052a3;
 }
 
@@ -74,4 +74,23 @@
   border: 1px solid #f5c6cb;
   text-align: center;
   font-size: 0.95rem;
+}
+
+.signup-link {
+  text-align: center;
+  color: #333;
+  margin-top: 20px;
+  font-size: 0.95rem;
+}
+
+.signup-link a {
+  color: #0066cc;
+  text-decoration: none;
+  font-weight: bold;
+  transition: color 0.3s ease;
+}
+
+.signup-link a:hover {
+  color: #0052a3;
+  text-decoration: underline;
 }
