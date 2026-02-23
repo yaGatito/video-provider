@@ -67,6 +67,7 @@ func run() error {
 	videoHandler := httpadapter.NewVideoHandler(videoService, idGen, mwLog.Log)
 
 	router := mux.NewRouter()
+	router.Use(logger.CORSMiddleware)
 	router.Use(mwLog.LoggingMiddleware)
 	httpadapter.SetupRouter(router, videoHandler)
 
