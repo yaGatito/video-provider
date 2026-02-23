@@ -42,6 +42,38 @@ GOLANGCI_LINT := golangci-lint
 SWAG := swag.exe
 
 #   --- Common Commands ---
+.PHONY: setup
+setup:
+	$(call log, "Starting user database...")
+	$(MAKE) db-up CONFIG=user
+	timeout /t 5 /nobreak >nul
+	$(call log, "Initializing user database...")
+	$(MAKE) db-init CONFIG=user
+	
+	$(call log, "Starting video database...")
+	$(MAKE) db-up CONFIG=video
+	timeout /t 5 /nobreak >nul
+	$(call log, "Initializing video database...")
+	$(MAKE) db-init CONFIG=video
+	
+	$(call log, "Running migrations for user database...")
+	$(MAKE) migrate-up CONFIG=user
+	
+	$(call log, "Running migrations for video database...")
+	$(MAKE) migrate-up CONFIG=video
+	
+# 	$(call log, "Running user-service...")
+# 	$(MAKE) run CONFIG=user
+
+# 	$(call log, "Running video-service...")
+# 	$(MAKE) run CONFIG=video
+
+.PHONY: front
+front:
+	$(call log, "Starting frontend application...")
+	cd ./web/watch-ua
+	npm start
+
 .PHONY: run
 run:
 	$(call log, "Checking config: $(CONFIG_PATH)...")
