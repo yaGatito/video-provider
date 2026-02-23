@@ -8,13 +8,10 @@ CONFIG ?= local
 SERVICE_NAME = $(CONFIG)-service
 CONFIG_PATH := config/$(SERVICE_NAME).yml
 
-# ifeq (, $(shell which yq))
-# 	$(error "Tool not found: 'yq'.")
-# endif
 
-ifeq ("$(wildcard $(CONFIG_PATH))","")
-	$(error "Config not found: $(CONFIG_PATH)!")
-endif
+# ifeq ("$(wildcard $(CONFIG_PATH))","")
+# 	$(error "Config not found: $(CONFIG_PATH)!")
+# endif
 
 # funcs
 get-cfg = $(shell yq e $(1) $(CONFIG_PATH))
@@ -97,7 +94,7 @@ swag:
 .PHONY: sqlc
 sqlc:
 	$(call log, "SQLC generate by file: internal/$(SERVICE_NAME)/adapters/postgres/sqlc.yml")
-	$(SQLC) generate -f "internal/$(SERVICE_NAME)/adapters/postgres/sqlc.yml
+	$(SQLC) generate -f "internal/$(SERVICE_NAME)/adapters/postgres/sqlc.yml"
 
 .PHONY: mocks
 mocks:
@@ -133,7 +130,7 @@ tests: mocks
 #   --- Docker ---
 .PHONY: db-up 
 db-up:
-	docker run --rm --name $(DB_CONTAINER_NAME) -p $(DB_PORT):$(DB_PORT) -e POSTGRES_USER=$(POSTGRES_USER) -e POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) postgres:$(DB_VERSION) -p $(DB_PORT)
+	docker run --rm -d --name $(DB_CONTAINER_NAME) -p $(DB_PORT):$(DB_PORT) -e POSTGRES_USER=$(POSTGRES_USER) -e POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) postgres:$(DB_VERSION) -p $(DB_PORT)
 	$(call log, "Docker contained started with name $(DB_CONTAINER_NAME) on $(DB_PORT)")
 
 .PHONY: db-init
@@ -183,4 +180,3 @@ req-win-tools:
 opt-win-tools:
 	scoop install fd
 	scoop install ripgrep
-

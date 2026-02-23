@@ -15,6 +15,9 @@ const (
 
 	// ValidationErr represents a validation error.
 	ValidationErr string = "VALIDATION_ERROR"
+
+	// UnauthorizedErr represents an authorization error.
+	UnauthorizedErr string = "UNAUTHORIZED_ERROR"
 )
 
 type ServiceError struct {

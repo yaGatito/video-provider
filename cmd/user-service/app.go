@@ -63,6 +63,7 @@ func run() error {
 	userHandler := httpadapter.NewUserHandler(userInteractor)
 
 	router := mux.NewRouter()
+	router.Use(logger.CORSMiddleware)
 	router.Use(mwLog.LoggingMiddleware)
 	router.HandleFunc("/v1/users", userHandler.Create).Methods("POST")
 	router.HandleFunc("/v1/users/{id}", userHandler.Get).Methods("GET")
