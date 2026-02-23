@@ -2,7 +2,7 @@ package httpadp
 
 import (
 	"strings"
-	"video-provider/internal/user-service/shared"
+	"video-provider/internal/pkg/shared"
 
 	"github.com/go-playground/validator/v10"
 )

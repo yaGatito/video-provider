@@ -5,8 +5,8 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"video-provider/internal/pkg/shared"
 	"video-provider/internal/user-service/app"
-	"video-provider/internal/user-service/shared"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
