@@ -45,14 +45,14 @@ func (r *PostgresUserRepository) Create(user domain.User, passwordHash string, p
 	return id, nil
 }
 
-func (r *PostgresUserRepository) FindByID(id uuid.UUID) (*domain.User, error) {
+func (r *PostgresUserRepository) FindByID(id uuid.UUID) (domain.User, error) {
 	row, err := r.q.GetUserById(context.Background(), id)
 	if err != nil {
 		log.Printf("Error finding user by ID: %v", err)
-		return nil, err
+		return domain.User{}, err
 	}
 
-	return &domain.User{
+	return domain.User{
 		ID:        row.ID,
 		Name:      row.Name,
 		LastName:  row.Lastname,
@@ -63,14 +63,14 @@ func (r *PostgresUserRepository) FindByID(id uuid.UUID) (*domain.User, error) {
 	}, nil
 }
 
-func (r *PostgresUserRepository) FindByEmail(email string) (*domain.User, error) {
+func (r *PostgresUserRepository) FindByEmail(email string) (domain.User, error) {
 	row, err := r.q.GetUserByEmail(context.Background(), email)
 	if err != nil {
 		log.Printf("Error finding user by email: %v", err)
-		return nil, err
+		return domain.User{}, err
 	}
 
-	return &domain.User{
+	return domain.User{
 		ID:        row.ID,
 		Name:      row.Name,
 		LastName:  row.Lastname,
