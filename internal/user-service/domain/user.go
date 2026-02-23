@@ -3,7 +3,7 @@ package domain
 import (
 	"regexp"
 	"time"
-	"video-provider/internal/user-service/shared"
+	"video-provider/internal/pkg/shared"
 
 	"github.com/google/uuid"
 )
