@@ -7,23 +7,19 @@ interface UserLogin {
   password: string;
 }
 
-interface LoginResponse {
-  token: string;
-  message: string;
-}
-
 const Login: React.FC = () => {
-  const [username, setUsername] = useState('');
-  const [password, setPassword] = useState('');
+  const [userData, setUserData] = useState<UserLogin>({ username: '', password: '' });
   const [errorMessage, setErrorMessage] = useState('');
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUserData({ ...userData, [e.target.name]: e.target.value });
+  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    const apiUrl = process.env.REACT_APP_API_URL;
-    axios.post<LoginResponse>(`${apiUrl}/api/login`, { username, password })
-      .then((response: AxiosResponse<LoginResponse>) => {
+    axios.post('http://localhost:8081/v1/login', userData)
+      .then((response: AxiosResponse<{ token: string; message: string }>) => {
         console.log('Login successful:', response.data);
-        // Store token and redirect to home
         localStorage.setItem('authToken', response.data.token);
         window.location.href = '/';
       })
@@ -40,21 +36,22 @@ const Login: React.FC = () => {
       <form onSubmit={handleLogin}>
         <input
           type="text"
+          name="username"
           placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          value={userData.username}
+          onChange={handleChange}
           required
         />
         <input
           type="password"
+          name="password"
           placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          value={userData.password}
+          onChange={handleChange}
           required
         />
         <button type="submit">Login</button>
       </form>
-      <p className="signup-link">Don't have an account? <a href="/register">Sign up here</a></p>
     </div>
   );
 };

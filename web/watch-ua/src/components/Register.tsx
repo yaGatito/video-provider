@@ -3,23 +3,30 @@ import axios, { AxiosResponse } from 'axios';
 import './Register.css';
 
 interface User {
-  username: string;
   email: string;
+  name: string;
+  lastname: string;
   password: string;
 }
 
 const Register: React.FC = () => {
-  const [username, setUsername] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [userData, setUserData] = useState<User>({ email: '', name: '', lastname: '', password: '' });
   const [errorMessage, setErrorMessage] = useState('');
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setUserData({ ...userData, [e.target.name]: e.target.value });
+  };
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
-    axios.post<User>('https://your-api-url.com/api/register', { username, email, password })
+    axios.post('http://localhost:8081/v1/users', userData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
+      }
+    })
       .then((response: AxiosResponse<User>) => {
         console.log('Registration successful:', response.data);
-        // Redirect to home or login page after registration
         window.location.href = '/home';
       })
       .catch((error) => {
@@ -35,23 +42,34 @@ const Register: React.FC = () => {
       <form onSubmit={handleRegister}>
         <input
           type="text"
-          placeholder="Username"
-          value={username}
-          onChange={(e) => setUsername(e.target.value)}
+          name="name"
+          placeholder="First Name"
+          value={userData.name}
+          onChange={handleChange}
+          required
+        />
+        <input
+          type="text"
+          name="lastname"
+          placeholder="Last Name"
+          value={userData.lastname}
+          onChange={handleChange}
           required
         />
         <input
           type="email"
+          name="email"
           placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
+          value={userData.email}
+          onChange={handleChange}
           required
         />
         <input
           type="password"
-          placeholder="Password"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
+          name="password"
+          placeholder="Password (min 8 characters)"
+          value={userData.password}
+          onChange={handleChange}
           required
         />
         <button type="submit">Register</button>

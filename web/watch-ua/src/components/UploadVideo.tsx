@@ -2,43 +2,42 @@ import React, { useState } from 'react';
 import axios, { AxiosResponse } from 'axios';
 import './UploadVideo.css';
 
-interface UploadResponse {
-  id: number;
+interface VideoData {
   title: string;
-  message: string;
+  description?: string;
 }
 
 const UploadVideo: React.FC = () => {
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const [videoFile, setVideoFile] = useState<File | null>(null);
-  const [previewImageFile, setPreviewImageFile] = useState<File | null>(null);
+  const [videoData, setVideoData] = useState<VideoData>({ title: '', description: '' });
   const [uploading, setUploading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
 
-  const handleVideoFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setVideoFile(e.target.files[0]);
-    }
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    const { name, value } = e.target;
+    setVideoData({ ...videoData, [name]: value });
   };
 
-  const handlePreviewImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      setPreviewImageFile(e.target.files[0]);
-    }
-  };
-
-  const handleUpload = (e: React.FormEvent) => {
+  const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!title.trim()) {
+    if (!videoData.title.trim()) {
       setErrorMessage('Please enter a video title');
       return;
     }
 
-    if (!videoFile) {
-      setErrorMessage('Please select a video file');
+    if (!videoData.description || !videoData.description.trim()) {
+      setErrorMessage('Please enter a video description');
+      return;
+    }
+
+    if (videoData.title.length > 48) {
+      setErrorMessage('Video title must not exceed 48 characters');
+      return;
+    }
+
+    if (videoData.description.length > 512) {
+      setErrorMessage('Video description must not exceed 512 characters');
       return;
     }
 
@@ -46,102 +45,63 @@ const UploadVideo: React.FC = () => {
     setErrorMessage('');
     setSuccessMessage('');
 
-    const formData = new FormData();
-    formData.append('title', title);
-    formData.append('description', description);
-    formData.append('video', videoFile);
-    if (previewImageFile) {
-      formData.append('previewImage', previewImageFile);
-    }
+    const requestBody = {
+      topic: videoData.title,
+      description: videoData.description,
+    };
 
-    const apiUrl = process.env.REACT_APP_API_URL;
-    axios.post<UploadResponse>(`${apiUrl}/api/videos/upload`, formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-      },
-    })
-      .then((response: AxiosResponse<UploadResponse>) => {
-        console.log('Video uploaded successfully:', response.data);
-        setSuccessMessage(`Video "${response.data.title}" uploaded successfully!`);
-        setTitle('');
-        setDescription('');
-        setVideoFile(null);
-        setPreviewImageFile(null);
-        // Reset form inputs
-        const videoInput = document.getElementById('videoInput') as HTMLInputElement;
-        const imageInput = document.getElementById('imageInput') as HTMLInputElement;
-        if (videoInput) videoInput.value = '';
-        if (imageInput) imageInput.value = '';
-        // Redirect to home after 2 seconds
-        setTimeout(() => {
-          window.location.href = '/';
-        }, 2000);
-      })
-      .catch((error) => {
-        console.error('There was an error uploading the video!', error);
-        setErrorMessage('Error: ' + (error.response?.data?.message || 'Please try again.'));
-      })
-      .finally(() => {
-        setUploading(false);
-      });
+    try {
+      await axios.post('http://localhost:8080/v1/videos/pub/123e4567-e89b-12d3-a456-426614174000', requestBody);
+      setSuccessMessage(`Video "${videoData.title}" uploaded successfully!`);
+      setTimeout(() => {
+        window.location.href = '/';
+      }, 2000);
+    } catch (error) {
+      console.error('There was an error uploading the video!', error);
+      const message = axios.isAxiosError(error) && error.response?.data?.message ? error.response.data.message : 'Please try again.';
+      setErrorMessage('Error: ' + message);
+    } finally {
+      setUploading(false);
+    }
   };
 
   return (
     <div className="upload-video-page">
       <h1>🎥 Upload Video</h1>
-      
+
       {successMessage && <p className="success-message">{successMessage}</p>}
       {errorMessage && <p className="error-message">{errorMessage}</p>}
-      
+
       <form onSubmit={handleUpload} className="upload-form">
         <div className="form-group">
-          <label htmlFor="title">Video Title *</label>
+          <label htmlFor="title">Video Title * (max 48 characters)</label>
           <input
             id="title"
             type="text"
+            name="title"
             placeholder="Enter video title"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
+            value={videoData.title}
+            onChange={handleChange}
+            maxLength={48}
             required
           />
         </div>
 
         <div className="form-group">
-          <label htmlFor="description">Description</label>
+          <label htmlFor="description">Description *</label>
           <textarea
             id="description"
-            placeholder="Enter video description (optional)"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
+            name="description"
+            placeholder="Enter video description (max 512 characters)"
+            value={videoData.description || ''}
+            onChange={handleChange}
             rows={5}
-          />
-        </div>
-
-        <div className="form-group">
-          <label htmlFor="videoInput">Video File *</label>
-          <input
-            id="videoInput"
-            type="file"
-            accept="video/*"
-            onChange={handleVideoFileChange}
             required
           />
-          {videoFile && <p className="file-name">Selected: {videoFile.name}</p>}
         </div>
 
-        <div className="form-group">
-          <label htmlFor="imageInput">Preview Image</label>
-          <input
-            id="imageInput"
-            type="file"
-            accept="image/*"
-            onChange={handlePreviewImageChange}
-          />
-          {previewImageFile && <p className="file-name">Selected: {previewImageFile.name}</p>}
-        </div>
-
-        <button 
-          type="submit" 
+        <button
+          type="submit"
           className="upload-button"
           disabled={uploading}
         >
