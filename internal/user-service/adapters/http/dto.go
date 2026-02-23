@@ -2,7 +2,9 @@ package httpadp
 
 import (
 	"strings"
-	"video-provider/internal/user-service/shared"
+	"video-provider/internal/pkg/shared"
+
+	"github.com/go-playground/validator/v10"
 )
 
 // createUserRequest represents the data needed to create a new user.
@@ -48,12 +50,14 @@ func (r createUserRequest) validate() error {
 	return nil
 }
 
-// normalize normalizes the user request data. 
+// normalize normalizes the user request data.
 func (r createUserRequest) normalize() {
 	r.Email = strings.TrimSpace(strings.ToLower(r.Email))
 	r.Name = strings.TrimSpace(r.Name)
 	r.LastName = strings.TrimSpace(r.LastName)
-	r.Password = strings.TrimSpace(r.Password)
+	// TODO: check spaces in password and trim them if present.
+	// TODO: refactor validation.
+	// r.Password = strings.TrimSpace(r.Password)
 }
 
 // serviceErrorResponse represents a generic error response from the service.
@@ -62,3 +66,30 @@ type serviceErrorResponse struct {
 	Payload any    `json:"payload,omitempty"`
 }
 
+// loginUserRequest represents the request body for login
+type loginUserRequest struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8,max=50"`
+}
+
+// authResponse represents the response with authentication token
+type authResponse struct {
+	Token string `json:"token"`
+}
+
+// validate checks if the login request is valid
+func (r *loginUserRequest) validate() error {
+	validate := validator.New(validator.WithRequiredStructEnabled())
+
+	err := validate.Struct(r)
+	if err != nil {
+		// Handle validation errors
+		return err
+	}
+	return nil
+}
+
+// normalize normalizes the login request
+func (r *loginUserRequest) normalize() {
+	r.Email = strings.ToLower(r.Email)
+}

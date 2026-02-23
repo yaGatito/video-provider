@@ -12,10 +12,12 @@ import (
 
 type Querier interface {
 	CreateVideo(ctx context.Context, arg CreateVideoParams) (Video, error)
+	GetLatestTopNUploads(ctx context.Context, limit int32) ([]Video, error)
 	GetVideoByID(ctx context.Context, id uuid.UUID) (Video, error)
 	GetVideosByPublisher(ctx context.Context, arg GetVideosByPublisherParams) ([]Video, error)
 	SearchGlobal(ctx context.Context, arg SearchGlobalParams) ([]Video, error)
 	SearchPublisher(ctx context.Context, arg SearchPublisherParams) ([]Video, error)
+	UpdateVideo(ctx context.Context, arg UpdateVideoParams) (Video, error)
 }
 
 var _ Querier = (*Queries)(nil)

@@ -5,8 +5,8 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"video-provider/internal/pkg/shared"
 	"video-provider/internal/user-service/app"
-	"video-provider/internal/user-service/shared"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
@@ -19,6 +19,49 @@ type UserHandler struct {
 
 func NewUserHandler(userInteractor *app.UserService) UserHandler {
 	return UserHandler{UserInteractor: userInteractor}
+}
+
+// Login godoc
+// @Summary      User login
+// @Tags         Users
+// @Description  Authenticate a user and return a JWT token
+// @Accept       json
+// @Produce      json
+// @Param        user  body    loginUserRequest  true  "Login user payload"
+// @Success      200   {object}  authResponse
+// @Failure      400   {object}  serviceErrorResponse
+// @Failure      401   {object}  serviceErrorResponse
+// @Failure      500   {object}  serviceErrorResponse
+// @Router       /v1/users/login [post]
+func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
+	var loginRequestData loginUserRequest
+	if err := json.NewDecoder(r.Body).Decode(&loginRequestData); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	if err := loginRequestData.validate(); err != nil {
+		writeError(w, http.StatusBadRequest, err)
+		return
+	}
+
+	loginRequestData.normalize()
+
+	token, err := h.UserInteractor.Login(loginRequestData.Email, loginRequestData.Password)
+
+	if err != nil {
+		var vErr shared.ServiceError
+		if errors.As(err, &vErr) {
+			log.Printf("Error logging in (validation): %v", err)
+			writeJSON(w, http.StatusBadRequest, serviceErrorResponse{Code: shared.ValidationErr, Payload: vErr})
+			return
+		}
+		log.Printf("Error logging in: %v", err)
+		writeJSON(w, http.StatusUnauthorized, serviceErrorResponse{Code: shared.UnauthorizedErr})
+		return
+	}
+
+	writeJSON(w, http.StatusOK, authResponse{Token: token})
 }
 
 // Create godoc

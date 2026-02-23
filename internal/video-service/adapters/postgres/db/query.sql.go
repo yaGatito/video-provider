@@ -41,6 +41,37 @@ func (q *Queries) CreateVideo(ctx context.Context, arg CreateVideoParams) (Video
 	return i, err
 }
 
+const getLatestTopNUploads = `-- name: GetLatestTopNUploads :many
+SELECT id, publisherid, topic, description, createdat, status FROM videos ORDER BY createdAt DESC LIMIT $1
+`
+
+func (q *Queries) GetLatestTopNUploads(ctx context.Context, limit int32) ([]Video, error) {
+	rows, err := q.db.Query(ctx, getLatestTopNUploads, limit)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Video
+	for rows.Next() {
+		var i Video
+		if err := rows.Scan(
+			&i.ID,
+			&i.Publisherid,
+			&i.Topic,
+			&i.Description,
+			&i.Createdat,
+			&i.Status,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getVideoByID = `-- name: GetVideoByID :one
 SELECT id, publisherid, topic, description, createdat, status FROM videos WHERE id = $1 LIMIT 1
 `
@@ -174,4 +205,33 @@ func (q *Queries) SearchPublisher(ctx context.Context, arg SearchPublisherParams
 		return nil, err
 	}
 	return items, nil
+}
+
+const updateVideo = `-- name: UpdateVideo :one
+UPDATE videos SET
+  topic = $2,
+  description = $3,
+  updatedAt = NOW()
+WHERE id = $1
+RETURNING id, publisherid, topic, description, createdat, status
+`
+
+type UpdateVideoParams struct {
+	ID          uuid.UUID
+	Topic       string
+	Description pgtype.Text
+}
+
+func (q *Queries) UpdateVideo(ctx context.Context, arg UpdateVideoParams) (Video, error) {
+	row := q.db.QueryRow(ctx, updateVideo, arg.ID, arg.Topic, arg.Description)
+	var i Video
+	err := row.Scan(
+		&i.ID,
+		&i.Publisherid,
+		&i.Topic,
+		&i.Description,
+		&i.Createdat,
+		&i.Status,
+	)
+	return i, err
 }

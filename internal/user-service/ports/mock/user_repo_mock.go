@@ -50,11 +50,26 @@ func (mr *MockUserRepositoryMockRecorder) Create(user, passwordHash, passwordSal
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockUserRepository)(nil).Create), user, passwordHash, passwordSalt)
 }
 
+// FindByEmail mocks base method.
+func (m *MockUserRepository) FindByEmail(email string) (domain.User, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "FindByEmail", email)
+	ret0, _ := ret[0].(domain.User)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// FindByEmail indicates an expected call of FindByEmail.
+func (mr *MockUserRepositoryMockRecorder) FindByEmail(email interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByEmail", reflect.TypeOf((*MockUserRepository)(nil).FindByEmail), email)
+}
+
 // FindByID mocks base method.
-func (m *MockUserRepository) FindByID(id uuid.UUID) (*domain.User, error) {
+func (m *MockUserRepository) FindByID(id uuid.UUID) (domain.User, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "FindByID", id)
-	ret0, _ := ret[0].(*domain.User)
+	ret0, _ := ret[0].(domain.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
@@ -63,6 +78,20 @@ func (m *MockUserRepository) FindByID(id uuid.UUID) (*domain.User, error) {
 func (mr *MockUserRepositoryMockRecorder) FindByID(id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockUserRepository)(nil).FindByID), id)
+}
+
+// Update mocks base method.
+func (m *MockUserRepository) Update(user domain.User) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Update", user)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// Update indicates an expected call of Update.
+func (mr *MockUserRepositoryMockRecorder) Update(user interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockUserRepository)(nil).Update), user)
 }
 
 // MockPasswordHasher is a mock of PasswordHasher interface.
