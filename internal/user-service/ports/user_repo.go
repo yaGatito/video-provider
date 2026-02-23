@@ -9,6 +9,7 @@ import (
 type UserRepository interface {
 	Create(user domain.User, passwordHash string, passwordSalt string) (uuid.UUID, error)
 	FindByID(id uuid.UUID) (*domain.User, error)
+	FindByEmail(email string) (*domain.User, error)
 }
 
 type PasswordHasher interface {

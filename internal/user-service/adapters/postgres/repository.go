@@ -46,7 +46,7 @@ func (r *PostgresUserRepository) Create(user domain.User, passwordHash string, p
 }
 
 func (r *PostgresUserRepository) FindByID(id uuid.UUID) (*domain.User, error) {
-	row, err := r.q.GetUser(context.Background(), id)
+	row, err := r.q.GetUserById(context.Background(), id)
 	if err != nil {
 		log.Printf("Error finding user by ID: %v", err)
 		return nil, err
@@ -61,4 +61,40 @@ func (r *PostgresUserRepository) FindByID(id uuid.UUID) (*domain.User, error) {
 		Status:    row.Status,
 		IsAdmin:   row.IsAdmin,
 	}, nil
+}
+
+func (r *PostgresUserRepository) FindByEmail(email string) (*domain.User, error) {
+	row, err := r.q.GetUserByEmail(context.Background(), email)
+	if err != nil {
+		log.Printf("Error finding user by email: %v", err)
+		return nil, err
+	}
+
+	return &domain.User{
+		ID:        row.ID,
+		Name:      row.Name,
+		LastName:  row.Lastname,
+		Email:     row.Email,
+		CreatedAt: row.CreatedAt.Time,
+		Status:    row.Status,
+		IsAdmin:   row.IsAdmin,
+	}, nil
+}
+
+func (r *PostgresUserRepository) Update(user domain.User) error {
+	params := postgres.UpdateUserParams{
+		ID:       user.ID,
+		Name:     user.Name,
+		Lastname: user.LastName,
+		Email:    user.Email,
+		Status:   user.Status,
+		IsAdmin:  user.IsAdmin,
+	}
+
+	err := r.q.UpdateUser(context.Background(), params)
+	if err != nil {
+		log.Printf("Error updating user: %v", err)
+		return err
+	}
+	return nil
 }
