@@ -452,8 +452,8 @@ func (h VideoHandler) toDtoVideo(v domain.Video) VideoResponseBody {
 
 func (h VideoHandler) toDtoVideos(videos []domain.Video) []VideoResponseBody {
 	res := make([]VideoResponseBody, len(videos))
-	for _, v := range videos {
-		res = append(res, h.toDtoVideo(v))
+	for i, v := range videos {
+		res[i] = h.toDtoVideo(v)
 	}
 	return res
 }
