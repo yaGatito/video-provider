@@ -15,57 +15,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/api/videos": {
-            "get": {
-                "description": "Returns all videos with mock data for frontend",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "videos"
-                ],
-                "summary": "Get all videos",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
-        "/api/videos/{id}": {
-            "get": {
-                "description": "Returns a single video by ID with mock data for frontend",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "videos"
-                ],
-                "summary": "Get video by ID",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Video ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
         "/v1/users": {
             "post": {
                 "description": "Create a new user and return the created user's ID. Example ID",
@@ -301,7 +250,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/videos/search": {
+        "/v1/videos/search/": {
             "get": {
                 "description": "Search videos in the entire database by a keyword",
                 "produces": [
@@ -476,11 +425,11 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8081",
+	Host:             "localhost:8080",
 	BasePath:         "/",
 	Schemes:          []string{},
-	Title:            "User Service API",
-	Description:      "Service for managing users.",
+	Title:            "Video Service API",
+	Description:      "Service for managing video content.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

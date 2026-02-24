@@ -19,7 +19,7 @@ const VideoPage: React.FC = () => {
 
     useEffect(() => {
         const apiUrl = process.env.REACT_APP_API_URL;
-        axios.get<Video>(`${apiUrl}/api/videos/${id}`)
+        axios.get<Video>(`${apiUrl}/v1/videos/id/${id}`)
             .then((response: AxiosResponse<Video>) => {
                 setVideo(response.data);
             })
