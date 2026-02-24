@@ -24,8 +24,8 @@ const Home: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const apiUrl = process.env.REACT_APP_API_URL;
-    axios.get<VideoResponse>(`${apiUrl}/api/videos`)
+    const apiUrl = process.env.VIDEO_SERVICE_API_URL;
+    axios.get<VideoResponse>(`${apiUrl}/v1/videos/search?query=latest&limit=20&offset=0&sort=uploadDate&order=desc&`)
       .then((response: AxiosResponse<VideoResponse>) => {
         setVideos(response.data.videos);
         setLoading(false);
@@ -91,7 +91,7 @@ const Home: React.FC = () => {
         <h2>Latest Uploads</h2>
         <div className="video-list">
           {videos.map(video => (
-            <div key={video.id} className="video-card" onClick={() => window.location.href = `/video/${video.id}`}>
+            <div key={video.id} className="video-card" onClick={() => window.location.href = `/v1/videos/id/${video.id}`}>
               <img src={video.previewImage} alt={video.title} />
               <div className="video-content">
                 <h2>{video.title}</h2>
