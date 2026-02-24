@@ -54,47 +54,13 @@ definitions:
         type: string
       payload: {}
     type: object
-host: localhost:8081
+host: localhost:8080
 info:
   contact: {}
-  description: Service for managing users.
-  title: User Service API
+  description: Service for managing video content.
+  title: Video Service API
   version: "1.0"
 paths:
-  /api/videos:
-    get:
-      description: Returns all videos with mock data for frontend
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties: true
-            type: object
-      summary: Get all videos
-      tags:
-      - videos
-  /api/videos/{id}:
-    get:
-      description: Returns a single video by ID with mock data for frontend
-      parameters:
-      - description: Video ID
-        in: path
-        name: id
-        required: true
-        type: integer
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            additionalProperties: true
-            type: object
-      summary: Get video by ID
-      tags:
-      - videos
   /v1/users:
     post:
       consumes:
@@ -278,7 +244,7 @@ paths:
       summary: 'Creates new video. Publisher id example: d9fa522f-0006-464f-8d68-356ba1d6ad7d'
       tags:
       - videos
-  /v1/videos/search:
+  /v1/videos/search/:
     get:
       description: Search videos in the entire database by a keyword
       parameters:

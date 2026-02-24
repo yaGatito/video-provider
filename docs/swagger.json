@@ -1,65 +1,14 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "Service for managing users.",
-        "title": "User Service API",
+        "description": "Service for managing video content.",
+        "title": "Video Service API",
         "contact": {},
         "version": "1.0"
     },
-    "host": "localhost:8081",
+    "host": "localhost:8080",
     "basePath": "/",
     "paths": {
-        "/api/videos": {
-            "get": {
-                "description": "Returns all videos with mock data for frontend",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "videos"
-                ],
-                "summary": "Get all videos",
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
-        "/api/videos/{id}": {
-            "get": {
-                "description": "Returns a single video by ID with mock data for frontend",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "videos"
-                ],
-                "summary": "Get video by ID",
-                "parameters": [
-                    {
-                        "type": "integer",
-                        "description": "Video ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "object",
-                            "additionalProperties": true
-                        }
-                    }
-                }
-            }
-        },
         "/v1/users": {
             "post": {
                 "description": "Create a new user and return the created user's ID. Example ID",
@@ -295,7 +244,7 @@
                 }
             }
         },
-        "/v1/videos/search": {
+        "/v1/videos/search/": {
             "get": {
                 "description": "Search videos in the entire database by a keyword",
                 "produces": [
