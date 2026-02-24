@@ -11,6 +11,7 @@ const (
 	PathVarVideoID     = "videoID"
 	PathVarPublisherID = "publisherID"
 
+	BaseURL              = "/v1/videos/"
 	RouteVideo           = "/v1/videos/{" + PathVarVideoID + "}"
 	RoutePublisherVideos = "/v1/videos/pub/{" + PathVarPublisherID + "}"
 	RouteVideoSearch     = "/v1/videos/search/"
@@ -23,7 +24,7 @@ const (
 // CORSMiddleware adds CORS headers to all responses
 func CORSMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "*")
+		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
 		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
 		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
 		w.Header().Set("Access-Control-Max-Age", "3600")
@@ -41,24 +42,25 @@ func SetupRouter(r *mux.Router, h VideoHandler) {
 	// Apply CORS middleware to all routes
 	r.Use(CORSMiddleware)
 
+	// Video endpoints
 	r.HandleFunc(RouteVideo, h.GetByID).
-		Methods(http.MethodGet)
+		Methods(http.MethodGet, http.MethodOptions)
 
 	r.HandleFunc(RoutePublisherVideos, h.Create).
-		Methods(http.MethodPost)
+		Methods(http.MethodPost, http.MethodOptions)
 
 	r.HandleFunc(RoutePublisherVideos, h.GetByPublisher).
-		Methods(http.MethodGet)
+		Methods(http.MethodGet, http.MethodOptions)
 
 	r.HandleFunc(RouteVideoSearch, h.SearchGlobal).
-		Methods(http.MethodGet)
+		Methods(http.MethodGet, http.MethodOptions)
 
 	// Frontend API endpoints
 	r.HandleFunc(RouteAPIVideos, h.GetAllVideos).
-		Methods(http.MethodGet)
+		Methods(http.MethodGet, http.MethodOptions)
 
 	r.HandleFunc(RouteAPIVideoID, h.GetVideoByID).
-		Methods(http.MethodGet)
+		Methods(http.MethodGet, http.MethodOptions)
 
 	r.PathPrefix("/v1/swagger/").HandlerFunc(httpSwagger.WrapHandler)
 }
