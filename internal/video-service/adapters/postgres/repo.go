@@ -95,9 +95,9 @@ func (r *VideoRepoPostgreSQL) SearchGlobal(
 	search ports.VideoSearch,
 ) ([]domain.Video, error) {
 	params := postgres.SearchGlobalParams{
-		Concat: search.Query,
-		Offset: search.Offset,
-		Limit:  search.Limit,
+		Column1: search.Query,
+		Offset:  search.Offset,
+		Limit:   search.Limit,
 	}
 	videos, err := r.queries.SearchGlobal(ctx, params)
 	if err != nil {

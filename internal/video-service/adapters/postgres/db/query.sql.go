@@ -128,17 +128,22 @@ func (q *Queries) GetVideosByPublisher(ctx context.Context, arg GetVideosByPubli
 }
 
 const searchGlobal = `-- name: SearchGlobal :many
-SELECT id, publisherid, topic, description, createdat, status FROM videos WHERE topic LIKE CONCAT('%', $1, '%') OR description LIKE CONCAT('%', $1, '%') ORDER BY createdAt LIMIT $2 OFFSET $3
+SELECT id, publisherid, topic, description, createdat, status FROM videos 
+WHERE 
+    topic ILIKE '%' || $1::text || '%' 
+    OR description ILIKE '%' || $1::text || '%' 
+ORDER BY createdAt DESC 
+LIMIT $2 OFFSET $3
 `
 
 type SearchGlobalParams struct {
-	Concat interface{}
-	Limit  int32
-	Offset int32
+	Column1 string
+	Limit   int32
+	Offset  int32
 }
 
 func (q *Queries) SearchGlobal(ctx context.Context, arg SearchGlobalParams) ([]Video, error) {
-	rows, err := q.db.Query(ctx, searchGlobal, arg.Concat, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, searchGlobal, arg.Column1, arg.Limit, arg.Offset)
 	if err != nil {
 		return nil, err
 	}
