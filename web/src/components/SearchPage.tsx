@@ -15,10 +15,10 @@ const SearchPage: React.FC = () => {
   const [limit, setLimit] = useState(10);
   const [offset, setOffset] = useState(0);
   const [videos, setVideos] = useState<Video[]>([]);
+  const apiUrl = process.env.REACT_APP_API_URL
 
   useEffect(() => {
     if (query.length > 2) {
-      const apiUrl = process.env.REACT_APP_API_URL
       axios.get<Video[]>(`${apiUrl}/v1/videos/search?query=${query}&limit=${limit}&offset=${offset}`)
         .then((response: AxiosResponse<Video[]>) => {
           setVideos(response.data);
@@ -51,7 +51,7 @@ const SearchPage: React.FC = () => {
         <>
           <div className="video-list">
             {videos.map(video => (
-              <div key={video.id} className="video-card" onClick={() => window.location.href = `/v1/videos/${video.id}`}>
+              <div key={video.id} className="video-card" onClick={() => window.location.href = `${apiUrl}/v1/videos/id/${video.id}`}>
                 <div className="video-content">
                   <h2>{video.topic}</h2>
                   <p>{video.description}</p>

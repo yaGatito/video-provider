@@ -119,7 +119,7 @@ func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
 // @Success      200      {object}  VideoResponseBody
 // @Failure      400      {object}  string
 // @Failure      500      {object}  string
-// @Router       /v1/videos/{videoID} [get]
+// @Router       /v1/videos/id/{videoID} [get]
 func (h *VideoHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	// Required path variable
 	videoID, err := h.extractValidUUIDFromPathVar(r, PathVarVideoID)
