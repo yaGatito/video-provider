@@ -11,14 +11,9 @@ const (
 	PathVarVideoID     = "videoID"
 	PathVarPublisherID = "publisherID"
 
-	BaseURL              = "/v1/videos/"
-	RouteVideo           = "/v1/videos/{" + PathVarVideoID + "}"
 	RoutePublisherVideos = "/v1/videos/pub/{" + PathVarPublisherID + "}"
-	RouteVideoSearch     = "/v1/videos/search/"
-
-	// Frontend API routes
-	RouteAPIVideos  = "/api/videos"
-	RouteAPIVideoID = "/api/videos/{id}"
+	RouteVideoSearch     = "/v1/videos/search"
+	RouteVideo           = "/v1/videos/id/{" + PathVarVideoID + "}"
 )
 
 // CORSMiddleware adds CORS headers to all responses
@@ -53,13 +48,6 @@ func SetupRouter(r *mux.Router, h VideoHandler) {
 		Methods(http.MethodGet, http.MethodOptions)
 
 	r.HandleFunc(RouteVideoSearch, h.SearchGlobal).
-		Methods(http.MethodGet, http.MethodOptions)
-
-	// Frontend API endpoints
-	r.HandleFunc(RouteAPIVideos, h.GetAllVideos).
-		Methods(http.MethodGet, http.MethodOptions)
-
-	r.HandleFunc(RouteAPIVideoID, h.GetVideoByID).
 		Methods(http.MethodGet, http.MethodOptions)
 
 	r.PathPrefix("/v1/swagger/").HandlerFunc(httpSwagger.WrapHandler)

@@ -124,7 +124,7 @@ func (h *VideoHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	// Required path variable
 	videoID, err := h.extractValidUUIDFromPathVar(r, PathVarVideoID)
 	if err != nil {
-		h.writeJSON(w, http.StatusBadRequest, fmt.Errorf("parse vid id param: %w", err))
+		http.Error(w, fmt.Sprintf("parse vid id param: %v", err), http.StatusBadRequest)
 		return
 	}
 
@@ -241,9 +241,9 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 // @Param        limit   query     int     false  "Limit (default 10)"
 // @Param        offset  query     int     false  "Offset (default 0)"
 // @Success      200     {array}   VideoResponseBody
-// @Router       /v1/videos/search [get]
+// @Router       /v1/videos/search/ [get]
 func (h *VideoHandler) SearchGlobal(w http.ResponseWriter, r *http.Request) {
-	// Required url parameters
+	// Required URL params
 	values, err := url.ParseQuery(r.URL.RawQuery)
 	if err != nil {
 		h.writeJSON(w, http.StatusBadRequest, err)
@@ -272,95 +272,13 @@ func (h *VideoHandler) SearchGlobal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = json.NewEncoder(w).Encode(h.toDtoVideos(videos))
+	resp := h.toDtoVideos(videos)
+	err = json.NewEncoder(w).Encode(resp)
 	if err != nil {
 		h.writeJSON(w, http.StatusInternalServerError, err)
 		return
 	}
-	h.log.Println("Response were written successfully")
-}
-
-// GetAllVideos godoc
-// @Summary      Get all videos
-// @Description  Returns all videos with mock data for frontend
-// @Tags         videos
-// @Produce      json
-// @Success      200      {object}  map[string]interface{}
-// @Router       /api/videos [get]
-func (h *VideoHandler) GetAllVideos(w http.ResponseWriter, r *http.Request) {
-	videos := map[string]interface{}{
-		"videos": []map[string]interface{}{
-			{
-				"id":           1,
-				"title":        "Learn Go Programming",
-				"description":  "Complete guide to learning Go from basics to advanced concepts",
-				"likes":        1250,
-				"dislikes":     15,
-				"comments":     89,
-				"previewImage": "https://via.placeholder.com/300x200?text=Go+Programming",
-			},
-			{
-				"id":           2,
-				"title":        "Web Development Tips",
-				"description":  "Essential tips and tricks for building modern web applications",
-				"likes":        2100,
-				"dislikes":     32,
-				"comments":     156,
-				"previewImage": "https://via.placeholder.com/300x200?text=Web+Development",
-			},
-		},
-	}
-	w.Header().Set("Content-Type", "application/json")
-	w.Header().Set("Access-Control-Allow-Origin", "*")
-	json.NewEncoder(w).Encode(videos)
-}
-
-// GetVideoByID godoc
-// @Summary      Get video by ID
-// @Description  Returns a single video by ID with mock data for frontend
-// @Tags         videos
-// @Produce      json
-// @Param        id  path      int  true  "Video ID"
-// @Success      200      {object}  map[string]interface{}
-// @Router       /api/videos/{id} [get]
-func (h *VideoHandler) GetVideoByID(w http.ResponseWriter, r *http.Request) {
-	vars := mux.Vars(r)
-	videoID := vars["id"]
-
-	// Mock data for videos
-	videoData := map[int]map[string]interface{}{
-		1: {
-			"id":           1,
-			"title":        "Learn Go Programming",
-			"description":  "Complete guide to learning Go from basics to advanced concepts. In this comprehensive video series, you'll learn everything you need to know about Go programming language, including:\n\n- Go basics and syntax\n- Goroutines and concurrency\n- Channels and synchronization\n- Error handling best practices\n- Building production-ready applications\n\nWhether you're a beginner or experienced programmer, this course will help you master Go programming.",
-			"likes":        1250,
-			"dislikes":     15,
-			"comments":     89,
-			"previewImage": "https://via.placeholder.com/600x400?text=Go+Programming",
-		},
-		2: {
-			"id":           2,
-			"title":        "Web Development Tips",
-			"description":  "Essential tips and tricks for building modern web applications. This video covers:\n\n- Frontend best practices\n- React and Vue.js frameworks\n- State management strategies\n- Performance optimization\n- Security considerations\n- Testing and debugging\n\nLearn from industry experts and improve your web development skills.",
-			"likes":        2100,
-			"dislikes":     32,
-			"comments":     156,
-			"previewImage": "https://via.placeholder.com/600x400?text=Web+Development",
-		},
-	}
-
-	id := 0
-	fmt.Sscanf(videoID, "%d", &id)
-
-	if video, exists := videoData[id]; exists {
-		w.Header().Set("Content-Type", "application/json")
-		w.Header().Set("Access-Control-Allow-Origin", "*")
-		json.NewEncoder(w).Encode(video)
-	} else {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusNotFound)
-		json.NewEncoder(w).Encode(map[string]string{"error": "Video not found"})
-	}
+	h.log.Println("Response were written successfully:", resp)
 }
 
 func (h *VideoHandler) writeJSON(w http.ResponseWriter, status int, v any) {
