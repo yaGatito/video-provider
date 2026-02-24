@@ -109,8 +109,8 @@ func (r *VideoRepoPostgreSQL) SearchGlobal(
 
 func toDomainVideos(videos []postgres.Video) []domain.Video {
 	res := make([]domain.Video, len(videos))
-	for _, v := range videos {
-		res = append(res, toDomainVideo(v))
+	for i, v := range videos {
+		res[i] = toDomainVideo(v)
 	}
 	return res
 
