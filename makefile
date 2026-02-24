@@ -68,8 +68,7 @@ setup:
 .PHONY: front
 front:
 	$(call log, "Starting frontend application...")
-	cd ./web/watch-ua
-	npm start
+	cd ./web/watch-ua && npm start
 
 .PHONY: run
 run:

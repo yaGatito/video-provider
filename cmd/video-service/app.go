@@ -8,7 +8,7 @@ import (
 	"os"
 	_ "video-provider/docs"
 	config "video-provider/internal/pkg/config"
-	logger "video-provider/internal/pkg/middleware"
+	"video-provider/internal/pkg/middleware"
 	httpadapter "video-provider/internal/video-service/adapters/http"
 	"video-provider/internal/video-service/adapters/idgen"
 	"video-provider/internal/video-service/adapters/postgres"
@@ -60,18 +60,17 @@ func run() error {
 	defer pool.Close()
 
 	idGen := idgen.New()
-	mwLog := logger.NewMiddlewareLogger(os.Stdout, "[VIDSVC]")
+	mwLog := middleware.NewMiddlewareLogger(os.Stdout, "[VIDSVC]")
 
 	videoRepository := postgres.NewVideoRepoPostgreSQL(pool)
 	videoService := app.NewVideoInteractor(videoRepository)
 	videoHandler := httpadapter.NewVideoHandler(videoService, idGen, mwLog.Log)
 
 	router := mux.NewRouter()
-	router.Use(logger.CORSMiddleware)
 	router.Use(mwLog.LoggingMiddleware)
 	httpadapter.SetupRouter(router, videoHandler)
 
-	log.Printf("ideos-service starting on port %s", cfg.Api.Port)
+	log.Printf("Video-service starting on port %s", cfg.Api.Port)
 	err = http.ListenAndServe(":"+cfg.Api.Port, router)
 	if err != nil {
 		return fmt.Errorf("failed to start server: %w", err)
