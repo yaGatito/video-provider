@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import axios, { AxiosResponse } from 'axios';
+import axios, { AxiosError, AxiosResponse } from 'axios';
 import './UploadVideo.css';
 
 interface VideoData {
@@ -18,7 +18,7 @@ const UploadVideo: React.FC = () => {
     setVideoData({ ...videoData, [name]: value });
   };
 
-  const handleUpload = async (e: React.FormEvent) => {
+  const handleUpload = async (e: React.SubmitEvent) => {
     e.preventDefault();
     
     if (!videoData.title.trim()) {
@@ -51,14 +51,23 @@ const UploadVideo: React.FC = () => {
     };
 
     try {
-      await axios.post('http://localhost:8080/v1/videos/pub/123e4567-e89b-12d3-a456-426614174000', requestBody);
+    const response: AxiosResponse<{ message: string }> = await axios.post(
+      'http://localhost:8080/v1/videos/pub/123e4567-e89b-12d3-a456-426614174000',
+      requestBody
+    );
       setSuccessMessage(`Video "${videoData.title}" uploaded successfully!`);
       setTimeout(() => {
         window.location.href = '/';
       }, 2000);
     } catch (error) {
       console.error('There was an error uploading the video!', error);
-      const message = axios.isAxiosError(error) && error.response?.data?.message ? error.response.data.message : 'Please try again.';
+      let message = 'Please try again.';
+      if (axios.isAxiosError(error)) {
+        const axiosError: AxiosError<{ message: string }> = error;
+        if (axiosError.response && axiosError.response.data && axiosError.response.data.message) {
+          message = axiosError.response.data.message;
+        }
+      }
       setErrorMessage('Error: ' + message);
     } finally {
       setUploading(false);
