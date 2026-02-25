@@ -52,7 +52,7 @@ func (mr *MockVideoRepositoryMockRecorder) CreateVideo(ctx, video interface{}) *
 }
 
 // GetPublisherVideos mocks base method.
-func (m *MockVideoRepository) GetPublisherVideos(ctx context.Context, publisherID domain.UUID, args ports.PageRequest) ([]domain.Video, error) {
+func (m *MockVideoRepository) GetPublisherVideos(ctx context.Context, publisherID domain.UUID, args ports.VideoPageParams) ([]domain.Video, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPublisherVideos", ctx, publisherID, args)
 	ret0, _ := ret[0].([]domain.Video)
@@ -82,7 +82,7 @@ func (mr *MockVideoRepositoryMockRecorder) GetVideoByID(ctx, id interface{}) *go
 }
 
 // SearchGlobal mocks base method.
-func (m *MockVideoRepository) SearchGlobal(ctx context.Context, args ports.VideoSearch) ([]domain.Video, error) {
+func (m *MockVideoRepository) SearchGlobal(ctx context.Context, args ports.VideoSearchParams) ([]domain.Video, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SearchGlobal", ctx, args)
 	ret0, _ := ret[0].([]domain.Video)
@@ -97,7 +97,7 @@ func (mr *MockVideoRepositoryMockRecorder) SearchGlobal(ctx, args interface{}) *
 }
 
 // SearchPublisher mocks base method.
-func (m *MockVideoRepository) SearchPublisher(ctx context.Context, publisherID domain.UUID, args ports.VideoSearch) ([]domain.Video, error) {
+func (m *MockVideoRepository) SearchPublisher(ctx context.Context, publisherID domain.UUID, args ports.VideoSearchParams) ([]domain.Video, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SearchPublisher", ctx, publisherID, args)
 	ret0, _ := ret[0].([]domain.Video)
