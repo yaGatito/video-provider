@@ -151,7 +151,7 @@ paths:
       summary: User login
       tags:
       - Users
-  /v1/videos/{videoID}:
+  /v1/videos/id/{videoID}:
     get:
       description: Returns details of a single video by its unique identifier
       parameters:
@@ -261,6 +261,14 @@ paths:
         in: query
         name: offset
         type: integer
+      - description: Sort (default 'createdAt')
+        in: query
+        name: sort
+        type: string
+      - description: Order (default 'asc')
+        in: query
+        name: order
+        type: string
       produces:
       - application/json
       responses:

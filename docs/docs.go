@@ -152,6 +152,47 @@ const docTemplate = `{
                 }
             }
         },
+        "/v1/videos/id/{videoID}": {
+            "get": {
+                "description": "Returns details of a single video by its unique identifier",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "videos"
+                ],
+                "summary": "Get video by ID",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "video ID (UUID)",
+                        "name": "videoID",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/httpadapter.VideoResponseBody"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                }
+            }
+        },
         "/v1/videos/pub/{publisherID}": {
             "get": {
                 "description": "Returns a list of videos for a specific publisher with pagination and search support",
@@ -279,6 +320,18 @@ const docTemplate = `{
                         "description": "Offset (default 0)",
                         "name": "offset",
                         "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort (default 'createdAt')",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Order (default 'asc')",
+                        "name": "order",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -289,47 +342,6 @@ const docTemplate = `{
                             "items": {
                                 "$ref": "#/definitions/httpadapter.VideoResponseBody"
                             }
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/videos/{videoID}": {
-            "get": {
-                "description": "Returns details of a single video by its unique identifier",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "videos"
-                ],
-                "summary": "Get video by ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "video ID (UUID)",
-                        "name": "videoID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/httpadapter.VideoResponseBody"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "type": "string"
                         }
                     }
                 }
