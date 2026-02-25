@@ -4,9 +4,7 @@ import (
 	"fmt"
 	"testing"
 	"video-provider/internal/video-service/policy"
-	"video-provider/internal/video-service/ports"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -69,84 +67,98 @@ func TestIncorrectSearchQuery(t *testing.T) {
 
 func TestValidateLimit(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    int32
-		expected int32
+		name    string
+		wantErr bool
+		input   int32
 	}{
-		{"negative limit", -5, policy.DefaultVideosLimitPerRequest},
-		{"zero limit", 0, policy.DefaultVideosLimitPerRequest},
-		{"default limit", policy.DefaultVideosLimitPerRequest, policy.DefaultVideosLimitPerRequest},
-		{"above max limit", policy.MaxVideosLimitPerRequest + 1, policy.MaxVideosLimitPerRequest},
-		{"valid limit", 10, 10},
+		{"ok", false, 5},
+		{"negative limit", true, -5},
+		{"zero limit", true, 0},
+		{"above max limit", true, policy.MaxVideosLimitPerRequest + 1},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := ValidateLimit(tt.input)
-			require.Exactly(t, tt.expected, result)
+			result, err := ValidateLimit(tt.input)
+
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Exactly(t, tt.input, result)
+			}
 		})
 	}
 }
 
 func TestValidateOffset(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    int32
-		expected int32
+		name    string
+		wantErr bool
+		input   int32
 	}{
-		{"negative offset", -5, 0},
-		{"zero offset", 0, 0},
-		{"positive offset", 10, 10},
+		{"positive offset", false, 10},
+		{"zero offset", false, 0},
+		{"negative offset", true, -5},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := ValidateOffset(tt.input)
-			assert.Equal(t, tt.expected, result)
+			result, err := ValidateOffset(tt.input)
+
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Exactly(t, tt.input, result)
+			}
 		})
 	}
 }
 
 func TestValidateOrderBy(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    string
-		expected string
+		name    string
+		wantErr bool
+		input   string
 	}{
-		{"invalid sort", "unknown", ports.CreatedAtSort},
-		{"valid sort", ports.CreatedAtSort, ports.CreatedAtSort},
+		{"valid sort", false, "createdAt"},
+		{"invalid sort", true, "CreateddAte"},
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := ValidateOrderBy(tt.input)
-			assert.Equal(t, tt.expected, result)
-		})
+		result, err := ValidateOrderBy(tt.input)
+
+		if tt.wantErr {
+			require.Error(t, err)
+		} else {
+			require.NoError(t, err)
+			require.Exactly(t, tt.input, result)
+		}
 	}
 }
 
 func TestValidateAsc(t *testing.T) {
 	tests := []struct {
-		name     string
-		input    string
-		expected bool
+		name        string
+		wantErr     bool
+		input       string
+		expectedRes bool
 	}{
-		{"ValidEmptyString", "", true}, // default
-		{"ValidTrue", "t", true},
-		{"ValidFalse", "f", false},
-		{"InvalidTrue", "true", false},
-		{"ValidFalseString", "false", false},
-		{"InvalidNumberOne", "1", false},
-		{"InvalidNumberZero", "0", false},
-		{"InvalidAsc", "asc", false},
-		{"InvalidDesc", "desc", false},
+		{"ok true (asc)", false, "t", true},
+		{"ok false (desc)", false, "f", false},
+		{"invalid value", true, "false", false},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := ValidateAsc(tt.input)
-			if result != tt.expected {
-				t.Errorf("ValidateAsc(%q) = %v; want %v", tt.input, result, tt.expected)
+			result, err := ValidateIsAsc(tt.input)
+
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Exactly(t, tt.expectedRes, result)
 			}
 		})
 	}

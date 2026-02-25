@@ -53,7 +53,7 @@ func ValidateSearchQuery(query string) (string, error) {
 // 1. The limit must be greater than the default value defined by policy.DefaultVideosLimitPerRequest. If it is less than or equal to this value, an error is returned indicating that the limit is zero or less.
 // 2. The limit must not exceed the maximum allowed value defined by policy.MaxVideosLimitPerRequest. If it does, an error is returned indicating that the limit has reached the maximum allowed value.
 func ValidateLimit(limit int32) (int32, error) {
-	if limit <= policy.DefaultVideosLimitPerRequest {
+	if limit < policy.DefaultVideosLimitPerRequest {
 		return 0, fmt.Errorf("limit is zero or less")
 	}
 	if limit > policy.MaxVideosLimitPerRequest {
@@ -77,9 +77,6 @@ func ValidateLimit(limit int32) (int32, error) {
 func ValidateOffset(offset int32) (int32, error) {
 	if offset < 0 {
 		return 0, fmt.Errorf("offset is zero or less")
-	}
-	if offset > int32(policy.MaxInt32) {
-		return 0, fmt.Errorf("offset reached maximum allowed value")
 	}
 	return offset, nil
 }
