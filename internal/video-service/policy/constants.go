@@ -1,14 +1,22 @@
 package policy
 
-import "regexp"
+import (
+	"regexp"
+)
 
 const (
+	MaxInt32 = int32(^uint32(0) >> 1)
+
 	MaxIDBytesSize          = 36
 	MaxTopicBytesSize       = 48
 	MaxDescriptionBytesSize = 512
 
-	MaxSearchBytesSize           = 100
-	MinSearchBytesSize           = 2
+	MaxSearchBytesSize = 100
+	UrlParamMaxSize    = 10
+	MinSearchBytesSize = 2
+
+	DefaultVideosOffset = 0
+
 	DefaultVideosLimitPerRequest = 5
 	MaxVideosLimitPerRequest     = 50
 )

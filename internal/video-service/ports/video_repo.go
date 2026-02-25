@@ -6,10 +6,10 @@ import (
 )
 
 type VideoPageParams struct {
-	Offset int32
-	Limit  int32
-	SortBy string
-	IsAsc  bool
+	Offset  int32
+	Limit   int32
+	OrderBy string
+	IsAsc   bool
 }
 
 type VideoSearchParams struct {
@@ -18,9 +18,9 @@ type VideoSearchParams struct {
 }
 
 const (
-	CreatedAtSort string = "createdAt"
-	ascOrder      string = "ASC"
-	descOrder     string = "DESC"
+	OrderByCreatedAt string = "createdAt"
+	OrderAsc         string = " ASC"
+	OrderDesc        string = " DESC"
 )
 
 type VideoRepository interface {

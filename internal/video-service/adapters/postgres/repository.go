@@ -78,7 +78,8 @@ func (r *VideoRepoPostgreSQL) SearchPublisher(
 
 	params := postgres.SearchPublisherParams{
 		Publisherid: publisherID,
-		Concat:      search.Query,
+		Column2:     search.Query,
+		Column3:     search.OrderBy,
 		Offset:      search.Offset,
 		Limit:       search.Limit,
 	}
@@ -96,7 +97,7 @@ func (r *VideoRepoPostgreSQL) SearchGlobal(
 ) ([]domain.Video, error) {
 	params := postgres.SearchGlobalParams{
 		Column1: search.Query,
-		Column2: string(search.SortBy),
+		Column2: search.OrderBy,
 		Offset:  search.Offset,
 		Limit:   search.Limit,
 	}
