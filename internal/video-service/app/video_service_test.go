@@ -17,7 +17,7 @@ import (
 
 var testTopic = "topic"
 var testDesc = "desc"
-var testPublisherID, _ = uuid.Parse("d9fa522f-0006-464f-8d68-356ba1d6ad7d")
+var testPublisherID, _ = uuid.Parse("d9fa522f-0006-464f-8d68-326ba1d6ad7d")
 var testVideo = domain.Video{
 	PublisherID: testPublisherID,
 	Topic:       testTopic,
