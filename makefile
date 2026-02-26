@@ -68,15 +68,15 @@ setup:
 .PHONY: front
 front:
 	$(call log, "Starting frontend application...")
-	cd ./web/watch-ua && npm start
+	cd ./web && npm start
 
 .PHONY: run
 run:
 	$(call log, "Checking config: $(CONFIG_PATH)...")
 	go run cmd/$(SERVICE_NAME)/app.go -config=$(CONFIG_PATH)
 
-.PHONY: generate
-generate: sqlc swag mocks
+.PHONY: gen
+gen: sqlc swag mocks
 
 .PHONY: lint
 lint:

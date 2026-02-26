@@ -128,22 +128,29 @@ func (q *Queries) GetVideosByPublisher(ctx context.Context, arg GetVideosByPubli
 }
 
 const searchGlobal = `-- name: SearchGlobal :many
-SELECT id, publisherid, topic, description, createdat, status FROM videos 
+SELECT id, publisherid, topic, description, createdat, status
+FROM videos
 WHERE 
-    topic ILIKE '%' || $1::text || '%' 
-    OR description ILIKE '%' || $1::text || '%' 
-ORDER BY createdAt DESC 
-LIMIT $2 OFFSET $3
+  ($1::text = '' OR topic ILIKE '%' || $1::text || '%') 
+  OR ($1::text = '' OR description ILIKE '%' || $1::text || '%')
+ORDER BY $2
+LIMIT $3 OFFSET $4
 `
 
 type SearchGlobalParams struct {
 	Column1 string
+	Column2 interface{}
 	Limit   int32
 	Offset  int32
 }
 
 func (q *Queries) SearchGlobal(ctx context.Context, arg SearchGlobalParams) ([]Video, error) {
-	rows, err := q.db.Query(ctx, searchGlobal, arg.Column1, arg.Limit, arg.Offset)
+	rows, err := q.db.Query(ctx, searchGlobal,
+		arg.Column1,
+		arg.Column2,
+		arg.Limit,
+		arg.Offset,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -170,12 +177,19 @@ func (q *Queries) SearchGlobal(ctx context.Context, arg SearchGlobalParams) ([]V
 }
 
 const searchPublisher = `-- name: SearchPublisher :many
-SELECT id, publisherid, topic, description, createdat, status FROM videos WHERE publisherid = $1 AND (topic LIKE CONCAT('%', $2, '%') OR description LIKE CONCAT('%', $2, '%')) ORDER BY createdAt LIMIT $3 OFFSET $4
+SELECT id, publisherid, topic, description, createdat, status FROM videos 
+WHERE 
+  publisherid = $1
+  AND (($2::text = '' OR topic ILIKE '%' || $2::text || '%') 
+    OR ($2::text = '' OR description ILIKE '%' || $2::text || '%'))
+ORDER BY $3
+LIMIT $4 OFFSET $5
 `
 
 type SearchPublisherParams struct {
 	Publisherid uuid.UUID
-	Concat      interface{}
+	Column2     string
+	Column3     interface{}
 	Limit       int32
 	Offset      int32
 }
@@ -183,7 +197,8 @@ type SearchPublisherParams struct {
 func (q *Queries) SearchPublisher(ctx context.Context, arg SearchPublisherParams) ([]Video, error) {
 	rows, err := q.db.Query(ctx, searchPublisher,
 		arg.Publisherid,
-		arg.Concat,
+		arg.Column2,
+		arg.Column3,
 		arg.Limit,
 		arg.Offset,
 	)

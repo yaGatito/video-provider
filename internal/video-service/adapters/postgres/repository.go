@@ -54,7 +54,7 @@ func (r *VideoRepoPostgreSQL) GetVideoByID(
 func (r *VideoRepoPostgreSQL) GetPublisherVideos(
 	ctx context.Context,
 	publisherID domain.UUID,
-	args ports.PageRequest,
+	args ports.VideoPageParams,
 ) ([]domain.Video, error) {
 
 	params := postgres.GetVideosByPublisherParams{
@@ -73,12 +73,13 @@ func (r *VideoRepoPostgreSQL) GetPublisherVideos(
 func (r *VideoRepoPostgreSQL) SearchPublisher(
 	ctx context.Context,
 	publisherID domain.UUID,
-	search ports.VideoSearch,
+	search ports.VideoSearchParams,
 ) ([]domain.Video, error) {
 
 	params := postgres.SearchPublisherParams{
 		Publisherid: publisherID,
-		Concat:      search.Query,
+		Column2:     search.Query,
+		Column3:     search.OrderBy,
 		Offset:      search.Offset,
 		Limit:       search.Limit,
 	}
@@ -92,10 +93,11 @@ func (r *VideoRepoPostgreSQL) SearchPublisher(
 
 func (r *VideoRepoPostgreSQL) SearchGlobal(
 	ctx context.Context,
-	search ports.VideoSearch,
+	search ports.VideoSearchParams,
 ) ([]domain.Video, error) {
 	params := postgres.SearchGlobalParams{
 		Column1: search.Query,
+		Column2: search.OrderBy,
 		Offset:  search.Offset,
 		Limit:   search.Limit,
 	}

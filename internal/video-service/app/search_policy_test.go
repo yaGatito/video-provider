@@ -8,27 +8,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestValidatePagination(t *testing.T) {
-	tests := []struct {
-		name           string
-		offset         int32
-		limit          int32
-		expectedOffset int32
-		expectedLimit  int32
-	}{
-		{"ok", 0, 5, 0, 5},
-		{"zero limit", 0, 0, 0, policy.DefaultVideosLimitPerRequest},
-		{"negative limit", 5, -1, 5, policy.DefaultVideosLimitPerRequest},
-		{"negative offset", -1, 5, 0, 5},
-	}
-
-	for _, c := range tests {
-		offset, limit := ValidatePagination(c.offset, c.limit)
-		require.Exactly(t, c.expectedOffset, offset)
-		require.Exactly(t, c.expectedLimit, limit)
-	}
-}
-
 func TestValidateSearchQuery(t *testing.T) {
 	cases := []struct {
 		name           string
@@ -83,5 +62,104 @@ func TestIncorrectSearchQuery(t *testing.T) {
 	for _, c := range cases {
 		_, err := ValidateSearchQuery(c.query)
 		require.Error(t, err)
+	}
+}
+
+func TestValidateLimit(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantErr bool
+		input   int32
+	}{
+		{"ok", false, 5},
+		{"negative limit", true, -5},
+		{"zero limit", true, 0},
+		{"above max limit", true, policy.MaxVideosLimit + 1},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := ValidateLimit(tt.input)
+
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Exactly(t, tt.input, result)
+			}
+		})
+	}
+}
+
+func TestValidateOffset(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantErr bool
+		input   int32
+	}{
+		{"positive offset", false, 10},
+		{"zero offset", false, 0},
+		{"negative offset", true, -5},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := ValidateOffset(tt.input)
+
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Exactly(t, tt.input, result)
+			}
+		})
+	}
+}
+
+func TestValidateOrderBy(t *testing.T) {
+	tests := []struct {
+		name    string
+		wantErr bool
+		input   string
+	}{
+		{"valid sort", false, "createdAt"},
+		{"invalid sort", true, "CreateddAte"},
+	}
+
+	for _, tt := range tests {
+		result, err := ValidateOrderBy(tt.input)
+
+		if tt.wantErr {
+			require.Error(t, err)
+		} else {
+			require.NoError(t, err)
+			require.Exactly(t, tt.input, result)
+		}
+	}
+}
+
+func TestValidateAsc(t *testing.T) {
+	tests := []struct {
+		name        string
+		wantErr     bool
+		input       string
+		expectedRes bool
+	}{
+		{"ok true (asc)", false, "t", true},
+		{"ok false (desc)", false, "f", false},
+		{"invalid value", true, "false", false},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := ValidateIsAsc(tt.input)
+
+			if tt.wantErr {
+				require.Error(t, err)
+			} else {
+				require.NoError(t, err)
+				require.Exactly(t, tt.expectedRes, result)
+			}
+		})
 	}
 }

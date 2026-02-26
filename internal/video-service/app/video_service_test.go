@@ -7,8 +7,6 @@ import (
 	"time"
 	"video-provider/internal/video-service/app"
 	"video-provider/internal/video-service/domain"
-	"video-provider/internal/video-service/policy"
-	"video-provider/internal/video-service/ports"
 	mock_ports "video-provider/internal/video-service/ports/mock"
 
 	"github.com/stretchr/testify/require"
@@ -19,7 +17,7 @@ import (
 
 var testTopic = "topic"
 var testDesc = "desc"
-var testPublisherID, _ = uuid.Parse("d9fa522f-0006-464f-8d68-356ba1d6ad7d")
+var testPublisherID, _ = uuid.Parse("d9fa522f-0006-464f-8d68-326ba1d6ad7d")
 var testVideo = domain.Video{
 	PublisherID: testPublisherID,
 	Topic:       testTopic,
@@ -103,8 +101,8 @@ func TestGetdVideoByID(t *testing.T) {
 
 				res, err := videoService.GetByID(context.Background(), c.videoID)
 
-				require.Equal(t, expectedVideo, res)
 				require.NoError(t, err)
+				require.Equal(t, expectedVideo, res)
 			}
 		})
 	}
@@ -126,24 +124,30 @@ func TestGetVideoByPublisher(t *testing.T) {
 	}}
 
 	cases := []struct {
-		name               string
-		wantErr            bool
-		publisherID        uuid.UUID
-		pagination         ports.PageRequest
-		expectedPagination ports.PageRequest
+		name        string
+		wantErr     bool
+		publisherID uuid.UUID
+		offset      int32
+		limit       int32
+		orderBy     string
+		asc         string
 	}{
 		{"ok", false,
-			testPublisherID, getPageRequest(5, 5), getPageRequest(5, 5)},
-		{"ok without offset", false,
-			testPublisherID, getPageRequest(0, 5), getPageRequest(0, 5)},
-		{"limit less zero pagination", false,
-			testPublisherID, getPageRequest(0, -1), getPageRequest(0, policy.DefaultVideosLimitPerRequest)},
-		{"offset less zero pagination", false,
-			testPublisherID, getPageRequest(-1, 5), getPageRequest(0, 5)},
-		{"limit zero pagination", false,
-			testPublisherID, getPageRequest(5, -1), getPageRequest(5, policy.DefaultVideosLimitPerRequest)},
+			testPublisherID, 5, 5, "createdAt", "t"},
+		{"offset zero", false,
+			testPublisherID, 0, 5, "createdAt", "t"},
+		{"offset less zero", true,
+			testPublisherID, -10, 5, "createdAt", "t"},
+		{"limit less zero", true,
+			testPublisherID, 0, -10, "createdAt", "t"},
+		{"limit reached max value", true,
+			testPublisherID, 0, 1 >> 8, "createdAt", "t"},
+		{"invalid orderBy", true,
+			testPublisherID, 0, 5, "crtdAt", "t"},
+		{"invalid asc", true,
+			testPublisherID, 0, 5, "createdAt", "wrong_asc"},
 		{"nil publisher id", true,
-			emptyPublisherID, getPageRequest(5, 5), getPageRequest(0, 0) /* error */},
+			emptyPublisherID, 0, 5, "createdAt", "t"},
 	}
 
 	for _, c := range cases {
@@ -158,22 +162,26 @@ func TestGetVideoByPublisher(t *testing.T) {
 				_, err := videoService.GetByPublisher(
 					context.Background(),
 					c.publisherID,
-					c.pagination.Offset,
-					c.pagination.Limit)
+					c.orderBy,
+					c.offset,
+					c.limit,
+					c.asc)
 				require.Error(t, err)
 			} else {
 				repo.
 					EXPECT().
-					GetPublisherVideos(gomock.Any(), gomock.Eq(c.publisherID), gomock.Eq(c.expectedPagination)).
+					GetPublisherVideos(gomock.Any(), gomock.Eq(c.publisherID), gomock.Any()).
 					Return(expectedRes, nil).
 					MaxTimes(1)
 				res, err := videoService.GetByPublisher(
 					context.Background(),
 					c.publisherID,
-					c.pagination.Offset,
-					c.pagination.Limit)
-				require.Exactly(t, expectedRes, res)
+					c.orderBy,
+					c.offset,
+					c.limit,
+					c.asc)
 				require.NoError(t, err)
+				require.Exactly(t, expectedRes, res)
 			}
 		})
 	}
@@ -197,28 +205,38 @@ func TestSearchVideoByPublisher(t *testing.T) {
 		name        string
 		wantErr     bool
 		publisherID uuid.UUID
-		search      ports.VideoSearch
+		query       string
+		offset      int32
+		limit       int32
+		orderBy     string
+		asc         string
 	}{
-		{"ok", false, testPublisherID,
-			ports.VideoSearch{PageRequest: getPageRequest(5, 5), Query: "search"}},
-		{"ok with search surrounded spaces", false, testPublisherID,
-			ports.VideoSearch{
-				PageRequest: getPageRequest(5, 5),
-				Query:       "   ok with spacing search    ",
-			}},
-		{"ok without offset", false, testPublisherID,
-			ports.VideoSearch{PageRequest: getPageRequest(0, 5), Query: "search"}},
-		{"limit less zero pagination", false, testPublisherID,
-			ports.VideoSearch{PageRequest: getPageRequest(0, -1), Query: "search"}},
-		{"offset less zero pagination", false, testPublisherID,
-			ports.VideoSearch{PageRequest: getPageRequest(-1, 5), Query: "search"}},
-		{"limit zero pagination", false, testPublisherID,
-			ports.VideoSearch{PageRequest: getPageRequest(5, -1), Query: "search"}},
+		{"ok", false, testPublisherID, "search",
+			0 /*offset*/, 5 /*limit*/, "createdAt", "t"},
 
-		{"nil publisher id", true, emptyPublisherID,
-			ports.VideoSearch{PageRequest: getPageRequest(5, 5), Query: "search"}},
-		{"incorrect search", true, testPublisherID,
-			ports.VideoSearch{PageRequest: getPageRequest(5, 5), Query: "se!arch"}},
+		{"ok with search surrounded spaces", false, testPublisherID, "   ok with spacing search    ",
+			0 /*offset*/, 5 /*limit*/, "createdAt", "t"},
+
+		{"ok zero offset", false, testPublisherID, "search",
+			0 /*offset*/, 5 /*limit*/, "createdAt", "t"},
+
+		{"offset less zero", true, testPublisherID, "search",
+			-1 /*offset*/, 5 /*limit*/, "createdAt", "t"}, // Fix: Change wantErr to true
+
+		{"limit less zero", true, testPublisherID, "search",
+			0 /*offset*/, -1 /*limit*/, "createdAt", "t"}, // Fix: Change wantErr to true
+
+		{"limit zero", true, testPublisherID, "search",
+			0 /*offset*/, 0 /*limit*/, "createdAt", "t"},
+
+		{"limit reached max value", true, testPublisherID, "search",
+			0 /*offset*/, 0 /*limit*/, "createdAt", "t"},
+
+		{"nil publisher id", true, emptyPublisherID, "search",
+			0 /*offset*/, 5 /*limit*/, "createdAt", "t"},
+
+		{"incorrect search", true, testPublisherID, "se!arch",
+			0 /*offset*/, 5 /*limit*/, "createdAt", "t"},
 	}
 
 	for _, c := range cases {
@@ -233,9 +251,11 @@ func TestSearchVideoByPublisher(t *testing.T) {
 				_, err := videoService.SearchPublisher(
 					context.Background(),
 					c.publisherID,
-					c.search.Query,
-					c.search.Offset,
-					c.search.Limit)
+					c.query,
+					c.orderBy,
+					c.offset,
+					c.limit,
+					c.asc)
 				require.Error(t, err)
 			} else {
 				repo.
@@ -246,11 +266,13 @@ func TestSearchVideoByPublisher(t *testing.T) {
 				res, err := videoService.SearchPublisher(
 					context.Background(),
 					c.publisherID,
-					c.search.Query,
-					c.search.Offset,
-					c.search.Limit)
-				require.Exactly(t, expectedRes, res)
+					c.query,
+					c.orderBy,
+					c.offset,
+					c.limit,
+					c.asc)
 				require.NoError(t, err)
+				require.Exactly(t, expectedRes, res)
 			}
 		})
 	}
@@ -272,20 +294,32 @@ func TestValidSearchGlobal(t *testing.T) {
 	cases := []struct {
 		name    string
 		wantErr bool
-		search  ports.VideoSearch
+		query   string
+		offset  int32
+		limit   int32
+		orderBy string
+		asc     string
 	}{
-		{"ok", false,
-			ports.VideoSearch{PageRequest: getPageRequest(5, 5), Query: "search global"}},
-		{"ok with search surrounded spaces", false,
-			ports.VideoSearch{PageRequest: getPageRequest(5, 5), Query: "   ok with spacing    "}},
-		{"ok without offset", false,
-			ports.VideoSearch{PageRequest: getPageRequest(0, 5), Query: "search global"}},
-		{"limit less zero pagination", false,
-			ports.VideoSearch{PageRequest: getPageRequest(0, -1), Query: "search global"}},
-		{"offset less zero pagination", false,
-			ports.VideoSearch{PageRequest: getPageRequest(-1, 5), Query: "search global"}},
-		{"limit zero pagination", false,
-			ports.VideoSearch{PageRequest: getPageRequest(5, -1), Query: "search global"}},
+		{"ok", false, "search",
+			0 /*offset*/, 5 /*limit*/, "createdAt", "t"},
+
+		{"ok with search surrounded spaces", false, "   ok with spacing search    ",
+			0 /*offset*/, 5 /*limit*/, "createdAt", "t"},
+
+		{"offset less zero", true, "search",
+			-1 /*offset*/, 5 /*limit*/, "createdAt", "t"}, // Fix: Change wantErr to true
+
+		{"limit less zero", true, "search",
+			0 /*offset*/, -1 /*limit*/, "createdAt", "t"}, // Fix: Change wantErr to true
+
+		{"limit zero", true, "search",
+			0 /*offset*/, 0 /*limit*/, "createdAt", "t"},
+
+		{"limit reached max value", true, "search",
+			0 /*offset*/, 0 /*limit*/, "createdAt", "t"},
+
+		{"incorrect search", true, "se!arch",
+			0 /*offset*/, 5 /*limit*/, "createdAt", "t"},
 	}
 
 	for _, c := range cases {
@@ -299,9 +333,11 @@ func TestValidSearchGlobal(t *testing.T) {
 					MaxTimes(0)
 				_, err := videoService.SearchGlobal(
 					context.Background(),
-					c.search.Query,
-					c.search.Offset,
-					c.search.Limit)
+					c.query,
+					c.orderBy,
+					c.offset,
+					c.limit,
+					c.asc)
 				require.Error(t, err)
 			} else {
 				repo.
@@ -311,16 +347,14 @@ func TestValidSearchGlobal(t *testing.T) {
 					MaxTimes(1)
 				res, err := videoService.SearchGlobal(
 					context.Background(),
-					c.search.Query,
-					c.search.Offset,
-					c.search.Limit)
+					c.query,
+					c.orderBy,
+					c.offset,
+					c.limit,
+					c.asc)
 				require.NoError(t, err)
 				require.Exactly(t, expectedRes, res)
 			}
 		})
 	}
-}
-
-func getPageRequest(offset, limit int32) ports.PageRequest {
-	return ports.PageRequest{Offset: offset, Limit: limit}
 }

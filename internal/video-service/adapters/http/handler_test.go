@@ -8,8 +8,10 @@ import (
 	"strings"
 	"testing"
 	httpadapter "video-provider/internal/video-service/adapters/http"
+	"video-provider/internal/video-service/adapters/idgen"
 	mock_app "video-provider/internal/video-service/app/mock"
 	"video-provider/internal/video-service/domain"
+	"video-provider/internal/video-service/policy"
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -20,7 +22,7 @@ import (
 func TestCreateVideo(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	s := mock_app.NewMockVideoService(ctrl)
-	h := httpadapter.NewVideoHandler(s, nil, log.New(io.Discard, "", 0))
+	h := httpadapter.NewVideoHandler(s, idgen.New(), log.New(io.Discard, "", 0))
 	r := mux.NewRouter()
 	httpadapter.SetupRouter(r, h)
 
@@ -88,7 +90,7 @@ func getReqBody(topic, desc string) string {
 func TestGetVideoById(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	s := mock_app.NewMockVideoService(ctrl)
-	h := httpadapter.NewVideoHandler(s, nil, log.New(io.Discard, "", 0))
+	h := httpadapter.NewVideoHandler(s, idgen.New(), log.New(io.Discard, "", 0))
 	r := mux.NewRouter()
 	httpadapter.SetupRouter(r, h)
 
@@ -140,125 +142,192 @@ func TestGetVideoById(t *testing.T) {
 	}
 }
 
-func TestSearchPublisherVideos(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	s := mock_app.NewMockVideoService(ctrl)
-	h := httpadapter.NewVideoHandler(s, nil, log.New(io.Discard, "", 0))
-	r := mux.NewRouter()
-	httpadapter.SetupRouter(r, h)
-
-	pubID := uuid.Must(uuid.NewRandom())
+func TestGetByPublisherVideos(t *testing.T) {
+	pubIDStr := "d9fa522f-0016-464f-8d68-356ba1d6ad7d"
 	expTop := "topic"
 	expDec := "description"
 
+	expectedRes := []domain.Video{{
+		PublisherID: uuid.Must(uuid.Parse(pubIDStr)),
+		Topic:       expTop,
+		Description: expDec,
+	}}
+
 	cases := []struct {
-		name             string
-		wantErr          bool
-		pubID            string
-		urlParams        string
-		expCallByPub     int
-		expCallSearchPub int
+		name      string
+		wantErr   bool
+		pubID     string
+		urlParams string
 	}{
-		// SearchPublisher
-		{"ok search", false,
-			pubID.String(), "?offset=0&limit=5&query=search", 0, 1},
-		{"few words search", false,
-			pubID.String(), "?offset=0&limit=5&query=search+lorem+ipsum+kitty+dolor", 0, 1},
-		{"negative offset search", false,
-			pubID.String(), "?offset=-10&limit=5&query=search", 0, 1},
-		{"invalid offset search", false,
-			pubID.String(), "?offset=H&limit=5&query=search", 0, 1},
-		{"negative limit search", false,
-			pubID.String(), "?offset=0&limit=-10&query=search", 0, 1},
-		{"zero limit search", false,
-			pubID.String(), "?offset=0&limit=0&query=search", 0, 1},
-		{"invalid limit search", false,
-			pubID.String(), "?offset=0&limit=H&query=search", 0, 1},
-
-		// GetByPublisher
 		{"ok", false,
-			pubID.String(), "?offset=0&limit=5", 1, 0},
-		{"negative offset", false,
-			pubID.String(), "?offset=-10&limit=5", 1, 0},
-		{"invalid offset", false,
-			pubID.String(), "?offset=H&limit=5", 1, 0},
-		{"negative limit", false,
-			pubID.String(), "?offset=0&limit=-10", 1, 0},
-		{"zero limit", false,
-			pubID.String(), "?offset=0&limit=0", 1, 0},
-		{"invalid limit", false,
-			pubID.String(), "?offset=0&limit=H", 1, 0},
-		{"wrong url params", false,
-			pubID.String(), "?affset=0&leemeet=5&kueree=search", 1, 0},
-		{"partial wrong url params", false,
-			pubID.String(), "?affset=0&leemeet=5&search=", 1, 0},
+			pubIDStr, "?offset=0&limit=5&orderBy=createdAt&asc=t"},
 
-		// Errors. TODO: test in real time
-		// {"invalid search", true,
-		// 	pubID.String(), "?offset=0&limit=5&query=search with spaces", 0, 0},
-		{"invalid search", true,
-			pubID.String(), "?offset=0&limit=5&query=,.<>?/;", 0, 0},
-		{"ivalid id", true,
-			"1", "?offset=0&limit=5&query=search", 0, 0},
-		{"empty id", true,
-			"", "?offset=0&limit=5&query=search", 0, 0},
+		{"large URL query", true,
+			pubIDStr, "?offset=5&limit=5&orderBy=createdAt&asc=" + strings.Repeat("a", policy.UrlMaxLen)},
+
+		{"invalid offset", true,
+			pubIDStr, "?offset=H&limit=5&orderBy=createdAt&asc=t"},
+
+		{"no offset in URL", true,
+			pubIDStr, "?limit=5&orderBy=createdAt&asc=t"},
+
+		{"invalid limit", true,
+			pubIDStr, "?offset=0&limit=H&orderBy=createdAt&asc=t"},
+
+		{"no limit in URL", true,
+			pubIDStr, "?offset=0&orderBy=createdAt&asc=t"},
+
+		{"invalid asc", true,
+			pubIDStr, "?offset=0&limit=5&orderBy=createdAt&asc=!@#%"},
+
+		{"no asc in URL", true,
+			pubIDStr, "?offset=0&limit=5&orderBy=createdAt"},
+
+		{"invalid orderBy", true,
+			pubIDStr, "?offset=0&limit=5&orderBy=!@#%&asc=t"},
+
+		{"no orderBy in URL", true,
+			pubIDStr, "?offset=0&limit=5&asc=t"},
+
+		{"wrong url params", true,
+			pubIDStr, "?affset=0&leemeet=5&orderBy=createdAt&asc=t&kueree=search"},
+
+		{"partial wrong url params", true,
+			pubIDStr, "?affset=0&leemeet=5&orderBy=createdAt&asc=t&search="},
 	}
+
+	t.Parallel()
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			t.Parallel()
+			ctrl := gomock.NewController(t)
+			s := mock_app.NewMockVideoService(ctrl)
+			h := httpadapter.NewVideoHandler(s, idgen.New(), log.New(io.Discard, "", 0))
+			r := mux.NewRouter()
+			httpadapter.SetupRouter(r, h)
 
 			if c.wantErr {
 				s.EXPECT().
-					GetByPublisher(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					MaxTimes(c.expCallByPub)
-				s.EXPECT().
-					SearchPublisher(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					MaxTimes(c.expCallSearchPub)
+					GetByPublisher(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					MaxTimes(0)
 			} else {
 				s.EXPECT().GetByPublisher(
 					gomock.Any(),
 					gomock.Eq(uuid.MustParse(c.pubID)),
 					gomock.Any(),
 					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
 				).Return(
-					[]domain.Video{{
-						PublisherID: pubID,
-						Topic:       expTop,
-						Description: expDec,
-					}}, nil,
-				).MaxTimes(c.expCallByPub)
+					expectedRes, nil,
+				).MaxTimes(1)
+			}
 
+			url := strings.Replace(
+				httpadapter.RoutePublisherVideos,
+				"{"+httpadapter.PathVarPublisherID+"}",
+				c.pubID,
+				1,
+			) + c.urlParams
+
+			req := httptest.NewRequest(http.MethodGet, url, nil)
+			rec := httptest.NewRecorder()
+
+			r.ServeHTTP(rec, req)
+
+			if c.wantErr {
+				require.Equal(t, http.StatusBadRequest, rec.Code)
+			} else {
+				require.Equal(t, http.StatusOK, rec.Code)
+			}
+		})
+	}
+}
+
+func TestSearchPublisherVideos(t *testing.T) {
+	pubIDStr := "d9fa522f-0016-464f-8d68-356ba1d6ad7d"
+	expTop := "topic"
+	expDec := "description"
+
+	expectedRes := []domain.Video{{
+		PublisherID: uuid.Must(uuid.Parse(pubIDStr)),
+		Topic:       expTop,
+		Description: expDec,
+	}}
+
+	cases := []struct {
+		name          string
+		wantErr       bool
+		pubID         string
+		urlParams     string
+		expStatusCode int
+	}{
+		// SearchPublisher
+		{"ok search", false,
+			pubIDStr, "?offset=0&limit=5&orderBy=createdAt&asc=t&query=search", http.StatusOK},
+
+		{"few words search", false,
+			pubIDStr, "?offset=0&limit=5&orderBy=createdAt&asc=t&query=search+lorem+ipsum+kitty+dolor", http.StatusOK},
+
+		{"invalid offset search", true,
+			pubIDStr, "?offset=A&limit=5&orderBy=createdAt&asc=t&query=search", http.StatusBadRequest},
+
+		{"invalid limit search", true,
+			pubIDStr, "?offset=0&limit=A&orderBy=createdAt&asc=t&query=search", http.StatusBadRequest},
+
+		{"ivalid id", true,
+			"1", "?offset=0&limit=5&orderBy=createdAt&asc=t&query=search", http.StatusBadRequest},
+
+		{"empty id", true,
+			"", "?offset=0&limit=5&orderBy=createdAt&asc=t&query=search", http.StatusNotFound},
+
+		//TODO: temp fix, till error handling will be implemented
+		{"invalid search", true,
+			pubIDStr, "?offset=0&limit=5&orderBy=createdAt&asc=t&query=,.<>?/;", http.StatusBadRequest},
+	}
+
+	t.Parallel()
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+
+			ctrl := gomock.NewController(t)
+			s := mock_app.NewMockVideoService(ctrl)
+			h := httpadapter.NewVideoHandler(s, idgen.New(), log.New(io.Discard, "", 0))
+			r := mux.NewRouter()
+			httpadapter.SetupRouter(r, h)
+
+			if c.wantErr {
+				s.EXPECT().
+					SearchPublisher(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
+					MaxTimes(0)
+			} else {
 				s.EXPECT().SearchPublisher(
 					gomock.Any(),
 					gomock.Eq(uuid.MustParse(c.pubID)),
 					gomock.Any(),
 					gomock.Any(),
 					gomock.Any(),
+					gomock.Any(),
+					gomock.Any(),
 				).Return(
-					[]domain.Video{{
-						PublisherID: pubID,
-						Topic:       expTop,
-						Description: expDec,
-					}}, nil,
-				).MaxTimes(c.expCallSearchPub)
+					expectedRes, nil,
+				).MaxTimes(1)
 			}
 
 			url := strings.Replace(
 				httpadapter.RoutePublisherVideos,
 				"{"+httpadapter.PathVarPublisherID+"}",
-				c.pubID+c.urlParams,
+				c.pubID,
 				1,
-			)
+			) + c.urlParams
+
 			req := httptest.NewRequest(http.MethodGet, url, nil)
 			rec := httptest.NewRecorder()
 			r.ServeHTTP(rec, req)
 
-			if c.wantErr {
-				require.NotEqual(t, http.StatusOK, rec.Code)
-			} else {
-				require.Equal(t, http.StatusOK, rec.Code)
-			}
+			require.Equal(t, c.expStatusCode, rec.Code)
+
 		})
 	}
 }

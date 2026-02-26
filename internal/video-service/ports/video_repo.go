@@ -5,28 +5,36 @@ import (
 	"video-provider/internal/video-service/domain"
 )
 
+type VideoPageParams struct {
+	Offset  int32
+	Limit   int32
+	OrderBy string
+	IsAsc   bool
+}
+
+type VideoSearchParams struct {
+	VideoPageParams
+	Query string
+}
+
+const (
+	OrderByCreatedAt string = "createdAt"
+	OrderAsc         string = " ASC"
+	OrderDesc        string = " DESC"
+)
+
 type VideoRepository interface {
 	CreateVideo(ctx context.Context, video domain.Video) (domain.Video, error)
 	GetVideoByID(ctx context.Context, id domain.UUID) (domain.Video, error)
 	GetPublisherVideos(
 		ctx context.Context,
 		publisherID domain.UUID,
-		args PageRequest,
+		args VideoPageParams,
 	) ([]domain.Video, error)
 	SearchPublisher(
 		ctx context.Context,
 		publisherID domain.UUID,
-		args VideoSearch,
+		args VideoSearchParams,
 	) ([]domain.Video, error)
-	SearchGlobal(ctx context.Context, args VideoSearch) ([]domain.Video, error)
-}
-
-type PageRequest struct {
-	Offset int32
-	Limit  int32
-}
-
-type VideoSearch struct {
-	PageRequest
-	Query string
+	SearchGlobal(ctx context.Context, args VideoSearchParams) ([]domain.Video, error)
 }
