@@ -74,7 +74,7 @@ func TestValidateLimit(t *testing.T) {
 		{"ok", false, 5},
 		{"negative limit", true, -5},
 		{"zero limit", true, 0},
-		{"above max limit", true, policy.MaxVideosLimitPerRequest + 1},
+		{"above max limit", true, policy.MaxVideosLimit + 1},
 	}
 
 	for _, tt := range tests {

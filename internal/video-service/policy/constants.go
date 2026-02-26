@@ -5,20 +5,15 @@ import (
 )
 
 const (
-	MaxInt32 = int32(^uint32(0) >> 1)
-
 	MaxIDBytesSize          = 36
 	MaxTopicBytesSize       = 48
 	MaxDescriptionBytesSize = 512
 
-	MaxSearchBytesSize = 100
-	UrlParamMaxSize    = 10
-	MinSearchBytesSize = 2
+	UrlMaxLen    = 100
+	MinSearchLen = 3
 
-	DefaultVideosOffset = 0
-
-	DefaultVideosLimitPerRequest = 5
-	MaxVideosLimitPerRequest     = 50
+	ThresholdVideosLimit = 5
+	MaxVideosLimit       = 50
 )
 
 func GetTextingFormateRE128() *regexp.Regexp {
