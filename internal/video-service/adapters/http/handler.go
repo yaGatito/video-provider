@@ -49,12 +49,12 @@ func NewVideoHandler(
 }
 
 // Create godoc
-// @Summary      Creates new video. Publisher id example: d9fa522f-0006-464f-8d68-356ba1d6ad7d
-// @Description  Creates a new video record for the specified publisher
+// @Summary      Creates new video.
+// @Description  Creates a new video record for the specified publisher.
 // @Tags         videos
 // @Accept       json
 // @Produce      json
-// @Param        publisherID  path      string                 true  "publisher ID (UUID)"
+// @Param        publisherID  path      string                 true  "Publisher ID (UUID)"
 // @Param        video        body      createVideoRequestBody true  "Video creation request body"
 // @Success      200          {object}  nil
 // @Failure      400          {object}  string "Invalid input"
@@ -90,10 +90,10 @@ func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
 // @Description  Returns details of a single video by its unique identifier
 // @Tags         videos
 // @Produce      json
-// @Param        videoID  path      string  true  "video ID (UUID)"
+// @Param        videoID  path      string  true  "video ID (UUID)"  Format(uuid)
 // @Success      200      {object}  VideoResponseBody
-// @Failure      400      {object}  string
-// @Failure      500      {object}  string
+// @Failure      400      {object}  string  "Invalid video ID format"
+// @Failure      500      {object}  string  "Internal server error"
 // @Router       /v1/videos/id/{videoID} [get]
 func (h *VideoHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	videoID, err := h.pathVarHandler(w, r, PathVarVideoID)
@@ -110,10 +110,11 @@ func (h *VideoHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 // @Description  Returns a list of videos for a specific publisher with pagination and search support
 // @Tags         videos
 // @Produce      json
-// @Param        publisherID  path      string  true   "publisher ID (UUID)"
-// @Param        query        query     string  false  "Search query"
-// @Param        limit        query     int     false  "Limit (default 10)"
-// @Param        offset       query     int     false  "Offset (default 0)"
+// @Param        publisherID  	path      string  true   "publisher ID (UUID)"
+// @Param        limit   	  	query     int     false  "Limit (example: 10)"
+// @Param        offset  		query     int     false  "Offset (example: 0)"
+// @Param        sort    		query     string  false  "Sort (example: `createdAt`)"
+// @Param        order   		query     string  false  "Order (asc or desc, example: `t` for ascending, `f` for descending)"
 // @Success      200          {array}   VideoResponseBody
 // @Router       /v1/videos/pub/{publisherID} [get]
 func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
@@ -164,10 +165,10 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 // @Tags         videos
 // @Produce      json
 // @Param        query   query     string  true   "Search query"
-// @Param        limit   query     int     false  "Limit (default 10)"
-// @Param        offset  query     int     false  "Offset (default 0)"
-// @Param        sort    query     string  false  "Sort (default 'createdAt')"
-// @Param        order   query     string  false  "Order (default 'asc')"
+// @Param        limit   query     int     false  "Limit (example: 10)"
+// @Param        offset  query     int     false  "Offset (example: 0)"
+// @Param        sort    query     string  false  "Sort (example: `createdAt`)"
+// @Param        order   query     string  false  "Order (asc or desc, example: `t` for ascending, `f` for descending)"
 // @Success      200     {array}   VideoResponseBody
 // @Router       /v1/videos/search/ [get]
 func (h *VideoHandler) SearchGlobal(w http.ResponseWriter, r *http.Request) {
@@ -220,9 +221,6 @@ func (h VideoHandler) writeResponse(w http.ResponseWriter, v any, err error, err
 			h.log.Println("Error encoding response body:", err)
 		}
 	}
-}
-
-func (h VideoHandler) writeJSON(w http.ResponseWriter, status int, v any) {
 }
 
 func (h VideoHandler) parseUrlValues(w http.ResponseWriter, query string) (url.Values, error) {
