@@ -121,7 +121,6 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 	// Required path variable
 	publisherID, err := h.pathVarHandler(w, r, PathVarPublisherID)
 	if err != nil {
-		h.writeResponse(w, nil, fmt.Errorf("failed to parse `publisherId` path var: %w", err), http.StatusBadRequest)
 		return
 	}
 
@@ -209,14 +208,14 @@ func (h VideoHandler) writeResponse(w http.ResponseWriter, v any, err error, err
 	switch val := v.(type) {
 	case domain.Video:
 		w.WriteHeader(http.StatusOK)
-		err = json.NewEncoder(w).Encode(h.toDtoVideo(val))
+		err = json.NewEncoder(w).Encode(dtoVideo(val))
 		if err != nil {
 			h.log.Println("Error encoding response body:", err)
 		}
 
 	case []domain.Video:
 		w.WriteHeader(http.StatusOK)
-		err = json.NewEncoder(w).Encode(h.toDtoVideos(val))
+		err = json.NewEncoder(w).Encode(dtoVideos(val))
 		if err != nil {
 			h.log.Println("Error encoding response body:", err)
 		}
@@ -310,22 +309,4 @@ func (h VideoHandler) extractUrlVarString(
 	}
 
 	return value, nil
-}
-
-func (h VideoHandler) toDtoVideo(v domain.Video) VideoResponseBody {
-	return VideoResponseBody{
-		ID:          v.ID.String(),
-		PublisherID: v.PublisherID.String(),
-		Topic:       v.Topic,
-		Description: v.Description,
-		CreatedAt:   v.CreatedAt,
-	}
-}
-
-func (h VideoHandler) toDtoVideos(videos []domain.Video) []VideoResponseBody {
-	res := make([]VideoResponseBody, len(videos))
-	for i, v := range videos {
-		res[i] = h.toDtoVideo(v)
-	}
-	return res
 }

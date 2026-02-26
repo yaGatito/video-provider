@@ -3,6 +3,7 @@ package httpadapter
 import (
 	"fmt"
 	"time"
+	"video-provider/internal/video-service/domain"
 	"video-provider/internal/video-service/policy"
 )
 
@@ -36,6 +37,24 @@ func (e ValidationError) Error() string {
 type createVideoRequestBody struct {
 	Topic       string `json:"topic"`
 	Description string `json:"description"`
+}
+
+func dtoVideo(v domain.Video) VideoResponseBody {
+	return VideoResponseBody{
+		ID:          v.ID.String(),
+		PublisherID: v.PublisherID.String(),
+		Topic:       v.Topic,
+		Description: v.Description,
+		CreatedAt:   v.CreatedAt,
+	}
+}
+
+func dtoVideos(videos []domain.Video) []VideoResponseBody {
+	res := make([]VideoResponseBody, len(videos))
+	for i, v := range videos {
+		res[i] = dtoVideo(v)
+	}
+	return res
 }
 
 // validate validates the request body fields.
