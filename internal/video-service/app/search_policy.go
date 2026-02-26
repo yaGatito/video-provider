@@ -46,7 +46,7 @@ func ValidateSearchQuery(query string) (string, error) {
 // 2. The limit must not exceed the maximum allowed value defined by policy.MaxVideosLimitPerRequest. If it does, an error is returned indicating that the limit has reached the maximum allowed value.
 func ValidateLimit(limit int32) (int32, error) {
 	if limit < policy.ThresholdVideosLimit {
-		return 0, fmt.Errorf("limit is zero or less: %d", limit)
+		return 0, fmt.Errorf("limit is less then threshold(%d): %d", policy.ThresholdVideosLimit, limit)
 	}
 	if limit > policy.MaxVideosLimit {
 		return 0, fmt.Errorf("limit reached maximum allowed value: %d", limit)
