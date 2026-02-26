@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios, { AxiosResponse } from 'axios';
-import './SearchPage.css';
+import styled from 'styled-components';
+import { useNavigate } from 'react-router-dom';
 
 interface Video {
   id: string;
@@ -10,16 +11,99 @@ interface Video {
   createdAt: Date;
 }
 
+const Page = styled.div`
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.lg};
+`;
+
+const Header = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+
+const Title = styled.h1`
+  font-family: ${({ theme }) => theme.fonts.heading};
+`;
+
+const Input = styled.input`
+  width: 100%;
+  max-width: 680px;
+  padding: 0.85rem 1rem;
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radius.md};
+  background: ${({ theme }) => theme.colors.surface};
+  transition: border-color ${({ theme }) => theme.transitions.base}, box-shadow ${({ theme }) => theme.transitions.base};
+
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors.brand};
+    box-shadow: 0 0 0 3px rgba(15, 76, 129, 0.15);
+  }
+`;
+
+const Grid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: ${({ theme }) => theme.spacing.lg};
+`;
+
+const Card = styled.article`
+  background: ${({ theme }) => theme.colors.surface};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radius.md};
+  padding: ${({ theme }) => theme.spacing.lg};
+  cursor: pointer;
+  transition: transform ${({ theme }) => theme.transitions.base}, box-shadow ${({ theme }) => theme.transitions.base};
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: ${({ theme }) => theme.shadows.md};
+  }
+`;
+
+const Topic = styled.h2`
+  font-family: ${({ theme }) => theme.fonts.heading};
+  margin-bottom: ${({ theme }) => theme.spacing.sm};
+`;
+
+const Description = styled.p`
+  color: ${({ theme }) => theme.colors.textSecondary};
+  margin-bottom: ${({ theme }) => theme.spacing.md};
+`;
+
+const Meta = styled.p`
+  font-size: 0.85rem;
+  color: ${({ theme }) => theme.colors.muted};
+`;
+
+const LoadMoreButton = styled.button`
+  width: fit-content;
+  padding: 0.7rem 1.2rem;
+  border: none;
+  border-radius: ${({ theme }) => theme.radius.sm};
+  color: white;
+  background: ${({ theme }) => theme.colors.brand};
+  cursor: pointer;
+
+  &:hover {
+    background: ${({ theme }) => theme.colors.brandHover};
+  }
+`;
+
 const SearchPage: React.FC = () => {
   const [query, setQuery] = useState('');
-  const [limit, setLimit] = useState(10);
+  const [limit] = useState(10);
   const [offset, setOffset] = useState(0);
+  const [orderBy] = useState('createdAt');
+  const [asc] = useState('t');
   const [videos, setVideos] = useState<Video[]>([]);
-  const apiUrl = process.env.REACT_APP_API_URL
+  const apiUrl = process.env.REACT_APP_API_URL;
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (query.length > 2) {
-      axios.get<Video[]>(`${apiUrl}/v1/videos/search?query=${query}&limit=${limit}&offset=${offset}`)
+      axios.get<Video[]>(`${apiUrl}/v1/videos/search?query=${query}&limit=${limit}&offset=${offset}&orderBy=${orderBy}&asc=${asc}`)
         .then((response: AxiosResponse<Video[]>) => {
           setVideos(response.data);
         })
@@ -27,47 +111,46 @@ const SearchPage: React.FC = () => {
           console.error('There was an error fetching the search results!', error);
         });
     }
-  }, [query, limit, offset]);
+  }, [query, limit, offset, orderBy, asc, apiUrl]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value);
-    setOffset(0); // Reset offset when query changes
+    setOffset(0);
   };
 
   const loadMoreVideos = () => {
-    setOffset(offset + limit);
+    setOffset((current) => current + limit);
   };
 
   return (
-    <div className="search-page">
-      <h1>🔍 Search</h1>
-      <input
-        type="text"
-        placeholder="Search for videos..."
-        value={query}
-        onChange={handleSearch}
-      />
+    <Page>
+      <Header>
+        <Title>Search</Title>
+        <Input
+          type="text"
+          placeholder="Search for videos..."
+          value={query}
+          onChange={handleSearch}
+        />
+      </Header>
+
       {videos.length > 0 ? (
         <>
-          <div className="video-list">
-            {videos.map(video => (
-              <div key={video.id} className="video-card" onClick={() => window.location.href = `${apiUrl}/v1/videos/id/${video.id}`}>
-                <div className="video-content">
-                  <h2>{video.topic}</h2>
-                  <p>{video.description}</p>
-                  <div className="video-stats">
-                    <span>Published on {new Date(video.createdAt).toLocaleDateString()}</span>
-                  </div>
-                </div>
-              </div>
+          <Grid>
+            {videos.map((video) => (
+              <Card key={video.id} onClick={() => { navigate(`/watch/${video.id}`); }}>
+                <Topic>{video.topic}</Topic>
+                <Description>{video.description}</Description>
+                <Meta>Published on {new Date(video.createdAt).toLocaleDateString()}</Meta>
+              </Card>
             ))}
-          </div>
-          <button onClick={loadMoreVideos}>Load More</button>
+          </Grid>
+          <LoadMoreButton onClick={loadMoreVideos}>Load More</LoadMoreButton>
         </>
       ) : (
-        <p>No videos found.</p>
+        <Meta>No videos found.</Meta>
       )}
-    </div>
+    </Page>
   );
 };
 

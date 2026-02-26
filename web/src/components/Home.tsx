@@ -1,125 +1,183 @@
-// src/components/Home.tsx
-
 import React, { useEffect, useState } from 'react';
 import axios, { AxiosResponse } from 'axios';
+import styled from 'styled-components';
+import { useNavigate } from 'react-router-dom';
 
 interface Video {
   id: number;
-  title: string;
+  topic: string;
   description: string;
-  likes: number;
-  dislikes: number;
-  comments: number;
   previewImage: string;
-  uploadDate: string; // Add upload date
+  createdAt: string;
 }
 
-interface VideoResponse {
-  videos: Video[];
-}
+const Page = styled.div`
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.xl};
+`;
+
+const Hero = styled.section`
+  background: linear-gradient(120deg, #0f4c81, #2a74ae);
+  color: white;
+  border-radius: ${({ theme }) => theme.radius.lg};
+  padding: ${({ theme }) => theme.spacing.xxl} ${({ theme }) => theme.spacing.xl};
+  box-shadow: ${({ theme }) => theme.shadows.md};
+`;
+
+const HeroTitle = styled.h1`
+  font-family: ${({ theme }) => theme.fonts.heading};
+  font-size: clamp(1.8rem, 3.5vw, 2.8rem);
+  margin-bottom: ${({ theme }) => theme.spacing.sm};
+`;
+
+const HeroText = styled.p`
+  max-width: 700px;
+  color: #ddeeff;
+`;
+
+const Section = styled.section`
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.lg};
+`;
+
+const SectionTitle = styled.h2`
+  font-family: ${({ theme }) => theme.fonts.heading};
+  color: ${({ theme }) => theme.colors.textPrimary};
+`;
+
+const Grid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: ${({ theme }) => theme.spacing.lg};
+`;
+
+const Card = styled.article<{ $featured?: boolean }>`
+  background: ${({ theme }) => theme.colors.surface};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radius.md};
+  overflow: hidden;
+  box-shadow: ${({ theme }) => theme.shadows.sm};
+  transition: transform ${({ theme }) => theme.transitions.base}, box-shadow ${({ theme }) => theme.transitions.base};
+  cursor: ${({ $featured }) => ($featured ? 'default' : 'pointer')};
+
+  &:hover {
+    transform: ${({ $featured }) => ($featured ? 'none' : 'translateY(-4px)')};
+    box-shadow: ${({ theme }) => theme.shadows.md};
+  }
+`;
+
+const Preview = styled.img`
+  width: 100%;
+  height: 210px;
+  object-fit: cover;
+  display: block;
+`;
+
+const CardBody = styled.div`
+  padding: ${({ theme }) => theme.spacing.lg};
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+
+const CardTitle = styled.h3`
+  font-family: ${({ theme }) => theme.fonts.heading};
+`;
+
+const CardText = styled.p`
+  color: ${({ theme }) => theme.colors.textSecondary};
+  font-size: 0.95rem;
+`;
+
+const Meta = styled.div`
+  font-size: 0.86rem;
+  color: ${({ theme }) => theme.colors.muted};
+`;
 
 const Home: React.FC = () => {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
+  const apiUrl = process.env.REACT_APP_API_URL;
+  const navigate = useNavigate();
+
+  const getRandomSearchQuery = (): string => {
+    const queries = ['tec', 'wor', 'tra'];
+    return queries[Math.floor(Math.random() * queries.length)];
+  };
 
   useEffect(() => {
-    const apiUrl = process.env.VIDEO_SERVICE_API_URL;
-    axios.get<VideoResponse>(`${apiUrl}/v1/videos/search?query=latest&limit=20&offset=0&sort=uploadDate&order=desc&`)
-      .then((response: AxiosResponse<VideoResponse>) => {
-        setVideos(response.data.videos);
+    axios.get<Video[]>(`${apiUrl}/v1/videos/search?limit=20&offset=0&orderBy=createdAt&asc=t&query=${getRandomSearchQuery()}`)
+      .then((response: AxiosResponse<Video[]>) => {
+        setVideos(response.data);
         setLoading(false);
       })
-      .catch((error: unknown) => {
-        console.error('There was an error fetching the videos!', error);
+      .catch((requestError: unknown) => {
+        console.error('There was an error fetching the videos!', requestError);
         setError('Failed to load videos. Please try again later.');
         setLoading(false);
       });
-  }, []);
+  }, [apiUrl]);
 
   if (loading) {
     return (
-      <div className="home">
-        <div className="hero-section">
-          <h1>Watch UA</h1>
-          <p>Loading latest videos...</p>
-        </div>
-      </div>
+      <Page>
+        <Hero>
+          <HeroTitle>Watch UA</HeroTitle>
+          <HeroText>Loading latest videos...</HeroText>
+        </Hero>
+      </Page>
     );
   }
 
   if (error) {
     return (
-      <div className="home">
-        <div className="hero-section">
-          <h1>Watch UA</h1>
-          <p>{error}</p>
-        </div>
-      </div>
+      <Page>
+        <Hero>
+          <HeroTitle>Watch UA</HeroTitle>
+          <HeroText>{error}</HeroText>
+        </Hero>
+      </Page>
     );
   }
 
   return (
-    <div className="home">
-      <div className="hero-section">
-        <h1>Watch UA</h1>
-        <p>Discover amazing video content</p>
-      </div>
-      
-      {/* Featured Video Section */}
-      <div className="section">
-        <h2>Featured Video</h2>
-        <div className="video-card featured">
-          <img 
-            src="https://images.unsplash.com/photo-1618345522246-81e1f1e041b7?auto=format&fit=crop&w=1920&q=80" 
-            alt="Featured Video" 
+    <Page>
+      <Hero>
+        <HeroTitle>Watch UA</HeroTitle>
+        <HeroText>Discover bold stories and fresh uploads from the community.</HeroText>
+      </Hero>
+
+      <Section>
+        <SectionTitle>Featured Video</SectionTitle>
+        <Card $featured>
+          <Preview
+            src="https://images.unsplash.com/photo-1618345522246-81e1f1e041b7?auto=format&fit=crop&w=1920&q=80"
+            alt="Featured Video"
           />
-          <div className="video-content">
-            <h2>Sample Featured Video</h2>
-            <p>This is a sample featured video to showcase the latest content on Watch UA.</p>
-            <div className="video-stats">
-              <span>👍 1.2k</span>
-              <span>👎 120</span>
-              <span>💬 450</span>
-            </div>
-          </div>
-        </div>
-      </div>
-      
-      {/* Latest Uploads Section */}
-      <div className="section">
-        <h2>Latest Uploads</h2>
-        <div className="video-list">
-          {videos.map(video => (
-            <div key={video.id} className="video-card" onClick={() => window.location.href = `/v1/videos/id/${video.id}`}>
-              <img src={video.previewImage} alt={video.title} />
-              <div className="video-content">
-                <h2>{video.title}</h2>
-                <p>{video.description}</p>
-                <div className="video-stats">
-                  <span>👍 {video.likes}</span>
-                  <span>👎 {video.dislikes}</span>
-                  <span>💬 {video.comments}</span>
-                  <span>📅 {video.uploadDate}</span>
-                </div>
-              </div>
-            </div>
+          <CardBody>
+            <CardTitle>Sample Featured Video</CardTitle>
+            <CardText>This is a sample featured video to showcase the latest content on Watch UA.</CardText>
+            <Meta>1.2k likes | 120 dislikes | 450 comments</Meta>
+          </CardBody>
+        </Card>
+      </Section>
+
+      <Section>
+        <SectionTitle>Latest Uploads</SectionTitle>
+        <Grid>
+          {videos.map((video) => (
+            <Card key={video.id} onClick={() => { navigate(`/watch/${video.id}`); }}>
+              <Preview src={video.previewImage} alt={video.topic} />
+              <CardBody>
+                <CardTitle>{video.topic}</CardTitle>
+                <CardText>{video.description}</CardText>
+                <Meta>Published {new Date(video.createdAt).toLocaleDateString()}</Meta>
+              </CardBody>
+            </Card>
           ))}
-        </div>
-      </div>
-      
-      {/* Additional Content Section */}
-      <div className="section">
-        <h2>About Watch UA</h2>
-        <p>
-          Watch UA is a platform where you can discover amazing video content from creators around the world. 
-          Whether you're looking for tutorials, entertainment, or educational content, we've got something for you.
-        </p>
-        <p>
-          Join our community today and start exploring the world of video content!
-        </p>
-      </div>
-    </div>
+        </Grid>
+      </Section>
+    </Page>
   );
 };
 
