@@ -1,11 +1,94 @@
 import React, { useState } from 'react';
 import axios, { AxiosError, AxiosResponse } from 'axios';
-import './UploadVideo.css';
+import styled from 'styled-components';
 
 interface VideoData {
   title: string;
   description?: string;
 }
+
+const Page = styled.div`
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.md};
+  max-width: 700px;
+  margin: 0 auto;
+`;
+
+const Title = styled.h1`
+  font-family: ${({ theme }) => theme.fonts.heading};
+`;
+
+const Message = styled.p<{ $tone: 'success' | 'error' }>`
+  border-radius: ${({ theme }) => theme.radius.sm};
+  padding: ${({ theme }) => theme.spacing.md};
+  background: ${({ theme, $tone }) => ($tone === 'success' ? theme.colors.successBg : theme.colors.errorBg)};
+  color: ${({ theme, $tone }) => ($tone === 'success' ? theme.colors.successText : theme.colors.errorText)};
+`;
+
+const Form = styled.form`
+  background: ${({ theme }) => theme.colors.surface};
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radius.md};
+  box-shadow: ${({ theme }) => theme.shadows.sm};
+  padding: ${({ theme }) => theme.spacing.xl};
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.lg};
+`;
+
+const Group = styled.div`
+  display: grid;
+  gap: ${({ theme }) => theme.spacing.sm};
+`;
+
+const Label = styled.label`
+  font-weight: 700;
+`;
+
+const Input = styled.input`
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radius.sm};
+  padding: 0.75rem 0.9rem;
+
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors.brand};
+    box-shadow: 0 0 0 3px rgba(15, 76, 129, 0.15);
+  }
+`;
+
+const TextArea = styled.textarea`
+  border: 1px solid ${({ theme }) => theme.colors.border};
+  border-radius: ${({ theme }) => theme.radius.sm};
+  padding: 0.75rem 0.9rem;
+  min-height: 120px;
+  resize: vertical;
+
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.colors.brand};
+    box-shadow: 0 0 0 3px rgba(15, 76, 129, 0.15);
+  }
+`;
+
+const SubmitButton = styled.button`
+  border: none;
+  border-radius: ${({ theme }) => theme.radius.sm};
+  padding: 0.8rem 1rem;
+  color: white;
+  font-weight: 700;
+  background: ${({ theme }) => theme.colors.brand};
+  cursor: pointer;
+  transition: background ${({ theme }) => theme.transitions.base};
+
+  &:hover:not(:disabled) {
+    background: ${({ theme }) => theme.colors.brandHover};
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    background: #8da8bf;
+  }
+`;
 
 const UploadVideo: React.FC = () => {
   const [videoData, setVideoData] = useState<VideoData>({ title: '', description: '' });
@@ -18,9 +101,9 @@ const UploadVideo: React.FC = () => {
     setVideoData({ ...videoData, [name]: value });
   };
 
-  const handleUpload = async (e: React.SubmitEvent) => {
+  const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!videoData.title.trim()) {
       setErrorMessage('Please enter a video title');
       return;
@@ -51,11 +134,13 @@ const UploadVideo: React.FC = () => {
     };
 
     try {
-    const response: AxiosResponse<{ message: string }> = await axios.post(
-      'http://localhost:8080/v1/videos/pub/123e4567-e89b-12d3-a456-426614174000',
-      requestBody
-    );
-      setSuccessMessage(`Video "${videoData.title}" uploaded successfully!`);
+      const response: AxiosResponse<{ message: string }> = await axios.post(
+        'http://localhost:8080/v1/videos/pub/123e4567-e89b-12d3-a456-426614174000',
+        requestBody
+      );
+      if (response.status >= 200 && response.status < 300) {
+        setSuccessMessage(`Video "${videoData.title}" uploaded successfully!`);
+      }
       setTimeout(() => {
         window.location.href = '/';
       }, 2000);
@@ -64,27 +149,26 @@ const UploadVideo: React.FC = () => {
       let message = 'Please try again.';
       if (axios.isAxiosError(error)) {
         const axiosError: AxiosError<{ message: string }> = error;
-        if (axiosError.response && axiosError.response.data && axiosError.response.data.message) {
+        if (axiosError.response?.data?.message) {
           message = axiosError.response.data.message;
         }
       }
-      setErrorMessage('Error: ' + message);
+      setErrorMessage(`Error: ${message}`);
     } finally {
       setUploading(false);
     }
   };
 
   return (
-    <div className="upload-video-page">
-      <h1>🎥 Upload Video</h1>
+    <Page>
+      <Title>Upload Video</Title>
+      {successMessage && <Message $tone="success">{successMessage}</Message>}
+      {errorMessage && <Message $tone="error">{errorMessage}</Message>}
 
-      {successMessage && <p className="success-message">{successMessage}</p>}
-      {errorMessage && <p className="error-message">{errorMessage}</p>}
-
-      <form onSubmit={handleUpload} className="upload-form">
-        <div className="form-group">
-          <label htmlFor="title">Video Title * (max 48 characters)</label>
-          <input
+      <Form onSubmit={handleUpload}>
+        <Group>
+          <Label htmlFor="title">Video Title * (max 48 characters)</Label>
+          <Input
             id="title"
             type="text"
             name="title"
@@ -94,11 +178,11 @@ const UploadVideo: React.FC = () => {
             maxLength={48}
             required
           />
-        </div>
+        </Group>
 
-        <div className="form-group">
-          <label htmlFor="description">Description *</label>
-          <textarea
+        <Group>
+          <Label htmlFor="description">Description *</Label>
+          <TextArea
             id="description"
             name="description"
             placeholder="Enter video description (max 512 characters)"
@@ -107,17 +191,13 @@ const UploadVideo: React.FC = () => {
             rows={5}
             required
           />
-        </div>
+        </Group>
 
-        <button
-          type="submit"
-          className="upload-button"
-          disabled={uploading}
-        >
+        <SubmitButton type="submit" disabled={uploading}>
           {uploading ? 'Uploading...' : 'Upload Video'}
-        </button>
-      </form>
-    </div>
+        </SubmitButton>
+      </Form>
+    </Page>
   );
 };
 

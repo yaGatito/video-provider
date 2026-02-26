@@ -6,6 +6,7 @@ import SearchPage from './components/SearchPage';
 import Login from './components/Login';
 import Register from './components/Register';
 import UploadVideo from './components/UploadVideo';
+import VideoPage from './components/VideoPage';
 
 const App: React.FC = () => {
   return (
@@ -17,6 +18,8 @@ const App: React.FC = () => {
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route path="/upload" element={<UploadVideo />} />
+          <Route path="/watch/:id" element={<VideoPage />} />
+          <Route path="/v1/videos/id/:id" element={<VideoPage />} />
         </Routes>
       </Layout>
     </Router>
