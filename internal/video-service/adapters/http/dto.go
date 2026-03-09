@@ -1,10 +1,11 @@
 package httpadapter
 
 import (
-	"fmt"
 	"time"
 	"video-provider/internal/video-service/domain"
 	"video-provider/internal/video-service/policy"
+
+	"github.com/go-playground/validator/v10"
 )
 
 const (
@@ -35,8 +36,8 @@ func (e ValidationError) Error() string {
 
 // createVideoRequestBody represents the data required to create the video
 type createVideoRequestBody struct {
-	Topic       string `json:"topic"`
-	Description string `json:"description"`
+	Topic       string `json:"topic" validate:"required,minTopic,maxTopic"`
+	Description string `json:"description" validate:"required,maxDescription"`
 }
 
 func dtoVideo(v domain.Video) VideoResponseBody {
@@ -60,34 +61,25 @@ func dtoVideos(videos []domain.Video) []VideoResponseBody {
 // validate validates the request body fields.
 // It checks for empty fields, length constraints, and returns an error.
 func (r createVideoRequestBody) validate() error {
-	topicSize := len([]byte(r.Topic))
-	if topicSize == 0 {
-		return ValidationError{
-			ErrorCode:    TopicEmpty,
-			ErrorMessage: "topic is empty",
-		}
-	}
-	if topicSize > policy.MaxTopicBytesSize {
-		return ValidationError{
-			ErrorCode:    TopicSizeExceeded,
-			ErrorMessage: fmt.Sprintf("topic size is more then %d", policy.MaxTopicBytesSize),
-		}
-	}
+	validate := validator.New(validator.WithRequiredStructEnabled())
 
-	descSize := len([]byte(r.Description))
-	if descSize == 0 {
-		return ValidationError{
-			ErrorCode:    DescriptionEmpty,
-			ErrorMessage: "description is empty",
-		}
-	}
-	if descSize > policy.MaxDescriptionBytesSize {
-		return ValidationError{
-			ErrorCode: DescriptionSizeExceeded,
-			ErrorMessage: fmt.Sprintf(
-				"description size is more then %d",
-				policy.MaxDescriptionBytesSize,
-			),
+	validate.RegisterValidation("maxTopic", func(fl validator.FieldLevel) bool {
+		return len(fl.Field().String()) <= policy.MaxTopicLen
+	})
+	validate.RegisterValidation("minTopic", func(fl validator.FieldLevel) bool {
+		return len(fl.Field().String()) >= policy.MinTopicLen
+	})
+	validate.RegisterValidation("maxDescription", func(fl validator.FieldLevel) bool {
+		return len(fl.Field().String()) <= policy.MaxDescriptionLen
+	})
+
+	err := validate.Struct(r)
+	if err != nil {
+		switch err := err.(type) {
+		case validator.ValidationErrors:
+			return err[0]
+		default:
+			return err
 		}
 	}
 

@@ -5,9 +5,10 @@ import (
 )
 
 const (
-	MaxIDBytesSize          = 36
-	MaxTopicBytesSize       = 48
-	MaxDescriptionBytesSize = 512
+	MaxIDBytesSize    = 36
+	MaxTopicLen       = 48
+	MinTopicLen       = 5
+	MaxDescriptionLen = 512
 
 	UrlMaxLen    = 100
 	MinSearchLen = 3
