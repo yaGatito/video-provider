@@ -1,4 +1,4 @@
-package httpadapter
+package httpadp
 
 import (
 	"encoding/json"
@@ -15,6 +15,7 @@ import (
 	"video-provider/internal/video-service/ports"
 
 	"github.com/gorilla/mux"
+	"github.com/yaGatito/slicex"
 )
 
 const (
@@ -24,6 +25,8 @@ const (
 	OrderByUrlParam = "orderBy"
 	IsAscUrlParam   = "asc"
 )
+
+var ErrEmptyValue = errors.New("empty value error")
 
 // VideoHandler handles HTTP requests for video operations.
 // It provides endpoints for creating, retrieving, and searching videos.
@@ -145,7 +148,11 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 
 	search, err := h.extractUrlVarString(urlValues, SearchUrlParam)
 	if err != nil {
-		// TODO: Check `empty value` error here and skip, in other case -> write error response
+		if !errors.Is(err, ErrEmptyValue) {
+			h.writeResponse(w, nil, err, http.StatusBadRequest)
+			return
+		}
+
 		search = ""
 	}
 
@@ -215,7 +222,8 @@ func (h VideoHandler) writeResponse(w http.ResponseWriter, v any, err error, err
 
 	case []domain.Video:
 		w.WriteHeader(http.StatusOK)
-		err = json.NewEncoder(w).Encode(dtoVideos(val))
+		dtoVideos := slicex.Map(val, dtoVideo)
+		err = json.NewEncoder(w).Encode(dtoVideos)
 		if err != nil {
 			h.log.Println("Error encoding response body:", err)
 		}
@@ -294,6 +302,9 @@ func (h VideoHandler) pathVarHandler(
 	return res, nil
 }
 
+// extractUrlVarString extracts and unescapes a string parameter from URL values.
+// It returns an error if the parameter is missing or cannot be unescaped.
+// -- returns errEpmptyValue if the parameter is present but empty.
 func (h VideoHandler) extractUrlVarString(
 	values url.Values,
 	paramName string,
@@ -301,7 +312,7 @@ func (h VideoHandler) extractUrlVarString(
 
 	value := values.Get(paramName)
 	if len(value) == 0 {
-		return "", fmt.Errorf("%s empty", paramName)
+		return "", ErrEmptyValue
 	}
 	value, err := url.QueryUnescape(value)
 	if err != nil {

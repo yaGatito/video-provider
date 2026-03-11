@@ -1,4 +1,4 @@
-package httpadapter
+package httpadp
 
 import (
 	"time"
@@ -18,20 +18,11 @@ const (
 )
 
 type VideoResponseBody struct {
-	ID          string    `json:"id"`
-	PublisherID string    `json:"publisherID"`
-	Topic       string    `json:"topic"`
-	Description string    `json:"description"`
-	CreatedAt   time.Time `json:"createdAt"`
-}
-
-type ValidationError struct {
-	ErrorCode    string `json:"error_code"`
-	ErrorMessage string `json:"error_message"`
-}
-
-func (e ValidationError) Error() string {
-	return e.ErrorMessage
+	ID          string `json:"id"`
+	PublisherID string `json:"publisherID"`
+	Topic       string `json:"topic"`
+	Description string `json:"description"`
+	CreatedAt   string `json:"createdAt"`
 }
 
 // createVideoRequestBody represents the data required to create the video
@@ -46,16 +37,8 @@ func dtoVideo(v domain.Video) VideoResponseBody {
 		PublisherID: v.PublisherID.String(),
 		Topic:       v.Topic,
 		Description: v.Description,
-		CreatedAt:   v.CreatedAt,
+		CreatedAt:   v.CreatedAt.Format(time.DateTime),
 	}
-}
-
-func dtoVideos(videos []domain.Video) []VideoResponseBody {
-	res := make([]VideoResponseBody, len(videos))
-	for i, v := range videos {
-		res[i] = dtoVideo(v)
-	}
-	return res
 }
 
 // validate validates the request body fields.
