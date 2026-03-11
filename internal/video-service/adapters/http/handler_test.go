@@ -1,13 +1,15 @@
-package httpadapter_test
+package httpadp_test
 
 import (
+	"encoding/json"
 	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-	httpadapter "video-provider/internal/video-service/adapters/http"
+	"time"
+	httpadp "video-provider/internal/video-service/adapters/http"
 	"video-provider/internal/video-service/adapters/idgen"
 	mock_app "video-provider/internal/video-service/app/mock"
 	"video-provider/internal/video-service/domain"
@@ -20,125 +22,140 @@ import (
 )
 
 func TestCreateVideo(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	s := mock_app.NewMockVideoService(ctrl)
-	h := httpadapter.NewVideoHandler(s, idgen.New(), log.New(io.Discard, "", 0))
-	r := mux.NewRouter()
-	httpadapter.SetupRouter(r, h)
-
 	pubID := uuid.Must(uuid.NewRandom())
-	expTop := "topic"
-	expDec := "description"
-	reqBody := `{
-		"topic": "` + expTop + `",aa
-		"description": "` + expDec + `"
-	}`
+	testVideo := domain.Video{
+		PublisherID: pubID,
+		Topic:       "TEST",
+		Description: "TESTEE",
+		CreatedAt:   time.Now(),
+		Status:      domain.StatusPublished,
+	}
+	expVideoRes := httpadp.VideoResponseBody{
+		ID:          testVideo.ID.String(),
+		PublisherID: testVideo.PublisherID.String(),
+		Topic:       testVideo.Topic,
+		Description: testVideo.Description,
+		CreatedAt:   testVideo.CreatedAt.Format(time.DateTime),
+	}
 
 	cases := []struct {
-		name    string
-		wantErr bool
-		pubID   string
-		reqBody string
+		name          string
+		expCallCnt    int
+		expStatusCode int
+		pubID         string
+		reqBody       string
 	}{
-		{"ok", false, pubID.String(), getReqBody(expTop, expDec)},
-		{"ivalid id", true, "1", getReqBody(expTop, expDec)},
-		{"ivalid req body", true, pubID.String(), "budyyy"},
-		{"ivalid req body 1", true, pubID.String(), reqBody + " 1"},
-		{"ivalid req body 2", true, pubID.String(), "1 " + reqBody},
+		{"ok", 1, http.StatusOK, pubID.String(),
+			`{"topic":"TESTE","description":"TESTEE"}`},
+
+		{"ivalid id", 0, http.StatusBadRequest, "1",
+			`{"topic":"TEST","description":"TESTEE"}`},
+
+		{"ivalid req body", 0, http.StatusBadRequest, pubID.String(),
+			`{"topic":"TEST","description":"TESTEE"}1`},
+
+		{"ivalid req body 1", 0, http.StatusBadRequest, pubID.String(),
+			`{"topic":"TEST","encryption":"TESTEE"}`},
+
+		{"ivalid req body 2", 0, http.StatusBadRequest, pubID.String(),
+			`{"tropics":"TEST","description":"TESTEE"}`},
 	}
+
+	t.Parallel()
 
 	for _, c := range cases {
-		if c.wantErr {
-			s.EXPECT().Create(gomock.Any(), gomock.Any()).MaxTimes(0)
-		} else {
-			s.EXPECT().Create(gomock.Any(), gomock.Eq(domain.Video{
-				PublisherID: pubID,
-				Topic:       expTop,
-				Description: expDec,
-			})).MaxTimes(1)
-		}
+		t.Run(c.name, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			s := mock_app.NewMockVideoService(ctrl)
+			h := httpadp.NewVideoHandler(s, idgen.New(), log.New(io.Discard, "", 0))
+			r := mux.NewRouter()
+			httpadp.SetupRouter(r, h)
 
-		req := httptest.NewRequest(
-			http.MethodPost,
-			strings.Replace(
-				httpadapter.RoutePublisherVideos,
-				"{"+httpadapter.PathVarPublisherID+"}",
-				c.pubID,
-				1,
-			),
-			strings.NewReader(c.reqBody),
-		)
-		rec := httptest.NewRecorder()
-		r.ServeHTTP(rec, req)
+			s.EXPECT().Create(gomock.Any(), gomock.Any()).Return(testVideo, nil).MaxTimes(c.expCallCnt)
 
-		if c.wantErr {
-			require.NotEqual(t, http.StatusOK, rec.Code)
-		} else {
-			require.Equal(t, http.StatusOK, rec.Code)
-		}
+			req := httptest.NewRequest(
+				http.MethodPost,
+				strings.Replace(
+					httpadp.RoutePublisherVideos,
+					"{"+httpadp.PathVarPublisherID+"}",
+					c.pubID,
+					1,
+				),
+				strings.NewReader(c.reqBody),
+			)
+			rec := httptest.NewRecorder()
+
+			r.ServeHTTP(rec, req)
+
+			require.Equal(t, c.expStatusCode, rec.Code)
+
+			switch c.expCallCnt {
+			case 1:
+				var actualRes httpadp.VideoResponseBody
+				err := json.Unmarshal(rec.Body.Bytes(), &actualRes)
+				require.NoError(t, err)
+
+				require.Equal(t, expVideoRes, actualRes)
+			}
+
+		})
 	}
-
-}
-
-func getReqBody(topic, desc string) string {
-	return `{
-		"topic": "` + topic + `",
-		"description": "` + desc + `"
-	}`
 }
 
 func TestGetVideoById(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	s := mock_app.NewMockVideoService(ctrl)
-	h := httpadapter.NewVideoHandler(s, idgen.New(), log.New(io.Discard, "", 0))
+	h := httpadp.NewVideoHandler(s, idgen.New(), log.New(io.Discard, "", 0))
 	r := mux.NewRouter()
-	httpadapter.SetupRouter(r, h)
+	httpadp.SetupRouter(r, h)
 
 	vidID := uuid.Must(uuid.NewRandom())
 
-	pubID := uuid.Must(uuid.NewRandom())
-	expTop := "topic"
-	expDec := "description"
-
-	cases := []struct {
-		name    string
-		wantErr bool
-		vidID   string
-	}{
-		{"ok", false, vidID.String()},
-		{"ivalid id", true, "1"},
-		{"empty id", true, ""},
+	video := domain.Video{
+		PublisherID: uuid.Must(uuid.NewRandom()),
+		Topic:       "topic",
+		Description: "description",
 	}
 
+	cases := []struct {
+		name          string
+		reqVidID      string
+		expCallCnt    int
+		expStatusCode int
+	}{
+		{"ok", vidID.String(), 1, http.StatusOK},
+		{"ivalid id", "1", 0, http.StatusBadRequest},
+		{"empty id", "", 0, http.StatusNotFound},
+	}
+
+	t.Parallel()
+
 	for _, c := range cases {
-		if c.wantErr {
-			s.EXPECT().GetByID(gomock.Any(), gomock.Any()).MaxTimes(0)
-		} else {
-			s.EXPECT().GetByID(gomock.Any(), gomock.Eq(uuid.MustParse(c.vidID))).Return(domain.Video{
-				PublisherID: pubID,
-				Topic:       expTop,
-				Description: expDec,
-			}, nil).MaxTimes(1)
-		}
+		t.Run(c.name, func(t *testing.T) {
+			s.EXPECT().GetByID(gomock.Any(), gomock.Any()).Return(video, nil).MaxTimes(c.expCallCnt)
 
-		req := httptest.NewRequest(
-			http.MethodGet,
-			strings.Replace(
-				httpadapter.RouteVideo,
-				"{"+httpadapter.PathVarVideoID+"}",
-				c.vidID,
-				1,
-			),
-			nil,
-		)
-		rec := httptest.NewRecorder()
-		r.ServeHTTP(rec, req)
+			req := httptest.NewRequest(
+				http.MethodGet,
+				strings.Replace(
+					httpadp.RouteVideo,
+					"{"+httpadp.PathVarVideoID+"}",
+					c.reqVidID,
+					1,
+				),
+				nil,
+			)
+			rec := httptest.NewRecorder()
+			r.ServeHTTP(rec, req)
 
-		if c.wantErr {
-			require.NotEqual(t, http.StatusOK, rec.Code)
-		} else {
-			require.Equal(t, http.StatusOK, rec.Code)
-		}
+			switch c.expCallCnt {
+			case 1:
+				var actualRes domain.Video
+				json.Unmarshal(rec.Body.Bytes(), &actualRes)
+				require.Equal(t, video, actualRes)
+			}
+
+			require.Equal(t, c.expStatusCode, rec.Code)
+		})
 	}
 }
 
@@ -154,45 +171,45 @@ func TestGetByPublisherVideos(t *testing.T) {
 	}}
 
 	cases := []struct {
-		name      string
-		wantErr   bool
-		pubID     string
-		urlParams string
+		name       string
+		expCallCnt int
+		pubID      string
+		urlParams  string
 	}{
-		{"ok", false,
+		{"ok", 1,
 			pubIDStr, "?offset=0&limit=5&orderBy=createdAt&asc=t"},
 
-		{"large URL query", true,
+		{"large URL query", 0,
 			pubIDStr, "?offset=5&limit=5&orderBy=createdAt&asc=" + strings.Repeat("a", policy.UrlMaxLen)},
 
-		{"invalid offset", true,
+		{"invalid offset", 0,
 			pubIDStr, "?offset=H&limit=5&orderBy=createdAt&asc=t"},
 
-		{"no offset in URL", true,
+		{"no offset in URL", 0,
 			pubIDStr, "?limit=5&orderBy=createdAt&asc=t"},
 
-		{"invalid limit", true,
+		{"invalid limit", 0,
 			pubIDStr, "?offset=0&limit=H&orderBy=createdAt&asc=t"},
 
-		{"no limit in URL", true,
+		{"no limit in URL", 0,
 			pubIDStr, "?offset=0&orderBy=createdAt&asc=t"},
 
-		{"invalid asc", true,
+		{"invalid asc", 0,
 			pubIDStr, "?offset=0&limit=5&orderBy=createdAt&asc=!@#%"},
 
-		{"no asc in URL", true,
+		{"no asc in URL", 0,
 			pubIDStr, "?offset=0&limit=5&orderBy=createdAt"},
 
-		{"invalid orderBy", true,
+		{"invalid orderBy", 0,
 			pubIDStr, "?offset=0&limit=5&orderBy=!@#%&asc=t"},
 
-		{"no orderBy in URL", true,
+		{"no orderBy in URL", 0,
 			pubIDStr, "?offset=0&limit=5&asc=t"},
 
-		{"wrong url params", true,
+		{"wrong url params", 0,
 			pubIDStr, "?affset=0&leemeet=5&orderBy=createdAt&asc=t&kueree=search"},
 
-		{"partial wrong url params", true,
+		{"partial wrong url params", 0,
 			pubIDStr, "?affset=0&leemeet=5&orderBy=createdAt&asc=t&search="},
 	}
 
@@ -202,30 +219,24 @@ func TestGetByPublisherVideos(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			s := mock_app.NewMockVideoService(ctrl)
-			h := httpadapter.NewVideoHandler(s, idgen.New(), log.New(io.Discard, "", 0))
+			h := httpadp.NewVideoHandler(s, idgen.New(), log.New(io.Discard, "", 0))
 			r := mux.NewRouter()
-			httpadapter.SetupRouter(r, h)
+			httpadp.SetupRouter(r, h)
 
-			if c.wantErr {
-				s.EXPECT().
-					GetByPublisher(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					MaxTimes(0)
-			} else {
-				s.EXPECT().GetByPublisher(
-					gomock.Any(),
-					gomock.Eq(uuid.MustParse(c.pubID)),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-				).Return(
-					expectedRes, nil,
-				).MaxTimes(1)
-			}
+			s.EXPECT().GetByPublisher(
+				gomock.Any(),
+				gomock.Eq(uuid.MustParse(c.pubID)),
+				gomock.Any(),
+				gomock.Any(),
+				gomock.Any(),
+				gomock.Any(),
+			).Return(
+				expectedRes, nil,
+			).MaxTimes(c.expCallCnt)
 
 			url := strings.Replace(
-				httpadapter.RoutePublisherVideos,
-				"{"+httpadapter.PathVarPublisherID+"}",
+				httpadp.RoutePublisherVideos,
+				"{"+httpadp.PathVarPublisherID+"}",
 				c.pubID,
 				1,
 			) + c.urlParams
@@ -235,10 +246,14 @@ func TestGetByPublisherVideos(t *testing.T) {
 
 			r.ServeHTTP(rec, req)
 
-			if c.wantErr {
-				require.Equal(t, http.StatusBadRequest, rec.Code)
-			} else {
+			switch c.expCallCnt {
+			case 1:
 				require.Equal(t, http.StatusOK, rec.Code)
+				var actualRes []domain.Video
+				json.Unmarshal(rec.Body.Bytes(), &actualRes)
+				require.Equal(t, expectedRes, actualRes)
+			case 0:
+				require.Equal(t, http.StatusBadRequest, rec.Code)
 			}
 		})
 	}
@@ -257,32 +272,32 @@ func TestSearchPublisherVideos(t *testing.T) {
 
 	cases := []struct {
 		name          string
-		wantErr       bool
+		expCallCnt    int
 		pubID         string
 		urlParams     string
 		expStatusCode int
 	}{
 		// SearchPublisher
-		{"ok search", false,
+		{"ok search", 1,
 			pubIDStr, "?offset=0&limit=5&orderBy=createdAt&asc=t&query=search", http.StatusOK},
 
-		{"few words search", false,
+		{"few words search", 1,
 			pubIDStr, "?offset=0&limit=5&orderBy=createdAt&asc=t&query=search+lorem+ipsum+kitty+dolor", http.StatusOK},
 
-		{"invalid offset search", true,
+		{"invalid offset search", 0,
 			pubIDStr, "?offset=A&limit=5&orderBy=createdAt&asc=t&query=search", http.StatusBadRequest},
 
-		{"invalid limit search", true,
+		{"invalid limit search", 0,
 			pubIDStr, "?offset=0&limit=A&orderBy=createdAt&asc=t&query=search", http.StatusBadRequest},
 
-		{"ivalid id", true,
+		{"ivalid id", 0,
 			"1", "?offset=0&limit=5&orderBy=createdAt&asc=t&query=search", http.StatusBadRequest},
 
-		{"empty id", true,
+		{"empty id", 0,
 			"", "?offset=0&limit=5&orderBy=createdAt&asc=t&query=search", http.StatusNotFound},
 
 		//TODO: temp fix, till error handling will be implemented
-		{"invalid search", true,
+		{"invalid search", 0,
 			pubIDStr, "?offset=0&limit=5&orderBy=createdAt&asc=t&query=,.<>?/;", http.StatusBadRequest},
 	}
 
@@ -293,31 +308,22 @@ func TestSearchPublisherVideos(t *testing.T) {
 
 			ctrl := gomock.NewController(t)
 			s := mock_app.NewMockVideoService(ctrl)
-			h := httpadapter.NewVideoHandler(s, idgen.New(), log.New(io.Discard, "", 0))
+			h := httpadp.NewVideoHandler(s, idgen.New(), log.New(io.Discard, "", 0))
 			r := mux.NewRouter()
-			httpadapter.SetupRouter(r, h)
+			httpadp.SetupRouter(r, h)
 
-			if c.wantErr {
-				s.EXPECT().
-					SearchPublisher(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
-					MaxTimes(0)
-			} else {
-				s.EXPECT().SearchPublisher(
-					gomock.Any(),
-					gomock.Eq(uuid.MustParse(c.pubID)),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-					gomock.Any(),
-				).Return(
-					expectedRes, nil,
-				).MaxTimes(1)
-			}
+			s.EXPECT().SearchPublisher(
+				gomock.Any(),
+				gomock.Any(),
+				gomock.Any(),
+				gomock.Any(),
+				gomock.Any(),
+				gomock.Any(),
+				gomock.Any()).Return(expectedRes, nil).MaxTimes(c.expCallCnt)
 
 			url := strings.Replace(
-				httpadapter.RoutePublisherVideos,
-				"{"+httpadapter.PathVarPublisherID+"}",
+				httpadp.RoutePublisherVideos,
+				"{"+httpadp.PathVarPublisherID+"}",
 				c.pubID,
 				1,
 			) + c.urlParams
@@ -327,7 +333,11 @@ func TestSearchPublisherVideos(t *testing.T) {
 			r.ServeHTTP(rec, req)
 
 			require.Equal(t, c.expStatusCode, rec.Code)
-
+			if c.expCallCnt == 1 {
+				var actualRes []domain.Video
+				json.Unmarshal(rec.Body.Bytes(), &actualRes)
+				require.Equal(t, expectedRes, actualRes)
+			}
 		})
 	}
 }
