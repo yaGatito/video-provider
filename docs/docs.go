@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/v1/users": {
             "post": {
-                "description": "Create a new user and return the created user's ID. Example ID",
+                "description": "CreateUser a new user and return the created user's ID. Example ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -27,10 +27,10 @@ const docTemplate = `{
                 "tags": [
                     "Users"
                 ],
-                "summary": "Create a new user",
+                "summary": "CreateUser a new user",
                 "parameters": [
                     {
-                        "description": "Create user payload",
+                        "description": "CreateUser user payload",
                         "name": "user",
                         "in": "body",
                         "required": true,
@@ -122,7 +122,7 @@ const docTemplate = `{
                 "tags": [
                     "Users"
                 ],
-                "summary": "Get user by ID",
+                "summary": "GetUser user by ID",
                 "parameters": [
                     {
                         "type": "string",
@@ -165,6 +165,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "format": "uuid",
                         "description": "video ID (UUID)",
                         "name": "videoID",
                         "in": "path",
@@ -175,17 +176,17 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/httpadapter.VideoResponseBody"
+                            "$ref": "#/definitions/httpadp.VideoResponseBody"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid video ID format",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
                             "type": "string"
                         }
@@ -212,21 +213,27 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "string",
-                        "description": "Search query",
-                        "name": "query",
-                        "in": "query"
-                    },
-                    {
                         "type": "integer",
-                        "description": "Limit (default 10)",
+                        "description": "Limit (example: 10)",
                         "name": "limit",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Offset (default 0)",
+                        "description": "Offset (example: 0)",
                         "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort (example: ` + "`" + `createdAt` + "`" + `)",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Order (asc or desc, example: ` + "`" + `t` + "`" + ` for ascending, ` + "`" + `f` + "`" + ` for descending)",
+                        "name": "order",
                         "in": "query"
                     }
                 ],
@@ -236,14 +243,14 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/httpadapter.VideoResponseBody"
+                                "$ref": "#/definitions/httpadp.VideoResponseBody"
                             }
                         }
                     }
                 }
             },
             "post": {
-                "description": "Creates a new video record for the specified publisher",
+                "description": "Creates a new video record for the specified publisher.",
                 "consumes": [
                     "application/json"
                 ],
@@ -253,11 +260,11 @@ const docTemplate = `{
                 "tags": [
                     "videos"
                 ],
-                "summary": "Creates new video. Publisher id example: d9fa522f-0006-464f-8d68-356ba1d6ad7d",
+                "summary": "Creates new video.",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "publisher ID (UUID)",
+                        "description": "Publisher ID (UUID)",
                         "name": "publisherID",
                         "in": "path",
                         "required": true
@@ -268,7 +275,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/httpadapter.createVideoRequestBody"
+                            "$ref": "#/definitions/httpadp.createVideoRequestBody"
                         }
                     }
                 ],
@@ -311,25 +318,25 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "description": "Limit (default 10)",
+                        "description": "Limit (example: 10)",
                         "name": "limit",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Offset (default 0)",
+                        "description": "Offset (example: 0)",
                         "name": "offset",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Sort (default 'createdAt')",
+                        "description": "Sort (example: ` + "`" + `createdAt` + "`" + `)",
                         "name": "sort",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Order (default 'asc')",
+                        "description": "Order (asc or desc, example: ` + "`" + `t` + "`" + ` for ascending, ` + "`" + `f` + "`" + ` for descending)",
                         "name": "order",
                         "in": "query"
                     }
@@ -340,7 +347,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/httpadapter.VideoResponseBody"
+                                "$ref": "#/definitions/httpadp.VideoResponseBody"
                             }
                         }
                     }
@@ -349,7 +356,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "httpadapter.VideoResponseBody": {
+        "httpadp.VideoResponseBody": {
             "type": "object",
             "properties": {
                 "createdAt": {
@@ -369,17 +376,6 @@ const docTemplate = `{
                 }
             }
         },
-        "httpadapter.createVideoRequestBody": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "topic": {
-                    "type": "string"
-                }
-            }
-        },
         "httpadp.authResponse": {
             "type": "object",
             "properties": {
@@ -390,6 +386,12 @@ const docTemplate = `{
         },
         "httpadp.createUserRequest": {
             "type": "object",
+            "required": [
+                "email",
+                "lastname",
+                "name",
+                "password"
+            ],
             "properties": {
                 "email": {
                     "type": "string"
@@ -405,6 +407,21 @@ const docTemplate = `{
                 }
             }
         },
+        "httpadp.createVideoRequestBody": {
+            "type": "object",
+            "required": [
+                "description",
+                "topic"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "topic": {
+                    "type": "string"
+                }
+            }
+        },
         "httpadp.loginUserRequest": {
             "type": "object",
             "required": [
@@ -416,9 +433,7 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "password": {
-                    "type": "string",
-                    "maxLength": 50,
-                    "minLength": 8
+                    "type": "string"
                 }
             }
         },
@@ -437,11 +452,11 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8080",
+	Host:             "localhost:8081",
 	BasePath:         "/",
 	Schemes:          []string{},
-	Title:            "Video Service API",
-	Description:      "Service for managing video content.",
+	Title:            "User Service API",
+	Description:      "Service for managing users.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

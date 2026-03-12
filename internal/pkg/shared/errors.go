@@ -20,12 +20,21 @@ const (
 	UnauthorizedErr string = "UNAUTHORIZED_ERROR"
 )
 
+type ServiceCode string
+
 type ServiceError struct {
-	Code string
+	Code ServiceCode
 	Msg  string
+}
+
+func NewServiceError(code ServiceCode, msg string) ServiceError {
+	return ServiceError{
+		Code: code,
+		Msg:  msg,
+	}
 }
 
 // Error implements the error interface for ValidationError.
 func (e ServiceError) Error() string {
-	return e.Code
+	return e.Msg
 }

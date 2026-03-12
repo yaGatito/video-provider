@@ -8,17 +8,19 @@ import (
 	"video-provider/internal/pkg/shared"
 	"video-provider/internal/user-service/app"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
 type UserHandler struct {
-	UserInteractor *app.UserService
+	UserInteractor app.UserInteractor
+	validate       *validator.Validate
 	log            log.Logger
 }
 
-func NewUserHandler(userInteractor *app.UserService) UserHandler {
-	return UserHandler{UserInteractor: userInteractor}
+func NewUserHandler(userInteractor app.UserInteractor) *UserHandler {
+	return &UserHandler{UserInteractor: userInteractor, validate: NewUserValidate()}
 }
 
 // Login godoc
@@ -40,7 +42,8 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := loginRequestData.validate(); err != nil {
+	err := validateLoginUserRequest(h.validate, loginRequestData)
+	if err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
@@ -64,35 +67,36 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, authResponse{Token: token})
 }
 
-// Create godoc
-// @Summary      Create a new user
+// CreateUser godoc
+// @Summary      CreateUser a new user
 // @Tags         Users
-// @Description  Create a new user and return the created user's ID. Example ID
+// @Description  CreateUser a new user and return the created user's ID. Example ID
 //
 //	format (UUID): 123e4567-e89b-12d3-a456-426614174000
 //
 // @Accept       json
 // @Produce      json
-// @Param        user  body    createUserRequest  true  "Create user payload"
+// @Param        user  body    createUserRequest  true  "CreateUser user payload"
 // @Success      200   {string}  string  "created user id (example: 123e4567-e89b-12d3-a456-426614174000)"
 // @Failure      400   {object}  serviceErrorResponse
 // @Failure      500   {object}  serviceErrorResponse
 // @Router       /v1/users [post]
-func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var createUserRequestData createUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&createUserRequestData); err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
 
-	if err := createUserRequestData.validate(); err != nil {
+	err := validateCreateUserRequest(h.validate, createUserRequestData)
+	if err != nil {
 		writeError(w, http.StatusBadRequest, err)
 		return
 	}
 
 	createUserRequestData.normalize()
 
-	userId, err := h.UserInteractor.Register(app.RegisterUserCommand{
+	userId, err := h.UserInteractor.Create(app.RegisterUserCommand{
 		Email:    createUserRequestData.Email,
 		Name:     createUserRequestData.Name,
 		Lastname: createUserRequestData.LastName,
@@ -119,8 +123,8 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// Get godoc
-// @Summary      Get user by ID
+// GetUser godoc
+// @Summary      GetUser user by ID
 // @Tags         Users
 // @Description  Retrieve user details by ID. The ID can be provided as a
 //
@@ -133,7 +137,7 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 // @Failure      400  {object}  serviceErrorResponse
 // @Failure      500  {object}  serviceErrorResponse
 // @Router       /v1/users/{id} [get]
-func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	idStr := mux.Vars(r)["id"]
 	id, err := uuid.Parse(idStr)
 	if err != nil {
@@ -167,17 +171,18 @@ func writeJSON(w http.ResponseWriter, status int, v any) {
 }
 
 func writeError(w http.ResponseWriter, status int, err error) {
-	var vErr shared.ServiceError
 	resp := serviceErrorResponse{}
-	if errors.As(err, &vErr) {
-		resp.Code = vErr.Code
-		resp.Payload = vErr.Msg
-	} else {
-		resp.Code = shared.InternalErr
-		// Verbose way. TODO: change next on complete
+
+	switch err := err.(type) {
+	case shared.ServiceError:
+		resp.Code = string(err.Code)
+		resp.Payload = err.Msg
+	default:
+		resp.Code = string(shared.InternalErr)
+		// Verbose way. TODO: change next on complete error handling implementation
 		resp.Payload = err.Error()
-		// resp.Payload = "internal error"
 	}
+
 	log.Printf("Error writing response: %v", err)
 	writeJSON(w, status, resp)
 }

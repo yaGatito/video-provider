@@ -1,17 +1,17 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "Service for managing video content.",
-        "title": "Video Service API",
+        "description": "Service for managing users.",
+        "title": "User Service API",
         "contact": {},
         "version": "1.0"
     },
-    "host": "localhost:8080",
+    "host": "localhost:8081",
     "basePath": "/",
     "paths": {
         "/v1/users": {
             "post": {
-                "description": "Create a new user and return the created user's ID. Example ID",
+                "description": "CreateUser a new user and return the created user's ID. Example ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -21,10 +21,10 @@
                 "tags": [
                     "Users"
                 ],
-                "summary": "Create a new user",
+                "summary": "CreateUser a new user",
                 "parameters": [
                     {
-                        "description": "Create user payload",
+                        "description": "CreateUser user payload",
                         "name": "user",
                         "in": "body",
                         "required": true,
@@ -116,7 +116,7 @@
                 "tags": [
                     "Users"
                 ],
-                "summary": "Get user by ID",
+                "summary": "GetUser user by ID",
                 "parameters": [
                     {
                         "type": "string",
@@ -159,6 +159,7 @@
                 "parameters": [
                     {
                         "type": "string",
+                        "format": "uuid",
                         "description": "video ID (UUID)",
                         "name": "videoID",
                         "in": "path",
@@ -169,17 +170,17 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/httpadapter.VideoResponseBody"
+                            "$ref": "#/definitions/httpadp.VideoResponseBody"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid video ID format",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
                             "type": "string"
                         }
@@ -206,21 +207,27 @@
                         "required": true
                     },
                     {
-                        "type": "string",
-                        "description": "Search query",
-                        "name": "query",
-                        "in": "query"
-                    },
-                    {
                         "type": "integer",
-                        "description": "Limit (default 10)",
+                        "description": "Limit (example: 10)",
                         "name": "limit",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Offset (default 0)",
+                        "description": "Offset (example: 0)",
                         "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort (example: `createdAt`)",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Order (asc or desc, example: `t` for ascending, `f` for descending)",
+                        "name": "order",
                         "in": "query"
                     }
                 ],
@@ -230,14 +237,14 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/httpadapter.VideoResponseBody"
+                                "$ref": "#/definitions/httpadp.VideoResponseBody"
                             }
                         }
                     }
                 }
             },
             "post": {
-                "description": "Creates a new video record for the specified publisher",
+                "description": "Creates a new video record for the specified publisher.",
                 "consumes": [
                     "application/json"
                 ],
@@ -247,11 +254,11 @@
                 "tags": [
                     "videos"
                 ],
-                "summary": "Creates new video. Publisher id example: d9fa522f-0006-464f-8d68-356ba1d6ad7d",
+                "summary": "Creates new video.",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "publisher ID (UUID)",
+                        "description": "Publisher ID (UUID)",
                         "name": "publisherID",
                         "in": "path",
                         "required": true
@@ -262,7 +269,7 @@
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/httpadapter.createVideoRequestBody"
+                            "$ref": "#/definitions/httpadp.createVideoRequestBody"
                         }
                     }
                 ],
@@ -305,25 +312,25 @@
                     },
                     {
                         "type": "integer",
-                        "description": "Limit (default 10)",
+                        "description": "Limit (example: 10)",
                         "name": "limit",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Offset (default 0)",
+                        "description": "Offset (example: 0)",
                         "name": "offset",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Sort (default 'createdAt')",
+                        "description": "Sort (example: `createdAt`)",
                         "name": "sort",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Order (default 'asc')",
+                        "description": "Order (asc or desc, example: `t` for ascending, `f` for descending)",
                         "name": "order",
                         "in": "query"
                     }
@@ -334,7 +341,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/httpadapter.VideoResponseBody"
+                                "$ref": "#/definitions/httpadp.VideoResponseBody"
                             }
                         }
                     }
@@ -343,7 +350,7 @@
         }
     },
     "definitions": {
-        "httpadapter.VideoResponseBody": {
+        "httpadp.VideoResponseBody": {
             "type": "object",
             "properties": {
                 "createdAt": {
@@ -363,17 +370,6 @@
                 }
             }
         },
-        "httpadapter.createVideoRequestBody": {
-            "type": "object",
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "topic": {
-                    "type": "string"
-                }
-            }
-        },
         "httpadp.authResponse": {
             "type": "object",
             "properties": {
@@ -384,6 +380,12 @@
         },
         "httpadp.createUserRequest": {
             "type": "object",
+            "required": [
+                "email",
+                "lastname",
+                "name",
+                "password"
+            ],
             "properties": {
                 "email": {
                     "type": "string"
@@ -399,6 +401,21 @@
                 }
             }
         },
+        "httpadp.createVideoRequestBody": {
+            "type": "object",
+            "required": [
+                "description",
+                "topic"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "topic": {
+                    "type": "string"
+                }
+            }
+        },
         "httpadp.loginUserRequest": {
             "type": "object",
             "required": [
@@ -410,9 +427,7 @@
                     "type": "string"
                 },
                 "password": {
-                    "type": "string",
-                    "maxLength": 50,
-                    "minLength": 8
+                    "type": "string"
                 }
             }
         },
