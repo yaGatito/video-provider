@@ -40,7 +40,7 @@ type GetUserResult struct {
 }
 
 type UserInteractor interface {
-	Register(cmd RegisterUserCommand) (uuid.UUID, error)
+	Create(cmd RegisterUserCommand) (uuid.UUID, error)
 	Get(id uuid.UUID) (GetUserResult, error)
 	Update(cmd UpdateUserCommand) error
 	Login(email, password string) (string, error)
@@ -55,23 +55,12 @@ func NewUserService(repo ports.UserRepository) *UserService {
 	return &UserService{Repo: repo}
 }
 
-func (us *UserService) Register(cmd RegisterUserCommand) (uuid.UUID, error) {
-	user, err := domain.NewUser(cmd.Email, cmd.Name, cmd.Lastname)
-	if err != nil {
-		return uuid.UUID{}, err
-	}
+func (us *UserService) Create(cmd RegisterUserCommand) (uuid.UUID, error) {
+	user := domain.NewUser(cmd.Email, cmd.Name, cmd.Lastname)
 	fmt.Println("Received RegisterUserCommand with valid email", user.Email)
 
-	pass := domain.Password(cmd.Password)
-	if err = pass.ValidatePassword(); err != nil {
-		return uuid.UUID{}, fmt.Errorf("error validating user: %w", err)
-	}
-
 	// TODO: use hashing mechanism
-	var passHash = string(pass)
-	var passSalt = string(pass)
-
-	id, err := us.Repo.Create(user, passHash, passSalt)
+	id, err := us.Repo.Create(user, cmd.Password, cmd.Password)
 	if err != nil {
 		return uuid.UUID{}, fmt.Errorf("error creating user: %w", err)
 	}
