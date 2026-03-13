@@ -9,7 +9,7 @@ import (
 // createUserRequest represents the data needed to create a new user.
 // separating this struct in order to abstract service from transport (json tags required)
 type createUserRequest struct {
-	Email    string `json:"email" validate:"required,email"`
+	Email    string `json:"email" validate:"required,email,lenLimit"`
 	Name     string `json:"name" validate:"required,text64"`
 	LastName string `json:"lastname" validate:"required,text64"`
 	Password string `json:"password" validate:"required"`

@@ -16,7 +16,6 @@ import (
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
-	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 const configName = "user-service"
@@ -66,14 +65,7 @@ func run() error {
 	router.Use(logger.CORSMiddleware)
 	router.Use(mwLog.LoggingMiddleware)
 
-	router.HandleFunc("/v1/users", userHandler.CreateUser).
-		Methods(http.MethodPost, http.MethodOptions)
-	router.HandleFunc("/v1/users/{id}", userHandler.GetUser).
-		Methods(http.MethodGet, http.MethodOptions)
-	router.HandleFunc("/v1/login", userHandler.Login).
-		Methods(http.MethodPost, http.MethodOptions)
-
-	router.PathPrefix("/v1/swagger/").HandlerFunc(httpSwagger.WrapHandler)
+	httpadp.SetupRouter(router, userHandler)
 
 	log.Printf("User-service starting on port %s", cfg.Api.Port)
 	err = http.ListenAndServe(":"+cfg.Api.Port, router)

@@ -69,6 +69,10 @@ func TestInvalidCreateUserRequest(t *testing.T) {
 			`{"email":"email@","name":"John","lastname":"Doe","password":"Password123!!"}`,
 		},
 		{
+			"Long email", http.StatusBadRequest,
+			`{"email":"emaillllllllllllllllllllllllllllllllllllllllllllllllllllllll@longdomainname.com","name":"John","lastname":"Doe","password":"Password123!!"}`,
+		},
+		{
 			"Invalid name format", http.StatusBadRequest,
 			`{"email":"test@example.com","name":"John!!","lastname":"Doe","password":"Password123!!"}`,
 		},
@@ -77,12 +81,20 @@ func TestInvalidCreateUserRequest(t *testing.T) {
 			`{"email":"test@example.com","name":"J","lastname":"Doe","password":"Password123!!"}`,
 		},
 		{
+			"Too long name", http.StatusBadRequest,
+			`{"email":"test@example.com","name":"JOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOHN","lastname":"Doe","password":"Password123!!"}`,
+		},
+		{
 			"Invalid lastname format", http.StatusBadRequest,
 			`{"email":"test@example.com","name":"John","lastname":"Doe!!!","password":"Password123!!"}`,
 		},
 		{
 			"Short lastname", http.StatusBadRequest,
 			`{"email":"test@example.com","name":"John","lastname":"D","password":"Password123!!"}`,
+		},
+		{
+			"Too long lastname", http.StatusBadRequest,
+			`{"email":"test@example.com","name":"John","lastname":"DOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOE","password":"Password123!!"}`,
 		},
 		{
 			"No digits in password", http.StatusBadRequest,
