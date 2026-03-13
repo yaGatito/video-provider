@@ -2,7 +2,7 @@ package httpadp
 
 import (
 	"encoding/json"
-	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"video-provider/internal/pkg/shared"
@@ -38,33 +38,25 @@ func NewUserHandler(userInteractor app.UserInteractor) *UserHandler {
 func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var loginRequestData loginUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&loginRequestData); err != nil {
-		writeError(w, http.StatusBadRequest, err)
+		writeResponse(w, nil, shared.ServiceError{Code: shared.InvalidFormatErr, Msg: err.Error()})
 		return
 	}
 
 	err := validateLoginUserRequest(h.validate, loginRequestData)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err)
+		writeResponse(w, nil, err)
 		return
 	}
 
 	loginRequestData.normalize()
 
 	token, err := h.UserInteractor.Login(loginRequestData.Email, loginRequestData.Password)
-
 	if err != nil {
-		var vErr shared.ServiceError
-		if errors.As(err, &vErr) {
-			log.Printf("Error logging in (validation): %v", err)
-			writeJSON(w, http.StatusBadRequest, serviceErrorResponse{Code: shared.ValidationErr, Payload: vErr})
-			return
-		}
-		log.Printf("Error logging in: %v", err)
-		writeJSON(w, http.StatusUnauthorized, serviceErrorResponse{Code: shared.UnauthorizedErr})
+		writeResponse(w, nil, err)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, authResponse{Token: token})
+	writeResponse(w, authResponse{Token: token}, nil)
 }
 
 // CreateUser godoc
@@ -84,13 +76,13 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var createUserRequestData createUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&createUserRequestData); err != nil {
-		writeError(w, http.StatusBadRequest, err)
+		writeResponse(w, nil, shared.ServiceError{Code: shared.InvalidFormatErr, Msg: err.Error()})
 		return
 	}
 
 	err := validateCreateUserRequest(h.validate, createUserRequestData)
 	if err != nil {
-		writeError(w, http.StatusBadRequest, err)
+		writeResponse(w, nil, err)
 		return
 	}
 
@@ -103,24 +95,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		Password: createUserRequestData.Password,
 	})
 
-	if err != nil {
-		var vErr shared.ServiceError
-		if errors.As(err, &vErr) {
-			log.Printf("Error registering user (validation): %v", err)
-			writeJSON(w, http.StatusBadRequest, serviceErrorResponse{Code: shared.ValidationErr, Payload: vErr})
-			return
-		}
-		log.Printf("Error registering user: %v", err)
-		writeJSON(w, http.StatusInternalServerError, serviceErrorResponse{Code: shared.InternalErr})
-		return
-	}
-
-	err = json.NewEncoder(w).Encode(userId)
-	if err != nil {
-		log.Printf("Error encoding user response: %v", err)
-		writeJSON(w, http.StatusInternalServerError, serviceErrorResponse{Code: shared.InternalErr})
-		return
-	}
+	writeResponse(w, userId, err)
 }
 
 // GetUser godoc
@@ -141,48 +116,62 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	idStr := mux.Vars(r)["id"]
 	id, err := uuid.Parse(idStr)
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, serviceErrorResponse{Code: shared.InvalidRequestErr})
-		log.Printf("Invalid user id in path: %v", err)
+		writeResponse(w, nil, shared.ServiceError{Code: shared.InvalidFormatErr, Msg: "Invalid user id in path"})
 		return
 	}
-	log.Printf("Find by id: %s", id.String())
 
 	getUserResult, err := h.UserInteractor.Get(id)
 	if err != nil {
-		writeJSON(w, http.StatusNotFound, serviceErrorResponse{Code: shared.NotFoundErr})
-		log.Printf("Error retrieving user: %v", err)
+		writeResponse(w, nil, err)
 		return
 	}
-	log.Printf("User by id: %s found! - name: %s, lastname: %s\n", id.String(), getUserResult.Name, getUserResult.Lastname)
 
 	err = json.NewEncoder(w).Encode(getUserResult)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, serviceErrorResponse{Code: shared.InternalErr})
-		log.Printf("Error encoding user response: %v", err)
+		writeResponse(w, nil, shared.ServiceError{Code: shared.InternalErr, Msg: err.Error()})
 		return
 	}
-	log.Println("Response were written successfully")
 }
 
-func writeJSON(w http.ResponseWriter, status int, v any) {
+func writeResponse(w http.ResponseWriter, v any, err error) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(v)
-}
 
-func writeError(w http.ResponseWriter, status int, err error) {
-	resp := serviceErrorResponse{}
-
-	switch err := err.(type) {
-	case shared.ServiceError:
-		resp.Code = string(err.Code)
-		resp.Payload = err.Msg
-	default:
-		resp.Code = string(shared.InternalErr)
-		// Verbose way. TODO: change next on complete error handling implementation
-		resp.Payload = err.Error()
+	if err != nil {
+		v = err
 	}
 
-	log.Printf("Error writing response: %v", err)
-	writeJSON(w, status, resp)
+	if v == nil {
+		w.WriteHeader(http.StatusNoContent)
+		fmt.Println("WARNING: No content to write in response")
+		return
+	}
+
+	switch val := v.(type) {
+	case uuid.UUID:
+		w.WriteHeader(http.StatusOK)
+		err = json.NewEncoder(w).Encode(val.String())
+		if err != nil {
+			fmt.Println("Error encoding response body:", err)
+		}
+
+	case shared.ServiceError:
+		switch val.Code {
+		case shared.InvalidFormatErr, shared.InvalidRequestErr:
+			w.WriteHeader(http.StatusBadRequest)
+		case shared.NotFoundErr:
+			w.WriteHeader(http.StatusNotFound)
+		default:
+			w.WriteHeader(http.StatusInternalServerError)
+		}
+		err := json.NewEncoder(w).Encode(val)
+		if err != nil {
+			fmt.Println("Error encoding response body:", err)
+		}
+
+	case error:
+		fmt.Println("Error in response:", val)
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": val.Error()})
+
+	}
 }
