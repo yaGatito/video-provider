@@ -17,6 +17,9 @@ func NewUserValidate() *validator.Validate {
 	validate.RegisterValidation("text64", func(fl validator.FieldLevel) bool {
 		return textRe.MatchString(fl.Field().String())
 	})
+	validate.RegisterValidation("lenLimit", func(fl validator.FieldLevel) bool {
+		return len(fl.Field().String()) <= policy.MaxInputTextLen
+	})
 
 	return validate
 }
@@ -52,11 +55,13 @@ func validateFormat(v *validator.Validate, r any) error {
 	if err != nil {
 		switch err := err.(type) {
 		case validator.ValidationErrors:
-			return shared.NewServiceError(shared.ServiceCode(shared.InvalidRequestErr),
-				fmt.Sprintf("invalid field value: %v", err[0].Value()))
+			return shared.ServiceError{
+				Code: shared.InvalidRequestErr,
+				Msg:  fmt.Sprintf("invalid field value: %v", err[0].Value())}
 		default:
-			return shared.NewServiceError(shared.ServiceCode(shared.InvalidRequestErr),
-				fmt.Sprintf("error: %v", err.Error()))
+			return shared.ServiceError{
+				Code: shared.InvalidRequestErr,
+				Msg:  fmt.Sprintf("error: %v", err.Error())}
 		}
 	}
 
@@ -71,28 +76,40 @@ var passReqSpecGroup = regexp.MustCompile(`.*[!@#$%^&*()_=+-]+.*`)
 
 func validatePassword(password []byte) error {
 	if len(password) < policy.MinPasswordLen || len(password) > policy.MaxInputTextLen {
-		return shared.NewServiceError(shared.ServiceCode(shared.InvalidRequestErr),
-			fmt.Sprintf("password must be between %d and %d characters long", policy.MinPasswordLen, policy.MaxInputTextLen))
+		return shared.ServiceError{
+			Code: shared.InvalidRequestErr,
+			Msg:  fmt.Sprintf("password must be between %d and %d characters long", policy.MinPasswordLen, policy.MaxInputTextLen),
+		}
 	}
 	if !passRe.Match(password) {
-		return shared.NewServiceError(shared.ServiceCode(shared.InvalidRequestErr),
-			"password contains invalid characters")
+		return shared.ServiceError{
+			Code: shared.InvalidRequestErr,
+			Msg:  "password contains invalid characters",
+		}
 	}
 	if !passReqDigGroup.Match(password) {
-		return shared.NewServiceError(shared.ServiceCode(shared.InvalidRequestErr),
-			"password must contain at least one digit")
+		return shared.ServiceError{
+			Code: shared.InvalidRequestErr,
+			Msg:  "password must contain at least one digit",
+		}
 	}
 	if !passReqLowGroup.Match(password) {
-		return shared.NewServiceError(shared.ServiceCode(shared.InvalidRequestErr),
-			"password must contain at least one lowercase letter")
+		return shared.ServiceError{
+			Code: shared.InvalidRequestErr,
+			Msg:  "password must contain at least one lowercase letter",
+		}
 	}
 	if !passReqCapGroup.Match(password) {
-		return shared.NewServiceError(shared.ServiceCode(shared.InvalidRequestErr),
-			"password must contain at least one uppercase letter")
+		return shared.ServiceError{
+			Code: shared.InvalidRequestErr,
+			Msg:  "password must contain at least one uppercase letter",
+		}
 	}
 	if !passReqSpecGroup.Match(password) {
-		return shared.NewServiceError(shared.ServiceCode(shared.InvalidRequestErr),
-			"password must contain at least one special character")
+		return shared.ServiceError{
+			Code: shared.InvalidRequestErr,
+			Msg:  "password must contain at least one special character",
+		}
 	}
 	return nil
 }
