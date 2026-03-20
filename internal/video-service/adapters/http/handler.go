@@ -147,13 +147,9 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 	asc := resStr[1]
 
 	search, err := h.extractUrlVarString(urlValues, SearchUrlParam)
-	if err != nil {
-		if !errors.Is(err, ErrEmptyValue) {
-			h.writeResponse(w, nil, err, http.StatusBadRequest)
-			return
-		}
-
-		search = ""
+	if err != nil && !errors.Is(err, ErrEmptyValue) {
+		h.writeResponse(w, nil, err, http.StatusBadRequest)
+		return
 	}
 
 	var videos []domain.Video
