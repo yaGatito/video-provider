@@ -8,7 +8,6 @@ import (
 	context "context"
 	reflect "reflect"
 	domain "video-provider/internal/video-service/domain"
-	ports "video-provider/internal/video-service/ports"
 
 	gomock "github.com/golang/mock/gomock"
 )
@@ -52,18 +51,18 @@ func (mr *MockVideoRepositoryMockRecorder) CreateVideo(ctx, video interface{}) *
 }
 
 // GetPublisherVideos mocks base method.
-func (m *MockVideoRepository) GetPublisherVideos(ctx context.Context, publisherID domain.UUID, args ports.VideoPageParams) ([]domain.Video, error) {
+func (m *MockVideoRepository) GetPublisherVideos(ctx context.Context, publisherID domain.UUID, params domain.VideoPageParams) ([]domain.Video, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPublisherVideos", ctx, publisherID, args)
+	ret := m.ctrl.Call(m, "GetPublisherVideos", ctx, publisherID, params)
 	ret0, _ := ret[0].([]domain.Video)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetPublisherVideos indicates an expected call of GetPublisherVideos.
-func (mr *MockVideoRepositoryMockRecorder) GetPublisherVideos(ctx, publisherID, args interface{}) *gomock.Call {
+func (mr *MockVideoRepositoryMockRecorder) GetPublisherVideos(ctx, publisherID, params interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPublisherVideos", reflect.TypeOf((*MockVideoRepository)(nil).GetPublisherVideos), ctx, publisherID, args)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPublisherVideos", reflect.TypeOf((*MockVideoRepository)(nil).GetPublisherVideos), ctx, publisherID, params)
 }
 
 // GetVideoByID mocks base method.
@@ -82,31 +81,31 @@ func (mr *MockVideoRepositoryMockRecorder) GetVideoByID(ctx, id interface{}) *go
 }
 
 // SearchGlobal mocks base method.
-func (m *MockVideoRepository) SearchGlobal(ctx context.Context, args ports.VideoSearchParams) ([]domain.Video, error) {
+func (m *MockVideoRepository) SearchGlobal(ctx context.Context, query string, params domain.VideoPageParams) ([]domain.Video, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SearchGlobal", ctx, args)
+	ret := m.ctrl.Call(m, "SearchGlobal", ctx, query, params)
 	ret0, _ := ret[0].([]domain.Video)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // SearchGlobal indicates an expected call of SearchGlobal.
-func (mr *MockVideoRepositoryMockRecorder) SearchGlobal(ctx, args interface{}) *gomock.Call {
+func (mr *MockVideoRepositoryMockRecorder) SearchGlobal(ctx, query, params interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchGlobal", reflect.TypeOf((*MockVideoRepository)(nil).SearchGlobal), ctx, args)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchGlobal", reflect.TypeOf((*MockVideoRepository)(nil).SearchGlobal), ctx, query, params)
 }
 
 // SearchPublisher mocks base method.
-func (m *MockVideoRepository) SearchPublisher(ctx context.Context, publisherID domain.UUID, args ports.VideoSearchParams) ([]domain.Video, error) {
+func (m *MockVideoRepository) SearchPublisher(ctx context.Context, publisherID domain.UUID, query string, params domain.VideoPageParams) ([]domain.Video, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SearchPublisher", ctx, publisherID, args)
+	ret := m.ctrl.Call(m, "SearchPublisher", ctx, publisherID, query, params)
 	ret0, _ := ret[0].([]domain.Video)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // SearchPublisher indicates an expected call of SearchPublisher.
-func (mr *MockVideoRepositoryMockRecorder) SearchPublisher(ctx, publisherID, args interface{}) *gomock.Call {
+func (mr *MockVideoRepositoryMockRecorder) SearchPublisher(ctx, publisherID, query, params interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchPublisher", reflect.TypeOf((*MockVideoRepository)(nil).SearchPublisher), ctx, publisherID, args)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchPublisher", reflect.TypeOf((*MockVideoRepository)(nil).SearchPublisher), ctx, publisherID, query, params)
 }

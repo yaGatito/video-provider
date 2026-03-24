@@ -9,6 +9,10 @@ import (
 const (
 	StatusDraft     Status = "draft"
 	StatusPublished Status = "published"
+
+	OrderByDate string = "date"
+	AscOrder    string = "t"
+	DescOrder   string = "f"
 )
 
 type UUID = uuid.UUID
@@ -22,4 +26,11 @@ type Video struct {
 	Description string
 	CreatedAt   time.Time
 	Status      Status
+}
+
+type VideoPageParams struct {
+	OrderBy string
+	Offset  int32
+	Limit   int32
+	Asc     string
 }
