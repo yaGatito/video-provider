@@ -5,7 +5,25 @@ import (
 	"strings"
 	"video-provider/internal/video-service/domain"
 	"video-provider/internal/video-service/policy"
+
+	"github.com/go-playground/validator/v10"
 )
+
+func NewValidator() *validator.Validate {
+	validate := validator.New(validator.WithRequiredStructEnabled())
+
+	validate.RegisterValidation("maxTopic", func(fl validator.FieldLevel) bool {
+		return len(fl.Field().String()) <= policy.TopicMaxLen
+	})
+	validate.RegisterValidation("minTopic", func(fl validator.FieldLevel) bool {
+		return len(fl.Field().String()) >= policy.TopicMinLen
+	})
+	validate.RegisterValidation("maxDescription", func(fl validator.FieldLevel) bool {
+		return len(fl.Field().String()) <= policy.DescriptionMaxLen
+	})
+
+	return validate
+}
 
 func NewVideoPageParams(
 	orderByStr string,

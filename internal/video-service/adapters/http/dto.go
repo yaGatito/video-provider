@@ -3,7 +3,6 @@ package httpadp
 import (
 	"time"
 	"video-provider/internal/video-service/domain"
-	"video-provider/internal/video-service/policy"
 
 	"github.com/go-playground/validator/v10"
 )
@@ -16,10 +15,27 @@ type videoResponseBody struct {
 	CreatedAt   string `json:"createdAt"`
 }
 
+type videosResponseBody struct {
+	Videos []videoResponseBody `json:"videos"`
+}
+
+type serviceErrorResponse struct {
+	Message string `json:"msg"`
+}
+
 // createVideoRequestBody represents the data required to create the video
 type createVideoRequestBody struct {
 	Topic       string `json:"topic" validate:"required,minTopic,maxTopic"`
 	Description string `json:"description" validate:"required,maxDescription"`
+}
+
+func (r createVideoRequestBody) validate(v *validator.Validate) error {
+	err := v.Struct(r)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func dtoVideo(v domain.Video) videoResponseBody {
@@ -30,36 +46,4 @@ func dtoVideo(v domain.Video) videoResponseBody {
 		Description: v.Description,
 		CreatedAt:   v.CreatedAt.Format(time.DateTime),
 	}
-}
-
-// validate validates the request body fields.
-// It checks for empty fields, length constraints, and returns an error.
-func (r createVideoRequestBody) validate() error {
-	validate := validator.New(validator.WithRequiredStructEnabled())
-
-	validate.RegisterValidation("maxTopic", func(fl validator.FieldLevel) bool {
-		return len(fl.Field().String()) <= policy.TopicMaxLen
-	})
-	validate.RegisterValidation("minTopic", func(fl validator.FieldLevel) bool {
-		return len(fl.Field().String()) >= policy.TopicMinLen
-	})
-	validate.RegisterValidation("maxDescription", func(fl validator.FieldLevel) bool {
-		return len(fl.Field().String()) <= policy.MaxDescriptionLen
-	})
-
-	err := validate.Struct(r)
-	if err != nil {
-		switch err := err.(type) {
-		case validator.ValidationErrors:
-			return err[0]
-		default:
-			return err
-		}
-	}
-
-	if _, ok := err.(validator.ValidationErrors); ok {
-
-	}
-
-	return nil
 }

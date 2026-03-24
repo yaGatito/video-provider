@@ -3,10 +3,10 @@ package policy
 import "regexp"
 
 const (
-	IDMaxBytes    = 36
+	IDMaxBytes        = 36
 	TopicMaxLen       = 48
 	TopicMinLen       = 5
-	MaxDescriptionLen = 512
+	DescriptionMaxLen = 512
 
 	UrlMaxLen    = 100
 	SearchMinLen = 3
