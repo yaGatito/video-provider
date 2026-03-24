@@ -8,16 +8,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-const (
-	IDEmpty                 string = "ID_EMPTY"
-	IDSizeExceeded          string = "ID_SIZE_EXCEEDED"
-	TopicEmpty              string = "TOPIC_EMPTY"
-	TopicSizeExceeded       string = "TOPIC_SIZE_EXCEEDED"
-	DescriptionEmpty        string = "DESCRIPTION_EMPTY"
-	DescriptionSizeExceeded string = "DESCRIPTION_SIZE_EXCEEDED"
-)
-
-type VideoResponseBody struct {
+type videoResponseBody struct {
 	ID          string `json:"id"`
 	PublisherID string `json:"publisherID"`
 	Topic       string `json:"topic"`
@@ -31,8 +22,8 @@ type createVideoRequestBody struct {
 	Description string `json:"description" validate:"required,maxDescription"`
 }
 
-func dtoVideo(v domain.Video) VideoResponseBody {
-	return VideoResponseBody{
+func dtoVideo(v domain.Video) videoResponseBody {
+	return videoResponseBody{
 		ID:          v.ID.String(),
 		PublisherID: v.PublisherID.String(),
 		Topic:       v.Topic,
@@ -47,10 +38,10 @@ func (r createVideoRequestBody) validate() error {
 	validate := validator.New(validator.WithRequiredStructEnabled())
 
 	validate.RegisterValidation("maxTopic", func(fl validator.FieldLevel) bool {
-		return len(fl.Field().String()) <= policy.MaxTopicLen
+		return len(fl.Field().String()) <= policy.TopicMaxLen
 	})
 	validate.RegisterValidation("minTopic", func(fl validator.FieldLevel) bool {
-		return len(fl.Field().String()) >= policy.MinTopicLen
+		return len(fl.Field().String()) >= policy.TopicMinLen
 	})
 	validate.RegisterValidation("maxDescription", func(fl validator.FieldLevel) bool {
 		return len(fl.Field().String()) <= policy.MaxDescriptionLen
@@ -64,6 +55,10 @@ func (r createVideoRequestBody) validate() error {
 		default:
 			return err
 		}
+	}
+
+	if _, ok := err.(validator.ValidationErrors); ok {
+
 	}
 
 	return nil

@@ -1,4 +1,4 @@
-package app
+package httpadp
 
 import (
 	"fmt"
@@ -28,7 +28,7 @@ func TestValidateSearchQuery(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		res, err := ValidateSearchQuery(c.query)
+		res, err := validateSearchQuery(c.query)
 		if c.wantErr {
 			require.Error(t, err)
 		} else {
@@ -60,7 +60,7 @@ func TestIncorrectSearchQuery(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		_, err := ValidateSearchQuery(c.query)
+		_, err := validateSearchQuery(c.query)
 		require.Error(t, err)
 	}
 }
@@ -74,12 +74,12 @@ func TestValidateLimit(t *testing.T) {
 		{"ok", false, 5},
 		{"negative limit", true, -5},
 		{"zero limit", true, 0},
-		{"above max limit", true, policy.MaxVideosLimit + 1},
+		{"above max limit", true, policy.VideosMaxLimit + 1},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := ValidateLimit(tt.input)
+			result, err := validateLimit(tt.input)
 
 			if tt.wantErr {
 				require.Error(t, err)
@@ -104,7 +104,7 @@ func TestValidateOffset(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := ValidateOffset(tt.input)
+			result, err := validateOffset(tt.input)
 
 			if tt.wantErr {
 				require.Error(t, err)
@@ -127,7 +127,7 @@ func TestValidateOrderBy(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		result, err := ValidateOrderBy(tt.input)
+		result, err := validateOrderBy(tt.input)
 
 		if tt.wantErr {
 			require.Error(t, err)
@@ -152,7 +152,7 @@ func TestValidateAsc(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := ValidateIsAsc(tt.input)
+			result, err := validateIsAsc(tt.input)
 
 			if tt.wantErr {
 				require.Error(t, err)

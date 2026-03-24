@@ -29,7 +29,7 @@ func TestCreateVideo(t *testing.T) {
 		CreatedAt:   time.Now(),
 		Status:      domain.StatusPublished,
 	}
-	expVideoRes := VideoResponseBody{
+	expVideoRes := videoResponseBody{
 		ID:          testVideo.ID.String(),
 		PublisherID: testVideo.PublisherID.String(),
 		Topic:       testVideo.Topic,
@@ -90,7 +90,7 @@ func TestCreateVideo(t *testing.T) {
 
 			switch c.expCallCnt {
 			case 1:
-				var actualRes VideoResponseBody
+				var actualRes videoResponseBody
 				err := json.Unmarshal(rec.Body.Bytes(), &actualRes)
 				require.NoError(t, err)
 
@@ -226,9 +226,6 @@ func TestGetByPublisherVideos(t *testing.T) {
 				gomock.Any(),
 				gomock.Eq(uuid.MustParse(c.pubID)),
 				gomock.Any(),
-				gomock.Any(),
-				gomock.Any(),
-				gomock.Any(),
 			).Return(
 				expectedRes, nil,
 			).MaxTimes(c.expCallCnt)
@@ -312,9 +309,6 @@ func TestSearchPublisherVideos(t *testing.T) {
 			SetupRouter(r, h)
 
 			s.EXPECT().SearchPublisher(
-				gomock.Any(),
-				gomock.Any(),
-				gomock.Any(),
 				gomock.Any(),
 				gomock.Any(),
 				gomock.Any(),

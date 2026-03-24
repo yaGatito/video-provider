@@ -1,0 +1,90 @@
+package httpadp
+
+import (
+	"fmt"
+	"strings"
+	"video-provider/internal/video-service/domain"
+	"video-provider/internal/video-service/policy"
+)
+
+func NewVideoPageParams(
+	orderByStr string,
+	offset int32,
+	limit int32,
+	asc string,
+) (domain.VideoPageParams, error) {
+
+	offset, err := validateOffset(offset)
+	if err != nil {
+		return domain.VideoPageParams{}, err
+	}
+	limit, err = validateLimit(limit)
+	if err != nil {
+		return domain.VideoPageParams{}, err
+	}
+	orderBy, err := validateOrderBy(orderByStr)
+	if err != nil {
+		return domain.VideoPageParams{}, err
+	}
+	asc, err = validateIsAsc(asc)
+	if err != nil {
+		return domain.VideoPageParams{}, err
+	}
+
+	return domain.VideoPageParams{
+		Offset:  offset,
+		Limit:   limit,
+		OrderBy: orderBy,
+		Asc:     asc,
+	}, nil
+}
+
+func validateSearchQuery(query string) (string, error) {
+	query = strings.TrimSpace(query)
+
+	if len(query) < policy.SearchMinLen {
+		return "", fmt.Errorf("%s size is less than threshold: %d", query, policy.SearchMinLen)
+	}
+	if !policy.GetWordsFormatRE128().MatchString(query) {
+		return "", fmt.Errorf("query string contains prohibited characters")
+	}
+
+	return query, nil
+}
+
+func validateLimit(limit int32) (int32, error) {
+	if limit < policy.ThresholdVideosLimit {
+		return 0, fmt.Errorf("limit is less then threshold(%d): %d", policy.ThresholdVideosLimit, limit)
+	}
+	if limit > policy.VideosMaxLimit {
+		return 0, fmt.Errorf("limit reached maximum allowed value: %d", limit)
+	}
+	return limit, nil
+}
+
+func validateOffset(offset int32) (int32, error) {
+	if offset < 0 {
+		return 0, fmt.Errorf("offset is zero or less: %d", offset)
+	}
+	return offset, nil
+}
+
+func validateOrderBy(orderBy string) (string, error) {
+	switch orderBy {
+	case domain.OrderByDate:
+		return orderBy, nil
+	default:
+	}
+	return "", fmt.Errorf("invalid orderBy argument: %s", orderBy)
+}
+
+func validateIsAsc(asc string) (string, error) {
+	switch asc {
+	case domain.AscOrder:
+		return domain.AscOrder, nil
+	case domain.DescOrder:
+		return domain.DescOrder, nil
+	default:
+		return "", fmt.Errorf("invalid asc argument: %s; only `t` and `f` are allowed", asc)
+	}
+}

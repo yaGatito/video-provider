@@ -162,10 +162,12 @@ func TestGetVideoByPublisher(t *testing.T) {
 				_, err := videoService.GetByPublisher(
 					context.Background(),
 					c.publisherID,
-					c.orderBy,
-					c.offset,
-					c.limit,
-					c.asc)
+					domain.VideoPageParams{
+						Offset:  c.offset,
+						Limit:   c.limit,
+						OrderBy: c.orderBy,
+						Asc:     c.asc,
+					})
 				require.Error(t, err)
 			} else {
 				repo.
@@ -176,10 +178,12 @@ func TestGetVideoByPublisher(t *testing.T) {
 				res, err := videoService.GetByPublisher(
 					context.Background(),
 					c.publisherID,
-					c.orderBy,
-					c.offset,
-					c.limit,
-					c.asc)
+					domain.VideoPageParams{
+						Offset:  c.offset,
+						Limit:   c.limit,
+						OrderBy: c.orderBy,
+						Asc:     c.asc,
+					})
 				require.NoError(t, err)
 				require.Exactly(t, expectedRes, res)
 			}
@@ -246,31 +250,35 @@ func TestSearchVideoByPublisher(t *testing.T) {
 			if c.wantErr {
 				repo.
 					EXPECT().
-					SearchPublisher(gomock.Any(), gomock.Any(), gomock.Any()).
+					SearchPublisher(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).
 					MaxTimes(0)
 				_, err := videoService.SearchPublisher(
 					context.Background(),
 					c.publisherID,
 					c.query,
-					c.orderBy,
-					c.offset,
-					c.limit,
-					c.asc)
+					domain.VideoPageParams{
+						Offset:  c.offset,
+						Limit:   c.limit,
+						OrderBy: c.orderBy,
+						Asc:     c.asc,
+					})
 				require.Error(t, err)
 			} else {
 				repo.
 					EXPECT().
-					SearchPublisher(gomock.Any(), gomock.Eq(c.publisherID), gomock.Any()).
+					SearchPublisher(gomock.Any(), gomock.Eq(c.publisherID), gomock.Any(), gomock.Any()).
 					Return(expectedRes, nil).
 					MaxTimes(1)
 				res, err := videoService.SearchPublisher(
 					context.Background(),
 					c.publisherID,
 					c.query,
-					c.orderBy,
-					c.offset,
-					c.limit,
-					c.asc)
+					domain.VideoPageParams{
+						Offset:  c.offset,
+						Limit:   c.limit,
+						OrderBy: c.orderBy,
+						Asc:     c.asc,
+					})
 				require.NoError(t, err)
 				require.Exactly(t, expectedRes, res)
 			}
@@ -329,29 +337,33 @@ func TestValidSearchGlobal(t *testing.T) {
 			if c.wantErr {
 				repo.
 					EXPECT().
-					SearchGlobal(gomock.Any(), gomock.Any()).
+					SearchGlobal(gomock.Any(), gomock.Any(), gomock.Any()).
 					MaxTimes(0)
 				_, err := videoService.SearchGlobal(
 					context.Background(),
 					c.query,
-					c.orderBy,
-					c.offset,
-					c.limit,
-					c.asc)
+					domain.VideoPageParams{
+						Offset:  c.offset,
+						Limit:   c.limit,
+						OrderBy: c.orderBy,
+						Asc:     c.asc,
+					})
 				require.Error(t, err)
 			} else {
 				repo.
 					EXPECT().
-					SearchGlobal(gomock.Any(), gomock.Any()).
+					SearchGlobal(gomock.Any(), gomock.Any(), gomock.Any()).
 					Return(expectedRes, nil).
 					MaxTimes(1)
 				res, err := videoService.SearchGlobal(
 					context.Background(),
 					c.query,
-					c.orderBy,
-					c.offset,
-					c.limit,
-					c.asc)
+					domain.VideoPageParams{
+						Offset:  c.offset,
+						Limit:   c.limit,
+						OrderBy: c.orderBy,
+						Asc:     c.asc,
+					})
 				require.NoError(t, err)
 				require.Exactly(t, expectedRes, res)
 			}

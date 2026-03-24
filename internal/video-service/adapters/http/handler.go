@@ -22,7 +22,7 @@ const (
 	SearchUrlParam  = "query"
 	LimitUrlParam   = "limit"
 	OffsetUrlParam  = "offset"
-	OrderByUrlParam = "orderBy"
+	OrderByUrlParam = "order"
 	IsAscUrlParam   = "asc"
 )
 
@@ -85,7 +85,7 @@ func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Topic:       createVideoRequestData.Topic,
 		Description: createVideoRequestData.Description,
 	})
-	h.writeResponse(w, video, err, http.StatusInternalServerError)
+	h.writeResponse(w, dtoVideo(video), err, http.StatusInternalServerError)
 }
 
 // GetByID godoc
@@ -105,7 +105,7 @@ func (h *VideoHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	video, err := h.VideoInteractor.GetByID(r.Context(), domain.UUID(videoID))
-	h.writeResponse(w, video, err, http.StatusInternalServerError)
+	h.writeResponse(w, dtoVideo(video), err, http.StatusInternalServerError)
 }
 
 // GetByPublisher godoc
@@ -152,13 +152,24 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	pageParams, err := NewVideoPageParams(orderBy, offset, limit, asc)
+	if err != nil {
+		h.writeResponse(w, nil, err, http.StatusBadRequest)
+		return
+	}
+
 	var videos []domain.Video
 	if search == "" {
-		videos, err = h.VideoInteractor.GetByPublisher(r.Context(), publisherID, orderBy, offset, limit, asc)
+		videos, err = h.VideoInteractor.GetByPublisher(r.Context(), publisherID, pageParams)
 	} else {
-		videos, err = h.VideoInteractor.SearchPublisher(r.Context(), publisherID, search, orderBy, offset, limit, asc)
+		search, err = validateSearchQuery(search)
+		if err != nil {
+			h.writeResponse(w, nil, err, http.StatusBadRequest)
+			return
+		}
+		videos, err = h.VideoInteractor.SearchPublisher(r.Context(), publisherID, search, pageParams)
 	}
-	h.writeResponse(w, videos, err, http.StatusInternalServerError)
+	h.writeResponse(w, slicex.Map(videos, dtoVideo), err, http.StatusInternalServerError)
 }
 
 // SearchGlobal godoc
@@ -195,7 +206,13 @@ func (h *VideoHandler) SearchGlobal(w http.ResponseWriter, r *http.Request) {
 	orderBy := resStr[1]
 	asc := resStr[2]
 
-	videos, err := h.VideoInteractor.SearchGlobal(r.Context(), search, orderBy, offset, limit, asc)
+	pageParams, err := NewVideoPageParams(orderBy, offset, limit, asc)
+	if err != nil {
+		h.writeResponse(w, nil, err, http.StatusBadRequest)
+		return
+	}
+
+	videos, err := h.VideoInteractor.SearchGlobal(r.Context(), search, pageParams)
 	h.writeResponse(w, videos, err, http.StatusInternalServerError)
 }
 
@@ -208,21 +225,10 @@ func (h VideoHandler) writeResponse(w http.ResponseWriter, v any, err error, err
 		return
 	}
 
-	switch val := v.(type) {
-	case domain.Video:
-		w.WriteHeader(http.StatusOK)
-		err = json.NewEncoder(w).Encode(dtoVideo(val))
-		if err != nil {
-			h.log.Println("Error encoding response body:", err)
-		}
-
-	case []domain.Video:
-		w.WriteHeader(http.StatusOK)
-		dtoVideos := slicex.Map(val, dtoVideo)
-		err = json.NewEncoder(w).Encode(dtoVideos)
-		if err != nil {
-			h.log.Println("Error encoding response body:", err)
-		}
+	w.WriteHeader(http.StatusOK)
+	err = json.NewEncoder(w).Encode(v)
+	if err != nil {
+		h.log.Println("Error encoding response body:", err)
 	}
 }
 

@@ -1,20 +1,18 @@
 package policy
 
-import (
-	"regexp"
-)
+import "regexp"
 
 const (
-	MaxIDBytesSize    = 36
-	MaxTopicLen       = 48
-	MinTopicLen       = 5
+	IDMaxBytes    = 36
+	TopicMaxLen       = 48
+	TopicMinLen       = 5
 	MaxDescriptionLen = 512
 
 	UrlMaxLen    = 100
-	MinSearchLen = 3
+	SearchMinLen = 3
 
 	ThresholdVideosLimit = 5
-	MaxVideosLimit       = 50
+	VideosMaxLimit       = 50
 )
 
 func GetTextingFormateRE128() *regexp.Regexp {
