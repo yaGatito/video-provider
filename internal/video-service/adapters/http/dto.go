@@ -3,8 +3,6 @@ package httpadp
 import (
 	"time"
 	"video-provider/internal/video-service/domain"
-
-	"github.com/go-playground/validator/v10"
 )
 
 type videoResponseBody struct {
@@ -27,15 +25,6 @@ type serviceErrorResponse struct {
 type createVideoRequestBody struct {
 	Topic       string `json:"topic" validate:"required,minTopic,maxTopic"`
 	Description string `json:"description" validate:"required,maxDescription"`
-}
-
-func (r createVideoRequestBody) validate(v *validator.Validate) error {
-	err := v.Struct(r)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 func dtoVideo(v domain.Video) videoResponseBody {

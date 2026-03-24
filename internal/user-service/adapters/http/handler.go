@@ -2,7 +2,6 @@ package httpadp
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"video-provider/internal/pkg/shared"
@@ -16,11 +15,11 @@ import (
 type UserHandler struct {
 	UserInteractor app.UserInteractor
 	validate       *validator.Validate
-	log            log.Logger
+	log            *log.Logger
 }
 
-func NewUserHandler(userInteractor app.UserInteractor) *UserHandler {
-	return &UserHandler{UserInteractor: userInteractor, validate: NewUserValidate()}
+func NewUserHandler(userInteractor app.UserInteractor, log *log.Logger) *UserHandler {
+	return &UserHandler{UserInteractor: userInteractor, log: log, validate: NewUserValidate()}
 }
 
 // Login godoc
@@ -38,13 +37,22 @@ func NewUserHandler(userInteractor app.UserInteractor) *UserHandler {
 func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var loginRequestData loginUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&loginRequestData); err != nil {
-		writeResponse(w, nil, shared.ServiceError{Code: shared.InvalidFormatErr, Msg: err.Error()})
+		h.writeErrorResponse(w, shared.ServiceError{
+			Code:    http.StatusBadRequest,
+			Message: "failed to decode login request body",
+			Err:     err})
 		return
 	}
 
-	err := validateLoginUserRequest(h.validate, loginRequestData)
+	err := h.validate.Struct(loginRequestData)
 	if err != nil {
-		writeResponse(w, nil, err)
+		h.writeErrorResponse(w, err)
+		return
+	}
+
+	err = validatePassword([]byte(loginRequestData.Password))
+	if err != nil {
+		h.writeErrorResponse(w, err)
 		return
 	}
 
@@ -52,11 +60,11 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	token, err := h.UserInteractor.Login(loginRequestData.Email, loginRequestData.Password)
 	if err != nil {
-		writeResponse(w, nil, err)
+		h.writeErrorResponse(w, err)
 		return
 	}
 
-	writeResponse(w, authResponse{Token: token}, nil)
+	h.writeResponse(w, authResponse{Token: token})
 }
 
 // CreateUser godoc
@@ -76,13 +84,22 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var createUserRequestData createUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&createUserRequestData); err != nil {
-		writeResponse(w, nil, shared.ServiceError{Code: shared.InvalidFormatErr, Msg: err.Error()})
+		h.writeErrorResponse(w, shared.ServiceError{
+			Code:    http.StatusBadRequest,
+			Message: "failed to decode create user request body",
+			Err:     err})
 		return
 	}
 
-	err := validateCreateUserRequest(h.validate, createUserRequestData)
+	err := h.validate.Struct(createUserRequestData)
 	if err != nil {
-		writeResponse(w, nil, err)
+		h.writeErrorResponse(w, err)
+		return
+	}
+
+	err = validatePassword([]byte(createUserRequestData.Password))
+	if err != nil {
+		h.writeErrorResponse(w, err)
 		return
 	}
 
@@ -94,8 +111,12 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		Lastname: createUserRequestData.LastName,
 		Password: createUserRequestData.Password,
 	})
+	if err != nil {
+		h.writeErrorResponse(w, err)
+		return
+	}
 
-	writeResponse(w, userId, err)
+	h.writeResponse(w, userId)
 }
 
 // GetUser godoc
@@ -113,65 +134,73 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 // @Failure      500  {object}  serviceErrorResponse
 // @Router       /v1/users/{id} [get]
 func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
-	id, err := uuid.Parse(idStr)
+	userID, err := uuid.Parse(mux.Vars(r)["id"])
 	if err != nil {
-		writeResponse(w, nil, shared.ServiceError{Code: shared.InvalidFormatErr, Msg: "Invalid user id in path"})
+		h.writeErrorResponse(w, shared.ServiceError{
+			Code:    http.StatusBadRequest,
+			Message: "unparsable user id"})
 		return
 	}
 
-	getUserResult, err := h.UserInteractor.Get(id)
-	if err != nil {
-		writeResponse(w, nil, err)
+	if userID == uuid.Nil {
+		h.writeErrorResponse(w, shared.ServiceError{
+			Code:    http.StatusBadRequest,
+			Message: "empty user ID",
+		})
 		return
 	}
 
-	err = json.NewEncoder(w).Encode(getUserResult)
+	getUserResult, err := h.UserInteractor.Get(userID)
 	if err != nil {
-		writeResponse(w, nil, shared.ServiceError{Code: shared.InternalErr, Msg: err.Error()})
+		h.writeErrorResponse(w, err)
 		return
+	}
+
+	h.writeResponse(w, getUserResult)
+}
+
+func (h *UserHandler) writeResponse(w http.ResponseWriter, v any) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+
+	err := json.NewEncoder(w).Encode(v)
+	if err != nil {
+		h.log.Println("Error encoding response body:", err)
 	}
 }
 
-func writeResponse(w http.ResponseWriter, v any, err error) {
+func (h *UserHandler) writeErrorResponse(w http.ResponseWriter, vErr error) {
 	w.Header().Set("Content-Type", "application/json")
 
-	if err != nil {
-		v = err
-	}
-
-	if v == nil {
-		w.WriteHeader(http.StatusNoContent)
-		fmt.Println("WARNING: No content to write in response")
-		return
-	}
-
-	switch val := v.(type) {
-	case uuid.UUID:
-		w.WriteHeader(http.StatusOK)
-		err = json.NewEncoder(w).Encode(val.String())
-		if err != nil {
-			fmt.Println("Error encoding response body:", err)
-		}
-
+	switch vErr := vErr.(type) {
 	case shared.ServiceError:
-		switch val.Code {
-		case shared.InvalidFormatErr, shared.InvalidRequestErr:
-			w.WriteHeader(http.StatusBadRequest)
-		case shared.NotFoundErr:
-			w.WriteHeader(http.StatusNotFound)
-		default:
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-		err := json.NewEncoder(w).Encode(val)
+		h.log.Println("ServiceError: %w", vErr.Err)
+		w.WriteHeader(vErr.Code)
+		err := json.NewEncoder(w).Encode(serviceErrorResponse{
+			Message: vErr.Message,
+		})
 		if err != nil {
-			fmt.Println("Error encoding response body:", err)
+			h.log.Println("Error encoding error response body:", err)
+		}
+
+	case validator.ValidationErrors:
+		h.log.Println("Validation request body error: %w", vErr[0])
+		w.WriteHeader(http.StatusBadRequest)
+		err := json.NewEncoder(w).Encode(serviceErrorResponse{
+			Message: "invalid field: " + vErr[0].Field(),
+		})
+		if err != nil {
+			h.log.Println("Error validating request body:", err)
 		}
 
 	case error:
-		fmt.Println("Error in response:", val)
+		h.log.Println("Fallback error: %w", vErr)
 		w.WriteHeader(http.StatusInternalServerError)
-		json.NewEncoder(w).Encode(map[string]string{"error": val.Error()})
-
+		err := json.NewEncoder(w).Encode(serviceErrorResponse{
+			Message: "internal error",
+		})
+		if err != nil {
+			h.log.Println("Error encoding error response body:", err)
+		}
 	}
 }

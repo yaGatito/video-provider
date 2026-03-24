@@ -3,7 +3,6 @@ package httpadp
 import (
 	"encoding/json"
 	"errors"
-	"io"
 	"log"
 	"net/http"
 	"net/url"
@@ -15,6 +14,7 @@ import (
 	"video-provider/internal/video-service/ports"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/yaGatito/slicex"
 )
@@ -27,8 +27,6 @@ const (
 	IsAscUrlParam   = "asc"
 )
 
-// VideoHandler handles HTTP requests for video operations.
-// It provides endpoints for creating, retrieving, and searching videos.
 type VideoHandler struct {
 	VideoInteractor app.VideoService
 	IDGen           ports.IDGen
@@ -36,19 +34,12 @@ type VideoHandler struct {
 	validate        *validator.Validate
 }
 
-// NewVideoHandler creates and returns a new VideoHandler instance.
-// Parameters:
-//   - userInteractor: service for video operations
-//   - idGen: ID generator for parsing UUIDs
-//   - log: logger instance for recording events
-//
-// Returns a configured VideoHandler ready to handle HTTP requests.
 func NewVideoHandler(
 	userInteractor app.VideoService,
 	idGen ports.IDGen,
 	log *log.Logger,
 ) VideoHandler {
-	return VideoHandler{VideoInteractor: userInteractor, IDGen: idGen, log: log, validate: NewValidator()}
+	return VideoHandler{VideoInteractor: userInteractor, IDGen: idGen, log: log, validate: NewVideoValidator()}
 }
 
 // Create godoc
@@ -64,18 +55,23 @@ func NewVideoHandler(
 // @Failure      500          {object}  string "Internal error"
 // @Router       /v1/videos/pub/{publisherID} [post]
 func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
-	// Required path variable
 	publisherID, err := h.pathVarHandler(r, PathVarPublisherID)
 	if err != nil {
+		h.writeErrorResponse(w, err)
 		return
 	}
 
 	var createVideoRequestData createVideoRequestBody
-	if err := json.NewDecoder(r.Body).Decode(&createVideoRequestData); !errors.Is(err, io.EOF) && err != nil {
-		h.writeErrorResponse(w, err)
+	if err := json.NewDecoder(r.Body).Decode(&createVideoRequestData); err != nil {
+		h.writeErrorResponse(w, shared.ServiceError{
+			Code:    http.StatusBadRequest,
+			Message: "failed to decode request body",
+			Err:     err})
 		return
 	}
-	if err := createVideoRequestData.validate(h.validate); err != nil {
+
+	err = h.validate.Struct(createVideoRequestData)
+	if err != nil {
 		h.writeErrorResponse(w, err)
 		return
 	}
@@ -85,6 +81,7 @@ func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Topic:       createVideoRequestData.Topic,
 		Description: createVideoRequestData.Description,
 	})
+
 	h.writeResponse(w, dtoVideo(video))
 }
 
@@ -105,6 +102,14 @@ func (h *VideoHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if videoID == uuid.Nil {
+		h.writeErrorResponse(w, shared.ServiceError{
+			Code:    http.StatusBadRequest,
+			Message: "empty video ID",
+		})
+		return
+	}
+
 	video, err := h.VideoInteractor.GetByID(r.Context(), domain.UUID(videoID))
 	h.writeResponse(w, dtoVideo(video))
 }
@@ -117,7 +122,7 @@ func (h *VideoHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 // @Param        publisherID  	path      string  true   "publisher ID (UUID)"
 // @Param        limit   	  	query     int     false  "Limit (example: 10)"
 // @Param        offset  		query     int     false  "Offset (example: 0)"
-// @Param        sort    		query     string  false  "Sort (example: `createdAt`)"
+// @Param        sort    		query     string  false  "Sort (example: `date`)"
 // @Param        order   		query     string  false  "Order (asc or desc, example: `t` for ascending, `f` for descending)"
 // @Success      200          {array}   videoResponseBody
 // @Router       /v1/videos/pub/{publisherID} [get]
@@ -126,6 +131,14 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 	publisherID, err := h.pathVarHandler(r, PathVarPublisherID)
 	if err != nil {
 		h.writeErrorResponse(w, err)
+		return
+	}
+
+	if publisherID == uuid.Nil {
+		h.writeErrorResponse(w, shared.ServiceError{
+			Code:    http.StatusBadRequest,
+			Message: "empty publisher ID",
+		})
 		return
 	}
 
@@ -194,7 +207,7 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 // @Param        query   query     string  true   "Search query"
 // @Param        limit   query     int     false  "Limit (example: 10)"
 // @Param        offset  query     int     false  "Offset (example: 0)"
-// @Param        sort    query     string  false  "Sort (example: `createdAt`)"
+// @Param        sort    query     string  false  "Sort (example: `date`)"
 // @Param        order   query     string  false  "Order (asc or desc, example: `t` for ascending, `f` for descending)"
 // @Success      200     {array}   videoResponseBody
 // @Router       /v1/videos/search/ [get]
@@ -230,10 +243,15 @@ func (h *VideoHandler) SearchGlobal(w http.ResponseWriter, r *http.Request) {
 	}
 
 	videos, err := h.VideoInteractor.SearchGlobal(r.Context(), search, pageParams)
+	if err != nil {
+		h.writeErrorResponse(w, err)
+		return
+	}
+
 	h.writeResponse(w, videosResponseBody{Videos: slicex.Map(videos, dtoVideo)})
 }
 
-func (h VideoHandler) parseUrlValues(query string) (url.Values, error) {
+func (h *VideoHandler) parseUrlValues(query string) (url.Values, error) {
 	if len(query) > policy.UrlMaxLen {
 		return nil, shared.ServiceError{
 			Code:    http.StatusBadRequest,
@@ -249,7 +267,7 @@ func (h VideoHandler) parseUrlValues(query string) (url.Values, error) {
 	return urlValues, nil
 }
 
-func (h VideoHandler) parseIntsUrlParams(
+func (h *VideoHandler) parseIntsUrlParams(
 	values url.Values,
 	params ...string,
 ) ([]int32, error) {
@@ -269,7 +287,7 @@ func (h VideoHandler) parseIntsUrlParams(
 	return res, nil
 }
 
-func (h VideoHandler) parseStringsUrlParams(
+func (h *VideoHandler) parseStringsUrlParams(
 	values url.Values,
 	params ...string,
 ) ([]string, error) {
@@ -289,7 +307,7 @@ func (h VideoHandler) parseStringsUrlParams(
 	return res, nil
 }
 
-func (h VideoHandler) pathVarHandler(
+func (h *VideoHandler) pathVarHandler(
 	r *http.Request,
 	varName string,
 ) (domain.UUID, error) {
@@ -303,14 +321,14 @@ func (h VideoHandler) pathVarHandler(
 	if err != nil {
 		return domain.UUID{}, shared.ServiceError{
 			Code:    http.StatusBadRequest,
-			Message: "path var not specified: " + varName,
+			Message: "unparsable ID: " + varName,
 			Err:     err}
 	}
 
 	return res, nil
 }
 
-func (h VideoHandler) extractUrlVarString(
+func (h *VideoHandler) extractUrlVarString(
 	values url.Values,
 	paramName string,
 ) (string, error) {
@@ -330,7 +348,7 @@ func (h VideoHandler) extractUrlVarString(
 	return value, nil
 }
 
-func (h VideoHandler) writeResponse(w http.ResponseWriter, v any) {
+func (h *VideoHandler) writeResponse(w http.ResponseWriter, v any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 
@@ -340,7 +358,7 @@ func (h VideoHandler) writeResponse(w http.ResponseWriter, v any) {
 	}
 }
 
-func (h VideoHandler) writeErrorResponse(w http.ResponseWriter, vErr error) {
+func (h *VideoHandler) writeErrorResponse(w http.ResponseWriter, vErr error) {
 	w.Header().Set("Content-Type", "application/json")
 
 	switch vErr := vErr.(type) {
@@ -358,7 +376,7 @@ func (h VideoHandler) writeErrorResponse(w http.ResponseWriter, vErr error) {
 		h.log.Println("Validation request body error: %w", vErr[0])
 		w.WriteHeader(http.StatusBadRequest)
 		err := json.NewEncoder(w).Encode(serviceErrorResponse{
-			Message: vErr.Error(),
+			Message: "invalid field: " + vErr[0].Field(),
 		})
 		if err != nil {
 			h.log.Println("Error validating request body:", err)

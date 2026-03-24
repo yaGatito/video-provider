@@ -9,7 +9,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-func NewValidator() *validator.Validate {
+func NewVideoValidator() *validator.Validate {
 	validate := validator.New(validator.WithRequiredStructEnabled())
 
 	validate.RegisterValidation("maxTopic", func(fl validator.FieldLevel) bool {

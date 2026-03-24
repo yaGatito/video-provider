@@ -1,6 +1,8 @@
 package httpadp
 
 import (
+	"io"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -34,7 +36,7 @@ func TestValidCreateUserRequest(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			s := mock_app.NewMockUserInteractor(ctrl)
-			h := NewUserHandler(s)
+			h := NewUserHandler(s, log.New(io.Discard, "", 0))
 			r := mux.NewRouter()
 			SetupRouter(r, h)
 
@@ -120,7 +122,7 @@ func TestInvalidCreateUserRequest(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			s := mock_app.NewMockUserInteractor(ctrl)
-			h := NewUserHandler(s)
+			h := NewUserHandler(s, log.New(io.Discard, "", 0))
 			r := mux.NewRouter()
 			SetupRouter(r, h)
 

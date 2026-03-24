@@ -122,7 +122,7 @@ func TestValidateOrderBy(t *testing.T) {
 		wantErr bool
 		input   string
 	}{
-		{"valid sort", false, "createdAt"},
+		{"valid sort", false, "date"},
 		{"invalid sort", true, "CreateddAte"},
 	}
 
@@ -143,11 +143,11 @@ func TestValidateAsc(t *testing.T) {
 		name        string
 		wantErr     bool
 		input       string
-		expectedRes bool
+		expectedRes string
 	}{
-		{"ok true (asc)", false, "t", true},
-		{"ok false (desc)", false, "f", false},
-		{"invalid value", true, "false", false},
+		{"ok true (asc)", false, "t", "t"},
+		{"ok false (desc)", false, "f", "f"},
+		{"invalid value", true, "false", ""},
 	}
 
 	for _, tt := range tests {

@@ -18,6 +18,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 	"github.com/stretchr/testify/require"
+	"github.com/yaGatito/slicex"
 )
 
 func TestCreateVideo(t *testing.T) {
@@ -169,6 +170,10 @@ func TestGetByPublisherVideos(t *testing.T) {
 		Description: expDec,
 	}}
 
+	expectedResponseBody := videosResponseBody{
+		Videos: slicex.Map(expectedRes, dtoVideo),
+	}
+
 	cases := []struct {
 		name       string
 		expCallCnt int
@@ -176,40 +181,40 @@ func TestGetByPublisherVideos(t *testing.T) {
 		urlParams  string
 	}{
 		{"ok", 1,
-			pubIDStr, "?offset=0&limit=5&orderBy=createdAt&asc=t"},
+			pubIDStr, "?offset=0&limit=5&order=date&asc=t"},
 
 		{"large URL query", 0,
-			pubIDStr, "?offset=5&limit=5&orderBy=createdAt&asc=" + strings.Repeat("a", policy.UrlMaxLen)},
+			pubIDStr, "?offset=5&limit=5&order=date&asc=" + strings.Repeat("a", policy.UrlMaxLen)},
 
 		{"invalid offset", 0,
-			pubIDStr, "?offset=H&limit=5&orderBy=createdAt&asc=t"},
+			pubIDStr, "?offset=H&limit=5&order=date&asc=t"},
 
 		{"no offset in URL", 0,
-			pubIDStr, "?limit=5&orderBy=createdAt&asc=t"},
+			pubIDStr, "?limit=5&order=date&asc=t"},
 
 		{"invalid limit", 0,
-			pubIDStr, "?offset=0&limit=H&orderBy=createdAt&asc=t"},
+			pubIDStr, "?offset=0&limit=H&order=date&asc=t"},
 
 		{"no limit in URL", 0,
-			pubIDStr, "?offset=0&orderBy=createdAt&asc=t"},
+			pubIDStr, "?offset=0&order=date&asc=t"},
 
 		{"invalid asc", 0,
-			pubIDStr, "?offset=0&limit=5&orderBy=createdAt&asc=!@#%"},
+			pubIDStr, "?offset=0&limit=5&order=date&asc=!@#%"},
 
 		{"no asc in URL", 0,
-			pubIDStr, "?offset=0&limit=5&orderBy=createdAt"},
+			pubIDStr, "?offset=0&limit=5&order=date"},
 
 		{"invalid orderBy", 0,
-			pubIDStr, "?offset=0&limit=5&orderBy=!@#%&asc=t"},
+			pubIDStr, "?offset=0&limit=5&order=!@#%&asc=t"},
 
 		{"no orderBy in URL", 0,
 			pubIDStr, "?offset=0&limit=5&asc=t"},
 
 		{"wrong url params", 0,
-			pubIDStr, "?affset=0&leemeet=5&orderBy=createdAt&asc=t&kueree=search"},
+			pubIDStr, "?affset=0&leemeet=5&order=date&asc=t&kueree=search"},
 
 		{"partial wrong url params", 0,
-			pubIDStr, "?affset=0&leemeet=5&orderBy=createdAt&asc=t&search="},
+			pubIDStr, "?affset=0&leemeet=5&order=date&asc=t&search="},
 	}
 
 	t.Parallel()
@@ -245,9 +250,9 @@ func TestGetByPublisherVideos(t *testing.T) {
 			switch c.expCallCnt {
 			case 1:
 				require.Equal(t, http.StatusOK, rec.Code)
-				var actualRes []domain.Video
+				var actualRes videosResponseBody
 				json.Unmarshal(rec.Body.Bytes(), &actualRes)
-				require.Equal(t, expectedRes, actualRes)
+				require.Equal(t, expectedResponseBody, actualRes)
 			case 0:
 				require.Equal(t, http.StatusBadRequest, rec.Code)
 			}
@@ -266,6 +271,10 @@ func TestSearchPublisherVideos(t *testing.T) {
 		Description: expDec,
 	}}
 
+	expectedResponseBody := videosResponseBody{
+		Videos: slicex.Map(expectedRes, dtoVideo),
+	}
+
 	cases := []struct {
 		name          string
 		expCallCnt    int
@@ -275,26 +284,26 @@ func TestSearchPublisherVideos(t *testing.T) {
 	}{
 		// SearchPublisher
 		{"ok search", 1,
-			pubIDStr, "?offset=0&limit=5&orderBy=createdAt&asc=t&query=search", http.StatusOK},
+			pubIDStr, "?offset=0&limit=5&order=date&asc=t&query=search", http.StatusOK},
 
 		{"few words search", 1,
-			pubIDStr, "?offset=0&limit=5&orderBy=createdAt&asc=t&query=search+lorem+ipsum+kitty+dolor", http.StatusOK},
+			pubIDStr, "?offset=0&limit=5&order=date&asc=t&query=search+lorem+ipsum+kitty+dolor", http.StatusOK},
 
 		{"invalid offset search", 0,
-			pubIDStr, "?offset=A&limit=5&orderBy=createdAt&asc=t&query=search", http.StatusBadRequest},
+			pubIDStr, "?offset=A&limit=5&order=date&asc=t&query=search", http.StatusBadRequest},
 
 		{"invalid limit search", 0,
-			pubIDStr, "?offset=0&limit=A&orderBy=createdAt&asc=t&query=search", http.StatusBadRequest},
+			pubIDStr, "?offset=0&limit=A&order=date&asc=t&query=search", http.StatusBadRequest},
 
 		{"ivalid id", 0,
-			"1", "?offset=0&limit=5&orderBy=createdAt&asc=t&query=search", http.StatusBadRequest},
+			"1", "?offset=0&limit=5&order=date&asc=t&query=search", http.StatusBadRequest},
 
 		{"empty id", 0,
-			"", "?offset=0&limit=5&orderBy=createdAt&asc=t&query=search", http.StatusNotFound},
+			"", "?offset=0&limit=5&order=date&asc=t&query=search", http.StatusNotFound},
 
 		//TODO: temp fix, till error handling will be implemented
 		{"invalid search", 0,
-			pubIDStr, "?offset=0&limit=5&orderBy=createdAt&asc=t&query=,.<>?/;", http.StatusBadRequest},
+			pubIDStr, "?offset=0&limit=5&order=date&asc=t&query=,.<>?/;", http.StatusBadRequest},
 	}
 
 	t.Parallel()
@@ -327,9 +336,9 @@ func TestSearchPublisherVideos(t *testing.T) {
 
 			require.Equal(t, c.expStatusCode, rec.Code)
 			if c.expCallCnt == 1 {
-				var actualRes []domain.Video
+				var actualRes videosResponseBody
 				json.Unmarshal(rec.Body.Bytes(), &actualRes)
-				require.Equal(t, expectedRes, actualRes)
+				require.Equal(t, expectedResponseBody, actualRes)
 			}
 		})
 	}
