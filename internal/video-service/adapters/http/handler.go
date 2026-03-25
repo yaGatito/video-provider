@@ -82,7 +82,7 @@ func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Description: createVideoRequestData.Description,
 	})
 
-	h.writeResponse(w, dtoVideo(video))
+	h.writeResponse(w, dtoVideo(video), http.StatusCreated)
 }
 
 // GetByID godoc
@@ -111,7 +111,7 @@ func (h *VideoHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	video, err := h.VideoInteractor.GetByID(r.Context(), domain.UUID(videoID))
-	h.writeResponse(w, dtoVideo(video))
+	h.writeResponse(w, dtoVideo(video), http.StatusOK)
 }
 
 // GetByPublisher godoc
@@ -196,7 +196,7 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	h.writeResponse(w, videosResponseBody{Videos: slicex.Map(videos, dtoVideo)})
+	h.writeResponse(w, videosResponseBody{Videos: slicex.Map(videos, dtoVideo)}, http.StatusOK)
 }
 
 // SearchGlobal godoc
@@ -248,7 +248,7 @@ func (h *VideoHandler) SearchGlobal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.writeResponse(w, videosResponseBody{Videos: slicex.Map(videos, dtoVideo)})
+	h.writeResponse(w, videosResponseBody{Videos: slicex.Map(videos, dtoVideo)}, http.StatusOK)
 }
 
 func (h *VideoHandler) parseUrlValues(query string) (url.Values, error) {
@@ -348,9 +348,9 @@ func (h *VideoHandler) extractUrlVarString(
 	return value, nil
 }
 
-func (h *VideoHandler) writeResponse(w http.ResponseWriter, v any) {
+func (h *VideoHandler) writeResponse(w http.ResponseWriter, v any, code int) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(code)
 
 	err := json.NewEncoder(w).Encode(v)
 	if err != nil {

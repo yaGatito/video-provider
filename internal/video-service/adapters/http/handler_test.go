@@ -45,7 +45,7 @@ func TestCreateVideo(t *testing.T) {
 		pubID         string
 		reqBody       string
 	}{
-		{"ok", 1, http.StatusOK, pubID.String(),
+		{"ok", 1, http.StatusCreated, pubID.String(),
 			`{"topic":"TESTE","description":"TESTEE"}`},
 
 		{"ivalid id", 0, http.StatusBadRequest, "1",

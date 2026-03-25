@@ -50,7 +50,7 @@ func TestValidCreateUserRequest(t *testing.T) {
 					RouteUsers,
 					strings.NewReader(c.reqBody)))
 
-			require.Equal(t, http.StatusOK, rec.Code)
+			require.Equal(t, http.StatusCreated, rec.Code)
 			require.Equal(t, expResponse, rec.Body.String())
 		})
 	}

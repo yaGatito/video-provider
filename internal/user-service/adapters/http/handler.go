@@ -64,7 +64,7 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.writeResponse(w, authResponse{Token: token})
+	h.writeResponse(w, authResponse{Token: token}, http.StatusOK)
 }
 
 // CreateUser godoc
@@ -116,7 +116,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.writeResponse(w, userId)
+	h.writeResponse(w, userId, http.StatusCreated)
 }
 
 // GetUser godoc
@@ -156,12 +156,12 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.writeResponse(w, getUserResult)
+	h.writeResponse(w, getUserResult, http.StatusOK)
 }
 
-func (h *UserHandler) writeResponse(w http.ResponseWriter, v any) {
+func (h *UserHandler) writeResponse(w http.ResponseWriter, v any, code int) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusOK)
+	w.WriteHeader(code)
 
 	err := json.NewEncoder(w).Encode(v)
 	if err != nil {

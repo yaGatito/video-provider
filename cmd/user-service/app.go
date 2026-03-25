@@ -59,7 +59,7 @@ func run() error {
 
 	userRepository := postgres.NewPostgresUserRepository(dbPool)
 	userInteractor := usecase.NewUserService(userRepository)
-	userHandler := httpadp.NewUserHandler(userInteractor)
+	userHandler := httpadp.NewUserHandler(userInteractor, mwLog.Log)
 
 	router := mux.NewRouter()
 	router.Use(logger.CORSMiddleware)
