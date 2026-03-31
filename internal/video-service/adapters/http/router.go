@@ -1,4 +1,4 @@
-package httpadapter
+package httpadp
 
 import (
 	"net/http"
@@ -14,6 +14,7 @@ const (
 	RoutePublisherVideos = "/v1/videos/pub/{" + PathVarPublisherID + "}"
 	RouteVideoSearch     = "/v1/videos/search"
 	RouteVideo           = "/v1/videos/id/{" + PathVarVideoID + "}"
+	RouteSwagger         = "/v1/swagger/"
 )
 
 // CORSMiddleware adds CORS headers to all responses
@@ -50,5 +51,5 @@ func SetupRouter(r *mux.Router, h VideoHandler) {
 	r.HandleFunc(RouteVideoSearch, h.SearchGlobal).
 		Methods(http.MethodGet, http.MethodOptions)
 
-	r.PathPrefix("/v1/swagger/").HandlerFunc(httpSwagger.WrapHandler)
+	r.PathPrefix(RouteSwagger).HandlerFunc(httpSwagger.WrapHandler)
 }

@@ -2,23 +2,24 @@ package httpadp
 
 import (
 	"encoding/json"
-	"errors"
 	"log"
 	"net/http"
 	"video-provider/internal/pkg/shared"
 	"video-provider/internal/user-service/app"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"github.com/gorilla/mux"
 )
 
 type UserHandler struct {
-	UserInteractor *app.UserService
-	log            log.Logger
+	UserInteractor app.UserInteractor
+	validate       *validator.Validate
+	log            *log.Logger
 }
 
-func NewUserHandler(userInteractor *app.UserService) UserHandler {
-	return UserHandler{UserInteractor: userInteractor}
+func NewUserHandler(userInteractor app.UserInteractor, log *log.Logger) *UserHandler {
+	return &UserHandler{UserInteractor: userInteractor, log: log, validate: NewUserValidate()}
 }
 
 // Login godoc
@@ -36,90 +37,89 @@ func NewUserHandler(userInteractor *app.UserService) UserHandler {
 func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var loginRequestData loginUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&loginRequestData); err != nil {
-		writeError(w, http.StatusBadRequest, err)
+		h.writeErrorResponse(w, shared.ServiceError{
+			Code:    http.StatusBadRequest,
+			Message: "failed to decode login request body",
+			Err:     err})
 		return
 	}
 
-	if err := loginRequestData.validate(); err != nil {
-		writeError(w, http.StatusBadRequest, err)
+	err := h.validate.Struct(loginRequestData)
+	if err != nil {
+		h.writeErrorResponse(w, err)
+		return
+	}
+
+	err = validatePassword([]byte(loginRequestData.Password))
+	if err != nil {
+		h.writeErrorResponse(w, err)
 		return
 	}
 
 	loginRequestData.normalize()
 
 	token, err := h.UserInteractor.Login(loginRequestData.Email, loginRequestData.Password)
-
 	if err != nil {
-		var vErr shared.ServiceError
-		if errors.As(err, &vErr) {
-			log.Printf("Error logging in (validation): %v", err)
-			writeJSON(w, http.StatusBadRequest, serviceErrorResponse{Code: shared.ValidationErr, Payload: vErr})
-			return
-		}
-		log.Printf("Error logging in: %v", err)
-		writeJSON(w, http.StatusUnauthorized, serviceErrorResponse{Code: shared.UnauthorizedErr})
+		h.writeErrorResponse(w, err)
 		return
 	}
 
-	writeJSON(w, http.StatusOK, authResponse{Token: token})
+	h.writeResponse(w, authResponse{Token: token}, http.StatusOK)
 }
 
-// Create godoc
-// @Summary      Create a new user
+// CreateUser godoc
+// @Summary      Creates a new user
 // @Tags         Users
-// @Description  Create a new user and return the created user's ID. Example ID
+// @Description  Creates a new user and return the created user's ID. Example ID
 //
 //	format (UUID): 123e4567-e89b-12d3-a456-426614174000
 //
 // @Accept       json
 // @Produce      json
-// @Param        user  body    createUserRequest  true  "Create user payload"
-// @Success      200   {string}  string  "created user id (example: 123e4567-e89b-12d3-a456-426614174000)"
+// @Param        user  body    createUserRequest  true  "CreateUser user payload"
+// @Success      201   {string}  string  "created user id (example: 123e4567-e89b-12d3-a456-426614174000)"
 // @Failure      400   {object}  serviceErrorResponse
 // @Failure      500   {object}  serviceErrorResponse
 // @Router       /v1/users [post]
-func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
+func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var createUserRequestData createUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&createUserRequestData); err != nil {
-		writeError(w, http.StatusBadRequest, err)
+		h.writeErrorResponse(w, shared.ServiceError{
+			Code:    http.StatusBadRequest,
+			Message: "failed to decode create user request body",
+			Err:     err})
 		return
 	}
 
-	if err := createUserRequestData.validate(); err != nil {
-		writeError(w, http.StatusBadRequest, err)
+	err := h.validate.Struct(createUserRequestData)
+	if err != nil {
+		h.writeErrorResponse(w, err)
+		return
+	}
+
+	err = validatePassword([]byte(createUserRequestData.Password))
+	if err != nil {
+		h.writeErrorResponse(w, err)
 		return
 	}
 
 	createUserRequestData.normalize()
 
-	userId, err := h.UserInteractor.Register(app.RegisterUserCommand{
+	userId, err := h.UserInteractor.Create(app.RegisterUserCommand{
 		Email:    createUserRequestData.Email,
 		Name:     createUserRequestData.Name,
 		Lastname: createUserRequestData.LastName,
 		Password: createUserRequestData.Password,
 	})
-
 	if err != nil {
-		var vErr shared.ServiceError
-		if errors.As(err, &vErr) {
-			log.Printf("Error registering user (validation): %v", err)
-			writeJSON(w, http.StatusBadRequest, serviceErrorResponse{Code: shared.ValidationErr, Payload: vErr})
-			return
-		}
-		log.Printf("Error registering user: %v", err)
-		writeJSON(w, http.StatusInternalServerError, serviceErrorResponse{Code: shared.InternalErr})
+		h.writeErrorResponse(w, err)
 		return
 	}
 
-	err = json.NewEncoder(w).Encode(userId)
-	if err != nil {
-		log.Printf("Error encoding user response: %v", err)
-		writeJSON(w, http.StatusInternalServerError, serviceErrorResponse{Code: shared.InternalErr})
-		return
-	}
+	h.writeResponse(w, userId, http.StatusCreated)
 }
 
-// Get godoc
+// GetUser godoc
 // @Summary      Get user by ID
 // @Tags         Users
 // @Description  Retrieve user details by ID. The ID can be provided as a
@@ -133,51 +133,74 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 // @Failure      400  {object}  serviceErrorResponse
 // @Failure      500  {object}  serviceErrorResponse
 // @Router       /v1/users/{id} [get]
-func (h *UserHandler) Get(w http.ResponseWriter, r *http.Request) {
-	idStr := mux.Vars(r)["id"]
-	id, err := uuid.Parse(idStr)
+func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
+	userID, err := uuid.Parse(mux.Vars(r)["id"])
 	if err != nil {
-		writeJSON(w, http.StatusBadRequest, serviceErrorResponse{Code: shared.InvalidRequestErr})
-		log.Printf("Invalid user id in path: %v", err)
+		h.writeErrorResponse(w, shared.ServiceError{
+			Code:    http.StatusBadRequest,
+			Message: "unparsable user id"})
 		return
 	}
-	log.Printf("Find by id: %s", id.String())
 
-	getUserResult, err := h.UserInteractor.Get(id)
-	if err != nil {
-		writeJSON(w, http.StatusNotFound, serviceErrorResponse{Code: shared.NotFoundErr})
-		log.Printf("Error retrieving user: %v", err)
+	if userID == uuid.Nil {
+		h.writeErrorResponse(w, shared.ServiceError{
+			Code:    http.StatusBadRequest,
+			Message: "empty user ID",
+		})
 		return
 	}
-	log.Printf("User by id: %s found! - name: %s, lastname: %s\n", id.String(), getUserResult.Name, getUserResult.Lastname)
 
-	err = json.NewEncoder(w).Encode(getUserResult)
+	getUserResult, err := h.UserInteractor.Get(userID)
 	if err != nil {
-		writeJSON(w, http.StatusInternalServerError, serviceErrorResponse{Code: shared.InternalErr})
-		log.Printf("Error encoding user response: %v", err)
+		h.writeErrorResponse(w, err)
 		return
 	}
-	log.Println("Response were written successfully")
+
+	h.writeResponse(w, getUserResult, http.StatusOK)
 }
 
-func writeJSON(w http.ResponseWriter, status int, v any) {
+func (h *UserHandler) writeResponse(w http.ResponseWriter, v any, code int) {
 	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	_ = json.NewEncoder(w).Encode(v)
+	w.WriteHeader(code)
+
+	err := json.NewEncoder(w).Encode(v)
+	if err != nil {
+		h.log.Println("Error encoding response body:", err)
+	}
 }
 
-func writeError(w http.ResponseWriter, status int, err error) {
-	var vErr shared.ServiceError
-	resp := serviceErrorResponse{}
-	if errors.As(err, &vErr) {
-		resp.Code = vErr.Code
-		resp.Payload = vErr.Msg
-	} else {
-		resp.Code = shared.InternalErr
-		// Verbose way. TODO: change next on complete
-		resp.Payload = err.Error()
-		// resp.Payload = "internal error"
+func (h *UserHandler) writeErrorResponse(w http.ResponseWriter, vErr error) {
+	w.Header().Set("Content-Type", "application/json")
+
+	switch vErr := vErr.(type) {
+	case shared.ServiceError:
+		h.log.Println("ServiceError: %w", vErr.Err)
+		w.WriteHeader(vErr.Code)
+		err := json.NewEncoder(w).Encode(serviceErrorResponse{
+			Message: vErr.Message,
+		})
+		if err != nil {
+			h.log.Println("Error encoding error response body:", err)
+		}
+
+	case validator.ValidationErrors:
+		h.log.Println("Validation request body error: %w", vErr[0])
+		w.WriteHeader(http.StatusBadRequest)
+		err := json.NewEncoder(w).Encode(serviceErrorResponse{
+			Message: "invalid field: " + vErr[0].Field(),
+		})
+		if err != nil {
+			h.log.Println("Error validating request body:", err)
+		}
+
+	case error:
+		h.log.Println("Fallback error: %w", vErr)
+		w.WriteHeader(http.StatusInternalServerError)
+		err := json.NewEncoder(w).Encode(serviceErrorResponse{
+			Message: "internal error",
+		})
+		if err != nil {
+			h.log.Println("Error encoding error response body:", err)
+		}
 	}
-	log.Printf("Error writing response: %v", err)
-	writeJSON(w, status, resp)
 }

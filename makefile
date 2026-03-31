@@ -135,6 +135,7 @@ ifeq ("$(CONFIG)","video")
 endif
 
 ifeq ("$(CONFIG)","user")
+	$(MOCKGEN) -source="./internal/$(SERVICE_NAME)/app/service.go" -destination="./internal/$(SERVICE_NAME)/app/mock/service_mock.go" -mock_names=UserInteractor=MockUserInteractor
 	$(MOCKGEN) -source="./internal/$(SERVICE_NAME)/ports/user_repo.go" -destination="./internal/$(SERVICE_NAME)/ports/mock/user_repo_mock.go" -mock_names=UserRepository=MockUserRepository
 	$(call log, "$(SERVICE_NAME) mocks generated")
 endif

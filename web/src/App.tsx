@@ -19,7 +19,7 @@ const App: React.FC = () => {
           <Route path="/register" element={<Register />} />
           <Route path="/upload" element={<UploadVideo />} />
           <Route path="/watch/:id" element={<VideoPage />} />
-          <Route path="/v1/videos/id/:id" element={<VideoPage />} />
+          <Route path="/videos/id/:id" element={<VideoPage />} />
         </Routes>
       </Layout>
     </Router>

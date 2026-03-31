@@ -1,25 +1,5 @@
 basePath: /
 definitions:
-  httpadapter.VideoResponseBody:
-    properties:
-      createdAt:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      publisherID:
-        type: string
-      topic:
-        type: string
-    type: object
-  httpadapter.createVideoRequestBody:
-    properties:
-      description:
-        type: string
-      topic:
-        type: string
-    type: object
   httpadp.authResponse:
     properties:
       token:
@@ -35,24 +15,49 @@ definitions:
         type: string
       password:
         type: string
+    required:
+    - email
+    - lastname
+    - name
+    - password
+    type: object
+  httpadp.createVideoRequestBody:
+    properties:
+      description:
+        type: string
+      topic:
+        type: string
+    required:
+    - description
+    - topic
     type: object
   httpadp.loginUserRequest:
     properties:
       email:
         type: string
       password:
-        maxLength: 50
-        minLength: 8
         type: string
     required:
     - email
     - password
     type: object
-  httpadp.serviceErrorResponse:
+  httpadp.videoResponseBody:
     properties:
-      code:
+      createdAt:
         type: string
-      payload: {}
+      description:
+        type: string
+      id:
+        type: string
+      publisherID:
+        type: string
+      topic:
+        type: string
+    type: object
+  video-provider_internal_user-service_adapters_http.serviceErrorResponse:
+    properties:
+      msg:
+        type: string
     type: object
 host: localhost:8080
 info:
@@ -65,9 +70,9 @@ paths:
     post:
       consumes:
       - application/json
-      description: Create a new user and return the created user's ID. Example ID
+      description: Creates a new user and return the created user's ID. Example ID
       parameters:
-      - description: Create user payload
+      - description: CreateUser user payload
         in: body
         name: user
         required: true
@@ -76,19 +81,19 @@ paths:
       produces:
       - application/json
       responses:
-        "200":
+        "201":
           description: 'created user id (example: 123e4567-e89b-12d3-a456-426614174000)'
           schema:
             type: string
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/httpadp.serviceErrorResponse'
+            $ref: '#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/httpadp.serviceErrorResponse'
-      summary: Create a new user
+            $ref: '#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse'
+      summary: Creates a new user
       tags:
       - Users
   /v1/users/{id}:
@@ -109,11 +114,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/httpadp.serviceErrorResponse'
+            $ref: '#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/httpadp.serviceErrorResponse'
+            $ref: '#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse'
       summary: Get user by ID
       tags:
       - Users
@@ -139,15 +144,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/httpadp.serviceErrorResponse'
+            $ref: '#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/httpadp.serviceErrorResponse'
+            $ref: '#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/httpadp.serviceErrorResponse'
+            $ref: '#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse'
       summary: User login
       tags:
       - Users
@@ -156,6 +161,7 @@ paths:
       description: Returns details of a single video by its unique identifier
       parameters:
       - description: video ID (UUID)
+        format: uuid
         in: path
         name: videoID
         required: true
@@ -166,13 +172,13 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/httpadapter.VideoResponseBody'
+            $ref: '#/definitions/httpadp.videoResponseBody'
         "400":
-          description: Bad Request
+          description: Invalid video ID format
           schema:
             type: string
         "500":
-          description: Internal Server Error
+          description: Internal server error
           schema:
             type: string
       summary: Get video by ID
@@ -188,18 +194,22 @@ paths:
         name: publisherID
         required: true
         type: string
-      - description: Search query
-        in: query
-        name: query
-        type: string
-      - description: Limit (default 10)
+      - description: 'Limit (example: 10)'
         in: query
         name: limit
         type: integer
-      - description: Offset (default 0)
+      - description: 'Offset (example: 0)'
         in: query
         name: offset
         type: integer
+      - description: 'Sort (example: `date`)'
+        in: query
+        name: sort
+        type: string
+      - description: 'Order (asc or desc, example: `t` for ascending, `f` for descending)'
+        in: query
+        name: order
+        type: string
       produces:
       - application/json
       responses:
@@ -207,7 +217,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/httpadapter.VideoResponseBody'
+              $ref: '#/definitions/httpadp.videoResponseBody'
             type: array
       summary: Get videos by publisher
       tags:
@@ -215,9 +225,9 @@ paths:
     post:
       consumes:
       - application/json
-      description: Creates a new video record for the specified publisher
+      description: Creates a new video record for the specified publisher.
       parameters:
-      - description: publisher ID (UUID)
+      - description: Publisher ID (UUID)
         in: path
         name: publisherID
         required: true
@@ -227,12 +237,12 @@ paths:
         name: video
         required: true
         schema:
-          $ref: '#/definitions/httpadapter.createVideoRequestBody'
+          $ref: '#/definitions/httpadp.createVideoRequestBody'
       produces:
       - application/json
       responses:
-        "200":
-          description: OK
+        "201":
+          description: Created
         "400":
           description: Invalid input
           schema:
@@ -241,7 +251,7 @@ paths:
           description: Internal error
           schema:
             type: string
-      summary: 'Creates new video. Publisher id example: d9fa522f-0006-464f-8d68-356ba1d6ad7d'
+      summary: Creates new video.
       tags:
       - videos
   /v1/videos/search/:
@@ -253,19 +263,19 @@ paths:
         name: query
         required: true
         type: string
-      - description: Limit (default 10)
+      - description: 'Limit (example: 10)'
         in: query
         name: limit
         type: integer
-      - description: Offset (default 0)
+      - description: 'Offset (example: 0)'
         in: query
         name: offset
         type: integer
-      - description: Sort (default 'createdAt')
+      - description: 'Sort (example: `date`)'
         in: query
         name: sort
         type: string
-      - description: Order (default 'asc')
+      - description: 'Order (asc or desc, example: `t` for ascending, `f` for descending)'
         in: query
         name: order
         type: string
@@ -276,7 +286,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/httpadapter.VideoResponseBody'
+              $ref: '#/definitions/httpadp.videoResponseBody'
             type: array
       summary: Global search
       tags:

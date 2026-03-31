@@ -9,7 +9,7 @@ import (
 	_ "video-provider/docs"
 	config "video-provider/internal/pkg/config"
 	"video-provider/internal/pkg/middleware"
-	httpadapter "video-provider/internal/video-service/adapters/http"
+	httpadp "video-provider/internal/video-service/adapters/http"
 	"video-provider/internal/video-service/adapters/idgen"
 	"video-provider/internal/video-service/adapters/postgres"
 	"video-provider/internal/video-service/app"
@@ -31,9 +31,6 @@ func main() {
 		log.Fatal(err)
 	}
 }
-
-// TODO: Fix the problem 1: application should beign configured from one place. Or at least it should be separated.
-// TODO: Decide who should be responsible for migration. (the one who run service or the service itself)
 
 func run() error {
 	ctx := context.Background()
@@ -64,11 +61,11 @@ func run() error {
 
 	videoRepository := postgres.NewVideoRepoPostgreSQL(pool)
 	videoService := app.NewVideoInteractor(videoRepository)
-	videoHandler := httpadapter.NewVideoHandler(videoService, idGen, mwLog.Log)
+	videoHandler := httpadp.NewVideoHandler(videoService, idGen, mwLog.Log)
 
 	router := mux.NewRouter()
 	router.Use(mwLog.LoggingMiddleware)
-	httpadapter.SetupRouter(router, videoHandler)
+	httpadp.SetupRouter(router, videoHandler)
 
 	log.Printf("Video-service starting on port %s", cfg.Api.Port)
 	err = http.ListenAndServe(":"+cfg.Api.Port, router)

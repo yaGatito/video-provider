@@ -9,14 +9,13 @@ import (
 	_ "video-provider/docs"
 	"video-provider/internal/pkg/config"
 	logger "video-provider/internal/pkg/middleware"
-	httpadapter "video-provider/internal/user-service/adapters/http"
+	httpadp "video-provider/internal/user-service/adapters/http"
 	"video-provider/internal/user-service/adapters/postgres"
 	usecase "video-provider/internal/user-service/app"
 
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/joho/godotenv"
-	httpSwagger "github.com/swaggo/http-swagger"
 )
 
 const configName = "user-service"
@@ -60,20 +59,13 @@ func run() error {
 
 	userRepository := postgres.NewPostgresUserRepository(dbPool)
 	userInteractor := usecase.NewUserService(userRepository)
-	userHandler := httpadapter.NewUserHandler(userInteractor)
+	userHandler := httpadp.NewUserHandler(userInteractor, mwLog.Log)
 
 	router := mux.NewRouter()
 	router.Use(logger.CORSMiddleware)
 	router.Use(mwLog.LoggingMiddleware)
 
-	router.HandleFunc("/v1/users", userHandler.Create).
-		Methods(http.MethodPost, http.MethodOptions)
-	router.HandleFunc("/v1/users/{id}", userHandler.Get).
-		Methods(http.MethodGet, http.MethodOptions)
-	router.HandleFunc("/v1/login", userHandler.Login).
-		Methods(http.MethodPost, http.MethodOptions)
-
-	router.PathPrefix("/v1/swagger/").HandlerFunc(httpSwagger.WrapHandler)
+	httpadp.SetupRouter(router, userHandler)
 
 	log.Printf("User-service starting on port %s", cfg.Api.Port)
 	err = http.ListenAndServe(":"+cfg.Api.Port, router)

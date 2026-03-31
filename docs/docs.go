@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/v1/users": {
             "post": {
-                "description": "Create a new user and return the created user's ID. Example ID",
+                "description": "Creates a new user and return the created user's ID. Example ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -27,10 +27,10 @@ const docTemplate = `{
                 "tags": [
                     "Users"
                 ],
-                "summary": "Create a new user",
+                "summary": "Creates a new user",
                 "parameters": [
                     {
-                        "description": "Create user payload",
+                        "description": "CreateUser user payload",
                         "name": "user",
                         "in": "body",
                         "required": true,
@@ -40,7 +40,7 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "201": {
                         "description": "created user id (example: 123e4567-e89b-12d3-a456-426614174000)",
                         "schema": {
                             "type": "string"
@@ -49,13 +49,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
+                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
+                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     }
                 }
@@ -95,19 +95,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
+                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
+                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
+                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     }
                 }
@@ -140,13 +140,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
+                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
+                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     }
                 }
@@ -165,6 +165,7 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "format": "uuid",
                         "description": "video ID (UUID)",
                         "name": "videoID",
                         "in": "path",
@@ -175,17 +176,17 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/httpadapter.VideoResponseBody"
+                            "$ref": "#/definitions/httpadp.videoResponseBody"
                         }
                     },
                     "400": {
-                        "description": "Bad Request",
+                        "description": "Invalid video ID format",
                         "schema": {
                             "type": "string"
                         }
                     },
                     "500": {
-                        "description": "Internal Server Error",
+                        "description": "Internal server error",
                         "schema": {
                             "type": "string"
                         }
@@ -212,21 +213,27 @@ const docTemplate = `{
                         "required": true
                     },
                     {
-                        "type": "string",
-                        "description": "Search query",
-                        "name": "query",
-                        "in": "query"
-                    },
-                    {
                         "type": "integer",
-                        "description": "Limit (default 10)",
+                        "description": "Limit (example: 10)",
                         "name": "limit",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Offset (default 0)",
+                        "description": "Offset (example: 0)",
                         "name": "offset",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Sort (example: ` + "`" + `date` + "`" + `)",
+                        "name": "sort",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Order (asc or desc, example: ` + "`" + `t` + "`" + ` for ascending, ` + "`" + `f` + "`" + ` for descending)",
+                        "name": "order",
                         "in": "query"
                     }
                 ],
@@ -236,14 +243,14 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/httpadapter.VideoResponseBody"
+                                "$ref": "#/definitions/httpadp.videoResponseBody"
                             }
                         }
                     }
                 }
             },
             "post": {
-                "description": "Creates a new video record for the specified publisher",
+                "description": "Creates a new video record for the specified publisher.",
                 "consumes": [
                     "application/json"
                 ],
@@ -253,11 +260,11 @@ const docTemplate = `{
                 "tags": [
                     "videos"
                 ],
-                "summary": "Creates new video. Publisher id example: d9fa522f-0006-464f-8d68-356ba1d6ad7d",
+                "summary": "Creates new video.",
                 "parameters": [
                     {
                         "type": "string",
-                        "description": "publisher ID (UUID)",
+                        "description": "Publisher ID (UUID)",
                         "name": "publisherID",
                         "in": "path",
                         "required": true
@@ -268,13 +275,13 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/httpadapter.createVideoRequestBody"
+                            "$ref": "#/definitions/httpadp.createVideoRequestBody"
                         }
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK"
+                    "201": {
+                        "description": "Created"
                     },
                     "400": {
                         "description": "Invalid input",
@@ -311,25 +318,25 @@ const docTemplate = `{
                     },
                     {
                         "type": "integer",
-                        "description": "Limit (default 10)",
+                        "description": "Limit (example: 10)",
                         "name": "limit",
                         "in": "query"
                     },
                     {
                         "type": "integer",
-                        "description": "Offset (default 0)",
+                        "description": "Offset (example: 0)",
                         "name": "offset",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Sort (default 'createdAt')",
+                        "description": "Sort (example: ` + "`" + `date` + "`" + `)",
                         "name": "sort",
                         "in": "query"
                     },
                     {
                         "type": "string",
-                        "description": "Order (default 'asc')",
+                        "description": "Order (asc or desc, example: ` + "`" + `t` + "`" + ` for ascending, ` + "`" + `f` + "`" + ` for descending)",
                         "name": "order",
                         "in": "query"
                     }
@@ -340,7 +347,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/httpadapter.VideoResponseBody"
+                                "$ref": "#/definitions/httpadp.videoResponseBody"
                             }
                         }
                     }
@@ -349,7 +356,68 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "httpadapter.VideoResponseBody": {
+        "httpadp.authResponse": {
+            "type": "object",
+            "properties": {
+                "token": {
+                    "type": "string"
+                }
+            }
+        },
+        "httpadp.createUserRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "lastname",
+                "name",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "lastname": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "httpadp.createVideoRequestBody": {
+            "type": "object",
+            "required": [
+                "description",
+                "topic"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string"
+                },
+                "topic": {
+                    "type": "string"
+                }
+            }
+        },
+        "httpadp.loginUserRequest": {
+            "type": "object",
+            "required": [
+                "email",
+                "password"
+            ],
+            "properties": {
+                "email": {
+                    "type": "string"
+                },
+                "password": {
+                    "type": "string"
+                }
+            }
+        },
+        "httpadp.videoResponseBody": {
             "type": "object",
             "properties": {
                 "createdAt": {
@@ -369,66 +437,12 @@ const docTemplate = `{
                 }
             }
         },
-        "httpadapter.createVideoRequestBody": {
+        "video-provider_internal_user-service_adapters_http.serviceErrorResponse": {
             "type": "object",
             "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "topic": {
+                "msg": {
                     "type": "string"
                 }
-            }
-        },
-        "httpadp.authResponse": {
-            "type": "object",
-            "properties": {
-                "token": {
-                    "type": "string"
-                }
-            }
-        },
-        "httpadp.createUserRequest": {
-            "type": "object",
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "lastname": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "httpadp.loginUserRequest": {
-            "type": "object",
-            "required": [
-                "email",
-                "password"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string",
-                    "maxLength": 50,
-                    "minLength": 8
-                }
-            }
-        },
-        "httpadp.serviceErrorResponse": {
-            "type": "object",
-            "properties": {
-                "code": {
-                    "type": "string"
-                },
-                "payload": {}
             }
         }
     }

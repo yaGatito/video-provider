@@ -1,95 +1,38 @@
-package httpadapter
+package httpadp
 
 import (
-	"fmt"
 	"time"
 	"video-provider/internal/video-service/domain"
-	"video-provider/internal/video-service/policy"
 )
 
-const (
-	IDEmpty                 string = "ID_EMPTY"
-	IDSizeExceeded          string = "ID_SIZE_EXCEEDED"
-	TopicEmpty              string = "TOPIC_EMPTY"
-	TopicSizeExceeded       string = "TOPIC_SIZE_EXCEEDED"
-	DescriptionEmpty        string = "DESCRIPTION_EMPTY"
-	DescriptionSizeExceeded string = "DESCRIPTION_SIZE_EXCEEDED"
-)
-
-type VideoResponseBody struct {
-	ID          string    `json:"id"`
-	PublisherID string    `json:"publisherID"`
-	Topic       string    `json:"topic"`
-	Description string    `json:"description"`
-	CreatedAt   time.Time `json:"createdAt"`
+type videoResponseBody struct {
+	ID          string `json:"id"`
+	PublisherID string `json:"publisherID"`
+	Topic       string `json:"topic"`
+	Description string `json:"description"`
+	CreatedAt   string `json:"createdAt"`
 }
 
-type ValidationError struct {
-	ErrorCode    string `json:"error_code"`
-	ErrorMessage string `json:"error_message"`
+type videosResponseBody struct {
+	Videos []videoResponseBody `json:"videos"`
 }
 
-func (e ValidationError) Error() string {
-	return e.ErrorMessage
+type serviceErrorResponse struct {
+	Message string `json:"msg"`
 }
 
 // createVideoRequestBody represents the data required to create the video
 type createVideoRequestBody struct {
-	Topic       string `json:"topic"`
-	Description string `json:"description"`
+	Topic       string `json:"topic" validate:"required,minTopic,maxTopic"`
+	Description string `json:"description" validate:"required,maxDescription"`
 }
 
-func dtoVideo(v domain.Video) VideoResponseBody {
-	return VideoResponseBody{
+func dtoVideo(v domain.Video) videoResponseBody {
+	return videoResponseBody{
 		ID:          v.ID.String(),
 		PublisherID: v.PublisherID.String(),
 		Topic:       v.Topic,
 		Description: v.Description,
-		CreatedAt:   v.CreatedAt,
+		CreatedAt:   v.CreatedAt.Format(time.DateTime),
 	}
-}
-
-func dtoVideos(videos []domain.Video) []VideoResponseBody {
-	res := make([]VideoResponseBody, len(videos))
-	for i, v := range videos {
-		res[i] = dtoVideo(v)
-	}
-	return res
-}
-
-// validate validates the request body fields.
-// It checks for empty fields, length constraints, and returns an error.
-func (r createVideoRequestBody) validate() error {
-	topicSize := len([]byte(r.Topic))
-	if topicSize == 0 {
-		return ValidationError{
-			ErrorCode:    TopicEmpty,
-			ErrorMessage: "topic is empty",
-		}
-	}
-	if topicSize > policy.MaxTopicBytesSize {
-		return ValidationError{
-			ErrorCode:    TopicSizeExceeded,
-			ErrorMessage: fmt.Sprintf("topic size is more then %d", policy.MaxTopicBytesSize),
-		}
-	}
-
-	descSize := len([]byte(r.Description))
-	if descSize == 0 {
-		return ValidationError{
-			ErrorCode:    DescriptionEmpty,
-			ErrorMessage: "description is empty",
-		}
-	}
-	if descSize > policy.MaxDescriptionBytesSize {
-		return ValidationError{
-			ErrorCode: DescriptionSizeExceeded,
-			ErrorMessage: fmt.Sprintf(
-				"description size is more then %d",
-				policy.MaxDescriptionBytesSize,
-			),
-		}
-	}
-
-	return nil
 }

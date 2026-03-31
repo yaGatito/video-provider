@@ -66,46 +66,46 @@ func (mr *MockVideoServiceMockRecorder) GetByID(ctx, videoID interface{}) *gomoc
 }
 
 // GetByPublisher mocks base method.
-func (m *MockVideoService) GetByPublisher(ctx context.Context, publisherID domain.UUID, orderBy string, offset, limit int32, asc string) ([]domain.Video, error) {
+func (m *MockVideoService) GetByPublisher(ctx context.Context, publisherID domain.UUID, params domain.VideoPageParams) ([]domain.Video, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetByPublisher", ctx, publisherID, orderBy, offset, limit, asc)
+	ret := m.ctrl.Call(m, "GetByPublisher", ctx, publisherID, params)
 	ret0, _ := ret[0].([]domain.Video)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetByPublisher indicates an expected call of GetByPublisher.
-func (mr *MockVideoServiceMockRecorder) GetByPublisher(ctx, publisherID, orderBy, offset, limit, asc interface{}) *gomock.Call {
+func (mr *MockVideoServiceMockRecorder) GetByPublisher(ctx, publisherID, params interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByPublisher", reflect.TypeOf((*MockVideoService)(nil).GetByPublisher), ctx, publisherID, orderBy, offset, limit, asc)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetByPublisher", reflect.TypeOf((*MockVideoService)(nil).GetByPublisher), ctx, publisherID, params)
 }
 
 // SearchGlobal mocks base method.
-func (m *MockVideoService) SearchGlobal(ctx context.Context, query, orderBy string, offset, limit int32, asc string) ([]domain.Video, error) {
+func (m *MockVideoService) SearchGlobal(ctx context.Context, query string, params domain.VideoPageParams) ([]domain.Video, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SearchGlobal", ctx, query, orderBy, offset, limit, asc)
+	ret := m.ctrl.Call(m, "SearchGlobal", ctx, query, params)
 	ret0, _ := ret[0].([]domain.Video)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // SearchGlobal indicates an expected call of SearchGlobal.
-func (mr *MockVideoServiceMockRecorder) SearchGlobal(ctx, query, orderBy, offset, limit, asc interface{}) *gomock.Call {
+func (mr *MockVideoServiceMockRecorder) SearchGlobal(ctx, query, params interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchGlobal", reflect.TypeOf((*MockVideoService)(nil).SearchGlobal), ctx, query, orderBy, offset, limit, asc)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchGlobal", reflect.TypeOf((*MockVideoService)(nil).SearchGlobal), ctx, query, params)
 }
 
 // SearchPublisher mocks base method.
-func (m *MockVideoService) SearchPublisher(ctx context.Context, publisherID domain.UUID, query, orderBy string, offset, limit int32, asc string) ([]domain.Video, error) {
+func (m *MockVideoService) SearchPublisher(ctx context.Context, publisherID domain.UUID, query string, params domain.VideoPageParams) ([]domain.Video, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "SearchPublisher", ctx, publisherID, query, orderBy, offset, limit, asc)
+	ret := m.ctrl.Call(m, "SearchPublisher", ctx, publisherID, query, params)
 	ret0, _ := ret[0].([]domain.Video)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // SearchPublisher indicates an expected call of SearchPublisher.
-func (mr *MockVideoServiceMockRecorder) SearchPublisher(ctx, publisherID, query, orderBy, offset, limit, asc interface{}) *gomock.Call {
+func (mr *MockVideoServiceMockRecorder) SearchPublisher(ctx, publisherID, query, params interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchPublisher", reflect.TypeOf((*MockVideoService)(nil).SearchPublisher), ctx, publisherID, query, orderBy, offset, limit, asc)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "SearchPublisher", reflect.TypeOf((*MockVideoService)(nil).SearchPublisher), ctx, publisherID, query, params)
 }

@@ -62,7 +62,7 @@ func TestUserService_Register(t *testing.T) {
 			mockRepo.EXPECT().Create(expectedUser, "hashedPass", "hashedPass").Return(tc.expectedID, nil)
 
 			// Call the Register method and check for errors
-			id, err := userService.Register(tc.cmd)
+			id, err := userService.Create(tc.cmd)
 			if tc.expectErr {
 				if err == nil {
 					t.Error("Expected error but got none")

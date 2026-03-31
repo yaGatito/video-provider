@@ -9,6 +9,13 @@ import (
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
+	"github.com/yaGatito/slicex"
+)
+
+const (
+	OrderByCreatedAt string = "createdAt"
+	OrderAsc         string = " ASC"
+	OrderDesc        string = " DESC"
 )
 
 type VideoRepoPostgreSQL struct {
@@ -27,6 +34,7 @@ func (r *VideoRepoPostgreSQL) CreateVideo(
 	ctx context.Context,
 	video domain.Video,
 ) (domain.Video, error) {
+
 	arg := postgres.CreateVideoParams{
 		Publisherid: video.PublisherID,
 		Topic:       video.Topic,
@@ -43,6 +51,7 @@ func (r *VideoRepoPostgreSQL) GetVideoByID(
 	ctx context.Context,
 	id domain.UUID,
 ) (domain.Video, error) {
+
 	video, err := r.queries.GetVideoByID(ctx, id)
 	if err != nil {
 		return domain.Video{}, err
@@ -54,68 +63,62 @@ func (r *VideoRepoPostgreSQL) GetVideoByID(
 func (r *VideoRepoPostgreSQL) GetPublisherVideos(
 	ctx context.Context,
 	publisherID domain.UUID,
-	args ports.VideoPageParams,
+	params domain.VideoPageParams,
 ) ([]domain.Video, error) {
 
-	params := postgres.GetVideosByPublisherParams{
+	args := postgres.GetVideosByPublisherParams{
 		Publisherid: publisherID,
-		Offset:      args.Offset,
-		Limit:       args.Limit,
+		Offset:      params.Offset,
+		Limit:       params.Limit,
 	}
-	videos, err := r.queries.GetVideosByPublisher(ctx, params)
+	videos, err := r.queries.GetVideosByPublisher(ctx, args)
 	if err != nil {
 		return nil, err
 	}
 
-	return toDomainVideos(videos), nil
+	return slicex.Map(videos, toDomainVideo), nil
 }
 
 func (r *VideoRepoPostgreSQL) SearchPublisher(
 	ctx context.Context,
 	publisherID domain.UUID,
-	search ports.VideoSearchParams,
+	query string,
+	params domain.VideoPageParams,
 ) ([]domain.Video, error) {
 
-	params := postgres.SearchPublisherParams{
+	args := postgres.SearchPublisherParams{
 		Publisherid: publisherID,
-		Column2:     search.Query,
-		Column3:     search.OrderBy,
-		Offset:      search.Offset,
-		Limit:       search.Limit,
+		Column2:     query,
+		Column3:     getOrderBy(params.OrderBy, params.Asc),
+		Offset:      params.Offset,
+		Limit:       params.Limit,
 	}
-	videos, err := r.queries.SearchPublisher(ctx, params)
+	videos, err := r.queries.SearchPublisher(ctx, args)
 	if err != nil {
 		return nil, err
 	}
 
-	return toDomainVideos(videos), nil
+	return slicex.Map(videos, toDomainVideo), nil
 }
 
 func (r *VideoRepoPostgreSQL) SearchGlobal(
 	ctx context.Context,
-	search ports.VideoSearchParams,
+	query string,
+	params domain.VideoPageParams,
 ) ([]domain.Video, error) {
-	params := postgres.SearchGlobalParams{
-		Column1: search.Query,
-		Column2: search.OrderBy,
-		Offset:  search.Offset,
-		Limit:   search.Limit,
+
+	args := postgres.SearchGlobalParams{
+		Column1: query,
+		Column2: getOrderBy(params.OrderBy, params.Asc),
+		Offset:  params.Offset,
+		Limit:   params.Limit,
 	}
-	videos, err := r.queries.SearchGlobal(ctx, params)
+	videos, err := r.queries.SearchGlobal(ctx, args)
 	if err != nil {
 		return nil, err
 	}
 
-	return toDomainVideos(videos), nil
-}
-
-func toDomainVideos(videos []postgres.Video) []domain.Video {
-	res := make([]domain.Video, len(videos))
-	for i, v := range videos {
-		res[i] = toDomainVideo(v)
-	}
-	return res
-
+	return slicex.Map(videos, toDomainVideo), nil
 }
 
 func toDomainVideo(video postgres.Video) domain.Video {
@@ -127,4 +130,20 @@ func toDomainVideo(video postgres.Video) domain.Video {
 		CreatedAt:   time.UnixMicro(video.Createdat.Microseconds),
 		Status:      domain.Status(video.Status.String),
 	}
+}
+
+func getOrderBy(order string, asc string) string {
+	switch order {
+	case domain.OrderByDate:
+		order = OrderByCreatedAt
+	}
+
+	switch asc {
+	case domain.AscOrder:
+		asc = OrderAsc
+	case domain.DescOrder:
+		asc = domain.DescOrder
+	}
+
+	return order + asc
 }
