@@ -148,7 +148,7 @@ const VideoPage: React.FC = () => {
           )}
           {streamUnavailable && (
             <StreamHint>
-              Stream is not available from <code>{streamUrl}</code>. Set <code>REACT_APP_VIDEO_STREAM_URL</code> if your
+              Stream1 is not available from <code>{streamUrl}</code>. Set <code>REACT_APP_VIDEO_STREAM_URL</code> if your
               stream endpoint is different.
             </StreamHint>
           )}

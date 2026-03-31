@@ -67,7 +67,7 @@ const Header: React.FC = () => {
   return (
     <Wrapper>
       <Container>
-        <Logo to="/">Watch UA</Logo>
+        <Logo to="/">Stream1</Logo>
         <Nav>
           <Menu>
             <li><MenuLink to="/">Home</MenuLink></li>

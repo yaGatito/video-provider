@@ -89,7 +89,7 @@ const Footer: React.FC = () => {
         <Grid>
           <section>
             <Title>About</Title>
-            <Text>Watch UA is a platform for discovering and publishing Ukrainian video content.</Text>
+            <Text>Stream1 is a platform for discovering and publishing Ukrainian video content.</Text>
           </section>
 
           <section>
@@ -103,20 +103,20 @@ const Footer: React.FC = () => {
 
           <section>
             <Title>Contact</Title>
-            <Text>Email: <FooterLink href="mailto:info@watchua.com">info@watchua.com</FooterLink></Text>
-            <Text>Support: <FooterLink href="mailto:support@watchua.com">support@watchua.com</FooterLink></Text>
+            <Text>Email: <FooterLink href="mailto:info@stream1.com">info@stream1.com</FooterLink></Text>
+            <Text>Support: <FooterLink href="mailto:support@stream1.com">support@stream1.com</FooterLink></Text>
             <Text>Phone: <FooterLink href="tel:+380441234567">+38 (044) 123-45-67</FooterLink></Text>
-            <Text>Address: Kyiv, Ukraine</Text>
+            <Text>Address: Odesa, Ukraine</Text>
             <Socials>
-              <SocialIcon href="https://facebook.com/watchua" title="Facebook" aria-label="Facebook">f</SocialIcon>
-              <SocialIcon href="https://twitter.com/watchua" title="Twitter" aria-label="Twitter">X</SocialIcon>
-              <SocialIcon href="https://instagram.com/watchua" title="Instagram" aria-label="Instagram">I</SocialIcon>
-              <SocialIcon href="https://youtube.com/@watchua" title="YouTube" aria-label="YouTube">Y</SocialIcon>
+              <SocialIcon href="https://facebook.com/stream1" title="Facebook" aria-label="Facebook">f</SocialIcon>
+              <SocialIcon href="https://twitter.com/stream1" title="Twitter" aria-label="Twitter">X</SocialIcon>
+              <SocialIcon href="https://instagram.com/stream1" title="Instagram" aria-label="Instagram">I</SocialIcon>
+              <SocialIcon href="https://youtube.com/@stream1" title="YouTube" aria-label="YouTube">Y</SocialIcon>
             </Socials>
           </section>
         </Grid>
 
-        <Bottom>&copy; {currentYear} Watch UA. All rights reserved.</Bottom>
+        <Bottom>&copy; {currentYear} Stream1. All rights reserved.</Bottom>
       </Container>
     </Wrapper>
   );

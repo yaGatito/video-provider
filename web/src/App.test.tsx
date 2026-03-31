@@ -33,7 +33,7 @@ describe('App smoke tests', () => {
   test('renders layout with header and footer', () => {
     renderAt('/search');
 
-    expect(screen.getAllByText('Watch UA').length).toBeGreaterThan(0);
+    expect(screen.getAllByText('Stream1').length).toBeGreaterThan(0);
     expect(screen.getByText(/All rights reserved\./i)).toBeInTheDocument();
   });
 

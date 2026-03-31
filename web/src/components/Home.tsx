@@ -3,14 +3,6 @@ import axios, { AxiosResponse } from 'axios';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 
-interface Video {
-  id: number;
-  topic: string;
-  description: string;
-  previewImage: string;
-  createdAt: string;
-}
-
 const Page = styled.div`
   display: grid;
   gap: ${({ theme }) => theme.spacing.xl};
@@ -93,6 +85,18 @@ const Meta = styled.div`
   color: ${({ theme }) => theme.colors.muted};
 `;
 
+interface Video {
+  id: string;
+  publisherID: string;
+  topic: string;
+  description: string;
+  createdAt: string;
+}
+
+interface VideosResp {
+  videos: Video[];
+}
+
 const Home: React.FC = () => {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -106,9 +110,9 @@ const Home: React.FC = () => {
   };
 
   useEffect(() => {
-    axios.get<Video[]>(`${apiUrl}/v1/videos/search?limit=20&offset=0&orderBy=createdAt&asc=t&query=${getRandomSearchQuery()}`)
-      .then((response: AxiosResponse<Video[]>) => {
-        setVideos(response.data);
+    axios.get<VideosResp>(`${apiUrl}/v1/videos/search?limit=20&offset=0&order=date&asc=t&query=${getRandomSearchQuery()}`)
+      .then((response: AxiosResponse<VideosResp>) => {
+        setVideos(response.data.videos);
         setLoading(false);
       })
       .catch((requestError: unknown) => {
@@ -122,7 +126,7 @@ const Home: React.FC = () => {
     return (
       <Page>
         <Hero>
-          <HeroTitle>Watch UA</HeroTitle>
+          <HeroTitle>Stream</HeroTitle>
           <HeroText>Loading latest videos...</HeroText>
         </Hero>
       </Page>
@@ -133,7 +137,7 @@ const Home: React.FC = () => {
     return (
       <Page>
         <Hero>
-          <HeroTitle>Watch UA</HeroTitle>
+          <HeroTitle>Stream1</HeroTitle>
           <HeroText>{error}</HeroText>
         </Hero>
       </Page>
@@ -143,7 +147,7 @@ const Home: React.FC = () => {
   return (
     <Page>
       <Hero>
-        <HeroTitle>Watch UA</HeroTitle>
+        <HeroTitle>Stream1</HeroTitle>
         <HeroText>Discover bold stories and fresh uploads from the community.</HeroText>
       </Hero>
 
@@ -156,7 +160,7 @@ const Home: React.FC = () => {
           />
           <CardBody>
             <CardTitle>Sample Featured Video</CardTitle>
-            <CardText>This is a sample featured video to showcase the latest content on Watch UA.</CardText>
+            <CardText>This is a sample featured video to showcase the latest content on Stream1.</CardText>
             <Meta>1.2k likes | 120 dislikes | 450 comments</Meta>
           </CardBody>
         </Card>
@@ -167,7 +171,7 @@ const Home: React.FC = () => {
         <Grid>
           {videos.map((video) => (
             <Card key={video.id} onClick={() => { navigate(`/watch/${video.id}`); }}>
-              <Preview src={video.previewImage} alt={video.topic} />
+              <Preview src="https://images.unsplash.com/photo-1618345522246-81e1f1e041b7?auto=format&fit=crop&w=1920&q=80" alt={video.topic} />
               <CardBody>
                 <CardTitle>{video.topic}</CardTitle>
                 <CardText>{video.description}</CardText>

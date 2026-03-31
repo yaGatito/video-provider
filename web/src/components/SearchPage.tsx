@@ -3,14 +3,6 @@ import axios, { AxiosResponse } from 'axios';
 import styled from 'styled-components';
 import { useNavigate } from 'react-router-dom';
 
-interface Video {
-  id: string;
-  publisherID: string;
-  topic: string;
-  description: string;
-  createdAt: Date;
-}
-
 const Page = styled.div`
   display: grid;
   gap: ${({ theme }) => theme.spacing.lg};
@@ -91,11 +83,23 @@ const LoadMoreButton = styled.button`
   }
 `;
 
+interface Video {
+  id: string;
+  publisherID: string;
+  topic: string;
+  description: string;
+  createdAt: Date;
+}
+
+interface VideosResp {
+  videos: Video[];
+}
+
 const SearchPage: React.FC = () => {
   const [query, setQuery] = useState('');
   const [limit] = useState(10);
   const [offset, setOffset] = useState(0);
-  const [orderBy] = useState('createdAt');
+  const [order] = useState('date');
   const [asc] = useState('t');
   const [videos, setVideos] = useState<Video[]>([]);
   const apiUrl = process.env.REACT_APP_API_URL;
@@ -103,15 +107,15 @@ const SearchPage: React.FC = () => {
 
   useEffect(() => {
     if (query.length > 2) {
-      axios.get<Video[]>(`${apiUrl}/v1/videos/search?query=${query}&limit=${limit}&offset=${offset}&orderBy=${orderBy}&asc=${asc}`)
-        .then((response: AxiosResponse<Video[]>) => {
-          setVideos(response.data);
+      axios.get<VideosResp>(`${apiUrl}/v1/videos/search?query=${query}&limit=${limit}&offset=${offset}&order=${order}&asc=${asc}`)
+        .then((response: AxiosResponse<VideosResp>) => {
+          setVideos(response.data.videos);
         })
         .catch((error: unknown) => {
           console.error('There was an error fetching the search results!', error);
         });
     }
-  }, [query, limit, offset, orderBy, asc, apiUrl]);
+  }, [query, limit, offset, order, asc, apiUrl]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value);
