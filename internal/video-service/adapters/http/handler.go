@@ -50,7 +50,7 @@ func NewVideoHandler(
 // @Produce      json
 // @Param        publisherID  path      string                 true  "Publisher ID (UUID)"
 // @Param        video        body      createVideoRequestBody true  "Video creation request body"
-// @Success      200          {object}  nil
+// @Success      201          {object}  nil
 // @Failure      400          {object}  string "Invalid input"
 // @Failure      500          {object}  string "Internal error"
 // @Router       /v1/videos/pub/{publisherID} [post]

@@ -17,7 +17,7 @@ const docTemplate = `{
     "paths": {
         "/v1/users": {
             "post": {
-                "description": "CreateUser a new user and return the created user's ID. Example ID",
+                "description": "Creates a new user and return the created user's ID. Example ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -27,7 +27,7 @@ const docTemplate = `{
                 "tags": [
                     "Users"
                 ],
-                "summary": "CreateUser a new user",
+                "summary": "Creates a new user",
                 "parameters": [
                     {
                         "description": "CreateUser user payload",
@@ -40,7 +40,7 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "201": {
                         "description": "created user id (example: 123e4567-e89b-12d3-a456-426614174000)",
                         "schema": {
                             "type": "string"
@@ -49,13 +49,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
+                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
+                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     }
                 }
@@ -95,19 +95,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
+                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
+                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
+                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     }
                 }
@@ -122,7 +122,7 @@ const docTemplate = `{
                 "tags": [
                     "Users"
                 ],
-                "summary": "GetUser user by ID",
+                "summary": "Get user by ID",
                 "parameters": [
                     {
                         "type": "string",
@@ -140,13 +140,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
+                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
+                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     }
                 }
@@ -176,7 +176,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/httpadp.VideoResponseBody"
+                            "$ref": "#/definitions/httpadp.videoResponseBody"
                         }
                     },
                     "400": {
@@ -226,7 +226,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Sort (example: ` + "`" + `createdAt` + "`" + `)",
+                        "description": "Sort (example: ` + "`" + `date` + "`" + `)",
                         "name": "sort",
                         "in": "query"
                     },
@@ -243,7 +243,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/httpadp.VideoResponseBody"
+                                "$ref": "#/definitions/httpadp.videoResponseBody"
                             }
                         }
                     }
@@ -280,8 +280,8 @@ const docTemplate = `{
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK"
+                    "201": {
+                        "description": "Created"
                     },
                     "400": {
                         "description": "Invalid input",
@@ -330,7 +330,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Sort (example: ` + "`" + `createdAt` + "`" + `)",
+                        "description": "Sort (example: ` + "`" + `date` + "`" + `)",
                         "name": "sort",
                         "in": "query"
                     },
@@ -347,7 +347,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/httpadp.VideoResponseBody"
+                                "$ref": "#/definitions/httpadp.videoResponseBody"
                             }
                         }
                     }
@@ -356,26 +356,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "httpadp.VideoResponseBody": {
-            "type": "object",
-            "properties": {
-                "createdAt": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "publisherID": {
-                    "type": "string"
-                },
-                "topic": {
-                    "type": "string"
-                }
-            }
-        },
         "httpadp.authResponse": {
             "type": "object",
             "properties": {
@@ -437,13 +417,32 @@ const docTemplate = `{
                 }
             }
         },
-        "httpadp.serviceErrorResponse": {
+        "httpadp.videoResponseBody": {
             "type": "object",
             "properties": {
-                "code": {
+                "createdAt": {
                     "type": "string"
                 },
-                "payload": {}
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "publisherID": {
+                    "type": "string"
+                },
+                "topic": {
+                    "type": "string"
+                }
+            }
+        },
+        "video-provider_internal_user-service_adapters_http.serviceErrorResponse": {
+            "type": "object",
+            "properties": {
+                "msg": {
+                    "type": "string"
+                }
             }
         }
     }
@@ -452,11 +451,11 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8081",
+	Host:             "localhost:8080",
 	BasePath:         "/",
 	Schemes:          []string{},
-	Title:            "User Service API",
-	Description:      "Service for managing users.",
+	Title:            "Video Service API",
+	Description:      "Service for managing video content.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

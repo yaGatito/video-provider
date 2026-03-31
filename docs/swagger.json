@@ -1,17 +1,17 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "Service for managing users.",
-        "title": "User Service API",
+        "description": "Service for managing video content.",
+        "title": "Video Service API",
         "contact": {},
         "version": "1.0"
     },
-    "host": "localhost:8081",
+    "host": "localhost:8080",
     "basePath": "/",
     "paths": {
         "/v1/users": {
             "post": {
-                "description": "CreateUser a new user and return the created user's ID. Example ID",
+                "description": "Creates a new user and return the created user's ID. Example ID",
                 "consumes": [
                     "application/json"
                 ],
@@ -21,7 +21,7 @@
                 "tags": [
                     "Users"
                 ],
-                "summary": "CreateUser a new user",
+                "summary": "Creates a new user",
                 "parameters": [
                     {
                         "description": "CreateUser user payload",
@@ -34,7 +34,7 @@
                     }
                 ],
                 "responses": {
-                    "200": {
+                    "201": {
                         "description": "created user id (example: 123e4567-e89b-12d3-a456-426614174000)",
                         "schema": {
                             "type": "string"
@@ -43,13 +43,13 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
+                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
+                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     }
                 }
@@ -89,19 +89,19 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
+                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
+                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
+                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     }
                 }
@@ -116,7 +116,7 @@
                 "tags": [
                     "Users"
                 ],
-                "summary": "GetUser user by ID",
+                "summary": "Get user by ID",
                 "parameters": [
                     {
                         "type": "string",
@@ -134,13 +134,13 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
+                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
+                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     }
                 }
@@ -170,7 +170,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/httpadp.VideoResponseBody"
+                            "$ref": "#/definitions/httpadp.videoResponseBody"
                         }
                     },
                     "400": {
@@ -220,7 +220,7 @@
                     },
                     {
                         "type": "string",
-                        "description": "Sort (example: `createdAt`)",
+                        "description": "Sort (example: `date`)",
                         "name": "sort",
                         "in": "query"
                     },
@@ -237,7 +237,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/httpadp.VideoResponseBody"
+                                "$ref": "#/definitions/httpadp.videoResponseBody"
                             }
                         }
                     }
@@ -274,8 +274,8 @@
                     }
                 ],
                 "responses": {
-                    "200": {
-                        "description": "OK"
+                    "201": {
+                        "description": "Created"
                     },
                     "400": {
                         "description": "Invalid input",
@@ -324,7 +324,7 @@
                     },
                     {
                         "type": "string",
-                        "description": "Sort (example: `createdAt`)",
+                        "description": "Sort (example: `date`)",
                         "name": "sort",
                         "in": "query"
                     },
@@ -341,7 +341,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/httpadp.VideoResponseBody"
+                                "$ref": "#/definitions/httpadp.videoResponseBody"
                             }
                         }
                     }
@@ -350,26 +350,6 @@
         }
     },
     "definitions": {
-        "httpadp.VideoResponseBody": {
-            "type": "object",
-            "properties": {
-                "createdAt": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "publisherID": {
-                    "type": "string"
-                },
-                "topic": {
-                    "type": "string"
-                }
-            }
-        },
         "httpadp.authResponse": {
             "type": "object",
             "properties": {
@@ -431,13 +411,32 @@
                 }
             }
         },
-        "httpadp.serviceErrorResponse": {
+        "httpadp.videoResponseBody": {
             "type": "object",
             "properties": {
-                "code": {
+                "createdAt": {
                     "type": "string"
                 },
-                "payload": {}
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "publisherID": {
+                    "type": "string"
+                },
+                "topic": {
+                    "type": "string"
+                }
+            }
+        },
+        "video-provider_internal_user-service_adapters_http.serviceErrorResponse": {
+            "type": "object",
+            "properties": {
+                "msg": {
+                    "type": "string"
+                }
             }
         }
     }

@@ -68,16 +68,16 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 }
 
 // CreateUser godoc
-// @Summary      CreateUser a new user
+// @Summary      Creates a new user
 // @Tags         Users
-// @Description  CreateUser a new user and return the created user's ID. Example ID
+// @Description  Creates a new user and return the created user's ID. Example ID
 //
 //	format (UUID): 123e4567-e89b-12d3-a456-426614174000
 //
 // @Accept       json
 // @Produce      json
 // @Param        user  body    createUserRequest  true  "CreateUser user payload"
-// @Success      200   {string}  string  "created user id (example: 123e4567-e89b-12d3-a456-426614174000)"
+// @Success      201   {string}  string  "created user id (example: 123e4567-e89b-12d3-a456-426614174000)"
 // @Failure      400   {object}  serviceErrorResponse
 // @Failure      500   {object}  serviceErrorResponse
 // @Router       /v1/users [post]
@@ -120,7 +120,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetUser godoc
-// @Summary      GetUser user by ID
+// @Summary      Get user by ID
 // @Tags         Users
 // @Description  Retrieve user details by ID. The ID can be provided as a
 //

@@ -4,7 +4,7 @@ api:
   port: 8081
 
 db:
-  name: user-store
+  name: user-storage
   host: 127.0.0.1
   port: 5433
   maxconns: 30
