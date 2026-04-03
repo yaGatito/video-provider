@@ -1,0 +1,37 @@
+# users.graphql
+
+type User {
+  id: ID!
+  name: String!
+  lastname: String!
+  email: String!
+  passwordHash: String!
+  passwordSalt: String!
+  createdAt: String!
+  status: String!
+  isAdmin: Boolean!
+}
+
+type Query {
+  users: [User]
+  user(id: ID!): User
+}
+
+type Mutation {
+  createUser(
+    name: String!
+    lastname: String!
+    email: String!
+    status: String!
+    isAdmin: Boolean!
+  ): User
+  updateUser(
+    id: ID!
+    name: String
+    lastname: String
+    email: String
+    status: String
+    isAdmin: Boolean
+  ): User
+  deleteUser(id: ID!): User
+}
