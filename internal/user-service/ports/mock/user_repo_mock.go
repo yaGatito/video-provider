@@ -5,6 +5,7 @@
 package mock_ports
 
 import (
+	context "context"
 	reflect "reflect"
 	domain "video-provider/internal/user-service/domain"
 
@@ -36,98 +37,76 @@ func (m *MockUserRepository) EXPECT() *MockUserRepositoryMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockUserRepository) Create(user domain.User, passwordHash, passwordSalt string) (uuid.UUID, error) {
+func (m *MockUserRepository) Create(ctx context.Context, user domain.User, password []byte) (uuid.UUID, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", user, passwordHash, passwordSalt)
+	ret := m.ctrl.Call(m, "Create", ctx, user, password)
 	ret0, _ := ret[0].(uuid.UUID)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockUserRepositoryMockRecorder) Create(user, passwordHash, passwordSalt interface{}) *gomock.Call {
+func (mr *MockUserRepositoryMockRecorder) Create(ctx, user, password interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockUserRepository)(nil).Create), user, passwordHash, passwordSalt)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockUserRepository)(nil).Create), ctx, user, password)
 }
 
 // FindByEmail mocks base method.
-func (m *MockUserRepository) FindByEmail(email string) (domain.User, error) {
+func (m *MockUserRepository) FindByEmail(ctx context.Context, email string) (domain.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindByEmail", email)
+	ret := m.ctrl.Call(m, "FindByEmail", ctx, email)
 	ret0, _ := ret[0].(domain.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FindByEmail indicates an expected call of FindByEmail.
-func (mr *MockUserRepositoryMockRecorder) FindByEmail(email interface{}) *gomock.Call {
+func (mr *MockUserRepositoryMockRecorder) FindByEmail(ctx, email interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByEmail", reflect.TypeOf((*MockUserRepository)(nil).FindByEmail), email)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByEmail", reflect.TypeOf((*MockUserRepository)(nil).FindByEmail), ctx, email)
 }
 
 // FindByID mocks base method.
-func (m *MockUserRepository) FindByID(id uuid.UUID) (domain.User, error) {
+func (m *MockUserRepository) FindByID(ctx context.Context, id uuid.UUID) (domain.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "FindByID", id)
+	ret := m.ctrl.Call(m, "FindByID", ctx, id)
 	ret0, _ := ret[0].(domain.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // FindByID indicates an expected call of FindByID.
-func (mr *MockUserRepositoryMockRecorder) FindByID(id interface{}) *gomock.Call {
+func (mr *MockUserRepositoryMockRecorder) FindByID(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockUserRepository)(nil).FindByID), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockUserRepository)(nil).FindByID), ctx, id)
+}
+
+// GetPassword mocks base method.
+func (m *MockUserRepository) GetPassword(ctx context.Context, email string) (uuid.UUID, string, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetPassword", ctx, email)
+	ret0, _ := ret[0].(uuid.UUID)
+	ret1, _ := ret[1].(string)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// GetPassword indicates an expected call of GetPassword.
+func (mr *MockUserRepositoryMockRecorder) GetPassword(ctx, email interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPassword", reflect.TypeOf((*MockUserRepository)(nil).GetPassword), ctx, email)
 }
 
 // Update mocks base method.
-func (m *MockUserRepository) Update(user domain.User) error {
+func (m *MockUserRepository) Update(ctx context.Context, id uuid.UUID, user domain.User) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", user)
+	ret := m.ctrl.Call(m, "Update", ctx, id, user)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockUserRepositoryMockRecorder) Update(user interface{}) *gomock.Call {
+func (mr *MockUserRepositoryMockRecorder) Update(ctx, id, user interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockUserRepository)(nil).Update), user)
-}
-
-// MockPasswordHasher is a mock of PasswordHasher interface.
-type MockPasswordHasher struct {
-	ctrl     *gomock.Controller
-	recorder *MockPasswordHasherMockRecorder
-}
-
-// MockPasswordHasherMockRecorder is the mock recorder for MockPasswordHasher.
-type MockPasswordHasherMockRecorder struct {
-	mock *MockPasswordHasher
-}
-
-// NewMockPasswordHasher creates a new mock instance.
-func NewMockPasswordHasher(ctrl *gomock.Controller) *MockPasswordHasher {
-	mock := &MockPasswordHasher{ctrl: ctrl}
-	mock.recorder = &MockPasswordHasherMockRecorder{mock}
-	return mock
-}
-
-// EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockPasswordHasher) EXPECT() *MockPasswordHasherMockRecorder {
-	return m.recorder
-}
-
-// Hash mocks base method.
-func (m *MockPasswordHasher) Hash(password string) ([]byte, error) {
-	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Hash", password)
-	ret0, _ := ret[0].([]byte)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
-}
-
-// Hash indicates an expected call of Hash.
-func (mr *MockPasswordHasherMockRecorder) Hash(password interface{}) *gomock.Call {
-	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Hash", reflect.TypeOf((*MockPasswordHasher)(nil).Hash), password)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockUserRepository)(nil).Update), ctx, id, user)
 }

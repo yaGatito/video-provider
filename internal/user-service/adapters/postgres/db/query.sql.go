@@ -13,20 +13,19 @@ import (
 )
 
 const createUser = `-- name: CreateUser :one
-INSERT INTO users (name, lastname, email, password_hash, password_salt, created_at, status, is_admin)
-VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+INSERT INTO users (name, lastname, email, password, created_at, status, is_admin)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 RETURNING id
 `
 
 type CreateUserParams struct {
-	Name         string
-	Lastname     string
-	Email        string
-	PasswordHash string
-	PasswordSalt string
-	CreatedAt    pgtype.Timestamp
-	Status       string
-	IsAdmin      bool
+	Name      string
+	Lastname  string
+	Email     string
+	Password  string
+	CreatedAt pgtype.Timestamp
+	Status    string
+	IsAdmin   bool
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (uuid.UUID, error) {
@@ -34,8 +33,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (uuid.UU
 		arg.Name,
 		arg.Lastname,
 		arg.Email,
-		arg.PasswordHash,
-		arg.PasswordSalt,
+		arg.Password,
 		arg.CreatedAt,
 		arg.Status,
 		arg.IsAdmin,
@@ -45,22 +43,30 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (uuid.UU
 	return id, err
 }
 
-const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, name, lastname, email, password_hash, password_salt, created_at, status, is_admin
+const findUserByEmail = `-- name: FindUserByEmail :one
+SELECT id, name, lastname, email, created_at, status, is_admin
 FROM users
 WHERE email = $1
 `
 
-func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
-	row := q.db.QueryRow(ctx, getUserByEmail, email)
-	var i User
+type FindUserByEmailRow struct {
+	ID        uuid.UUID
+	Name      string
+	Lastname  string
+	Email     string
+	CreatedAt pgtype.Timestamp
+	Status    string
+	IsAdmin   bool
+}
+
+func (q *Queries) FindUserByEmail(ctx context.Context, email string) (FindUserByEmailRow, error) {
+	row := q.db.QueryRow(ctx, findUserByEmail, email)
+	var i FindUserByEmailRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Lastname,
 		&i.Email,
-		&i.PasswordHash,
-		&i.PasswordSalt,
 		&i.CreatedAt,
 		&i.Status,
 		&i.IsAdmin,
@@ -68,44 +74,68 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 	return i, err
 }
 
-const getUserById = `-- name: GetUserById :one
-SELECT id, name, lastname, email, password_hash, password_salt, created_at, status, is_admin
+const findUserById = `-- name: FindUserById :one
+SELECT id, name, lastname, email, created_at, status, is_admin
 FROM users
 WHERE id = $1
 `
 
-func (q *Queries) GetUserById(ctx context.Context, id uuid.UUID) (User, error) {
-	row := q.db.QueryRow(ctx, getUserById, id)
-	var i User
+type FindUserByIdRow struct {
+	ID        uuid.UUID
+	Name      string
+	Lastname  string
+	Email     string
+	CreatedAt pgtype.Timestamp
+	Status    string
+	IsAdmin   bool
+}
+
+func (q *Queries) FindUserById(ctx context.Context, id uuid.UUID) (FindUserByIdRow, error) {
+	row := q.db.QueryRow(ctx, findUserById, id)
+	var i FindUserByIdRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Lastname,
 		&i.Email,
-		&i.PasswordHash,
-		&i.PasswordSalt,
 		&i.CreatedAt,
 		&i.Status,
 		&i.IsAdmin,
 	)
+	return i, err
+}
+
+const getPassword = `-- name: GetPassword :one
+SELECT id, password
+FROM users  
+WHERE email = $1
+`
+
+type GetPasswordRow struct {
+	ID       uuid.UUID
+	Password string
+}
+
+func (q *Queries) GetPassword(ctx context.Context, email string) (GetPasswordRow, error) {
+	row := q.db.QueryRow(ctx, getPassword, email)
+	var i GetPasswordRow
+	err := row.Scan(&i.ID, &i.Password)
 	return i, err
 }
 
 const updateUser = `-- name: UpdateUser :exec
 UPDATE users
-SET name = $2, lastname = $3, email = $4, password_hash = $5, password_salt = $6, status = $7, is_admin = $8
+SET name = $2, lastname = $3, email = $4, status = $5, is_admin = $6
 WHERE id = $1
 `
 
 type UpdateUserParams struct {
-	ID           uuid.UUID
-	Name         string
-	Lastname     string
-	Email        string
-	PasswordHash string
-	PasswordSalt string
-	Status       string
-	IsAdmin      bool
+	ID       uuid.UUID
+	Name     string
+	Lastname string
+	Email    string
+	Status   string
+	IsAdmin  bool
 }
 
 func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
@@ -114,8 +144,6 @@ func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) error {
 		arg.Name,
 		arg.Lastname,
 		arg.Email,
-		arg.PasswordHash,
-		arg.PasswordSalt,
 		arg.Status,
 		arg.IsAdmin,
 	)

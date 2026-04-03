@@ -9,9 +9,11 @@ import (
 	_ "video-provider/docs"
 	"video-provider/internal/pkg/config"
 	logger "video-provider/internal/pkg/middleware"
+
+	cryptoadp "video-provider/internal/user-service/adapters/crypto"
 	httpadp "video-provider/internal/user-service/adapters/http"
 	"video-provider/internal/user-service/adapters/postgres"
-	usecase "video-provider/internal/user-service/app"
+	"video-provider/internal/user-service/app"
 
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -58,7 +60,8 @@ func run() error {
 	mwLog := logger.NewMiddlewareLogger(os.Stdout, "[USRSVC]")
 
 	userRepository := postgres.NewPostgresUserRepository(dbPool)
-	userInteractor := usecase.NewUserService(userRepository)
+	pwHasher := cryptoadp.NewBCryptPasswordHasher()
+	userInteractor := app.NewUserService(userRepository, pwHasher)
 	userHandler := httpadp.NewUserHandler(userInteractor, mwLog.Log)
 
 	router := mux.NewRouter()

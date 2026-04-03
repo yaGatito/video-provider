@@ -2,13 +2,15 @@ package postgres
 
 import (
 	"context"
-	"log"
+	"errors"
 
+	"video-provider/internal/pkg/shared"
 	postgres "video-provider/internal/user-service/adapters/postgres/db"
 	"video-provider/internal/user-service/domain"
 	"video-provider/internal/user-service/ports"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
@@ -25,31 +27,32 @@ func NewPostgresUserRepository(dbConn postgres.DBTX) *PostgresUserRepository {
 	}
 }
 
-func (r *PostgresUserRepository) Create(user domain.User, passwordHash string, passwordSalt string) (uuid.UUID, error) {
+func (r *PostgresUserRepository) Create(ctx context.Context, user domain.User, password []byte) (uuid.UUID, error) {
 	params := postgres.CreateUserParams{
-		Name:         user.Name,
-		Lastname:     user.LastName,
-		Email:        user.Email,
-		PasswordHash: passwordHash,
-		PasswordSalt: passwordSalt,
-		CreatedAt:    pgtype.Timestamp{Time: user.CreatedAt, Valid: true},
-		Status:       user.Status,
-		IsAdmin:      user.IsAdmin,
+		Name:      user.Name,
+		Lastname:  user.LastName,
+		Email:     user.Email,
+		Password:  string(password),
+		CreatedAt: pgtype.Timestamp{Time: user.CreatedAt, Valid: true},
+		Status:    user.Status,
+		IsAdmin:   user.IsAdmin,
 	}
 
-	id, err := r.q.CreateUser(context.Background(), params)
+	id, err := r.q.CreateUser(ctx, params)
 	if err != nil {
-		log.Printf("Error creating user: %v", err)
-		return uuid.UUID{}, err
+		return uuid.UUID{}, shared.NewError(shared.ErrInternal, "failed to create user", err)
 	}
 	return id, nil
 }
 
-func (r *PostgresUserRepository) FindByID(id uuid.UUID) (domain.User, error) {
-	row, err := r.q.GetUserById(context.Background(), id)
+func (r *PostgresUserRepository) FindByID(ctx context.Context, id uuid.UUID) (domain.User, error) {
+	row, err := r.q.FindUserById(ctx, id)
 	if err != nil {
-		log.Printf("Error finding user by ID: %v", err)
-		return domain.User{}, err
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.User{}, shared.NewError(shared.ErrNotFound, "user not found with ID "+id.String(), err)
+		} else {
+			return domain.User{}, shared.NewError(shared.ErrInternal, "failed to retrieve user with ID "+id.String(), err)
+		}
 	}
 
 	return domain.User{
@@ -63,11 +66,14 @@ func (r *PostgresUserRepository) FindByID(id uuid.UUID) (domain.User, error) {
 	}, nil
 }
 
-func (r *PostgresUserRepository) FindByEmail(email string) (domain.User, error) {
-	row, err := r.q.GetUserByEmail(context.Background(), email)
+func (r *PostgresUserRepository) FindByEmail(ctx context.Context, email string) (domain.User, error) {
+	row, err := r.q.FindUserByEmail(ctx, email)
 	if err != nil {
-		log.Printf("Error finding user by email: %v", err)
-		return domain.User{}, err
+		if errors.Is(err, pgx.ErrNoRows) {
+			return domain.User{}, shared.NewError(shared.ErrNotFound, "user not found with email "+email, err)
+		} else {
+			return domain.User{}, shared.NewError(shared.ErrInternal, "failed to retrieve user with email "+email, err)
+		}
 	}
 
 	return domain.User{
@@ -81,20 +87,30 @@ func (r *PostgresUserRepository) FindByEmail(email string) (domain.User, error) 
 	}, nil
 }
 
-func (r *PostgresUserRepository) Update(user domain.User) error {
+func (r *PostgresUserRepository) Update(ctx context.Context, id uuid.UUID, user domain.User) error {
 	params := postgres.UpdateUserParams{
-		ID:       user.ID,
+		ID:       id,
 		Name:     user.Name,
 		Lastname: user.LastName,
 		Email:    user.Email,
-		Status:   user.Status,
-		IsAdmin:  user.IsAdmin,
 	}
 
-	err := r.q.UpdateUser(context.Background(), params)
+	err := r.q.UpdateUser(ctx, params)
 	if err != nil {
-		log.Printf("Error updating user: %v", err)
-		return err
+		return shared.NewError(shared.ErrInternal, "failed to update user", err)
 	}
 	return nil
+}
+
+func (r *PostgresUserRepository) GetPassword(ctx context.Context, email string) (uuid.UUID, string, error) {
+	row, err := r.q.GetPassword(ctx, email)
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return uuid.UUID{}, "", shared.NewError(shared.ErrNotFound, "not found password and email combination for email: "+email, err)
+		} else {
+			return uuid.UUID{}, "", shared.NewError(shared.ErrInternal, "failed to retrieve password", err)
+		}
+	}
+
+	return row.ID, row.Password, nil
 }

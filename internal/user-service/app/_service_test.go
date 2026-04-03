@@ -20,33 +20,31 @@ func TestUserService_Register(t *testing.T) {
 	mockHasher := mock_ports.NewMockPasswordHasher(ctrl)
 
 	// Initialize UserService with the mocks
-	userService := &UserService{Repo: mockRepo, log: *log.Default()}
+	userService := &UserService{repo: mockRepo, log: *log.Default()}
 
 	// Define test cases
 	testCases := []struct {
 		name       string
-		cmd        RegisterUserCommand
+		user        domain.User
 		expectErr  bool
 		expectedID uuid.UUID
 	}{
 		{
 			name: "Valid registration",
-			cmd: RegisterUserCommand{
+			user: domain.User{
 				Email:    "test@example.com",
 				Name:     "TestName",
-				Lastname: "TestLastname",
-				Password: "validPass",
+				LastName: "TestLastname",
 			},
 			expectErr:  false,
 			expectedID: uuid.MustParse("d9fa522f-0006-464f-8d68-356ba1d6ad7d"),
 		},
 		{
 			name: "Invalid password",
-			cmd: RegisterUserCommand{
+			user: domain.User{
 				Email:    "test@example.com",
 				Name:     "TestName",
-				Lastname: "TestLastname",
-				Password: "invalidPass",
+				LastName: "TestLastname",
 			},
 			expectErr: true,
 		},
@@ -54,15 +52,12 @@ func TestUserService_Register(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			// Mocking the hasher to always return a valid hash for simplicity
-			mockHasher.EXPECT().Hash(tc.cmd.Password).Return([]byte("hashedPass"), nil)
-
 			// Mocking the repository create method
-			expectedUser := &domain.User{Email: tc.cmd.Email, Name: tc.cmd.Name, LastName: tc.cmd.Lastname}
-			mockRepo.EXPECT().Create(expectedUser, "hashedPass", "hashedPass").Return(tc.expectedID, nil)
+			expectedUser := &domain.User{Email: tc.user.Email, Name: tc.user.Name, LastName: tc.user.LastName}
+			mockRepo.EXPECT().Create(expectedUser, []byte("hashedPass")).Return(tc.expectedID, nil)
 
 			// Call the Register method and check for errors
-			id, err := userService.Create(tc.cmd)
+			id, err := userService.Create(tc.user)
 			if tc.expectErr {
 				if err == nil {
 					t.Error("Expected error but got none")
@@ -85,7 +80,7 @@ func TestUserService_Get(t *testing.T) {
 
 	// Create mock instances
 	mockRepo := mock_ports.NewMockUserRepository(ctrl)
-	userService := &UserService{Repo: mockRepo, log: *log.Default()}
+	userService := &UserService{repo: mockRepo, log: *log.Default()}
 
 	// Define test cases
 	testCases := []struct {

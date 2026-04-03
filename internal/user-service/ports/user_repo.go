@@ -1,18 +1,16 @@
 package ports
 
 import (
+	"context"
 	"video-provider/internal/user-service/domain"
 
 	"github.com/google/uuid"
 )
 
 type UserRepository interface {
-	Create(user domain.User, passwordHash string, passwordSalt string) (uuid.UUID, error)
-	Update(user domain.User) error
-	FindByID(id uuid.UUID) (domain.User, error)
-	FindByEmail(email string) (domain.User, error)
-}
-
-type PasswordHasher interface {
-	Hash(password string) ([]byte, error)
+	Create(ctx context.Context, user domain.User, password []byte) (uuid.UUID, error)
+	Update(ctx context.Context, id uuid.UUID, user domain.User) error
+	FindByID(ctx context.Context, id uuid.UUID) (domain.User, error)
+	FindByEmail(ctx context.Context, email string) (domain.User, error)
+	GetPassword(ctx context.Context, email string) (uuid.UUID, string, error)
 }

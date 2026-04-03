@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"video-provider/internal/pkg/shared"
 	"video-provider/internal/user-service/app"
+	"video-provider/internal/user-service/domain"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -37,10 +38,7 @@ func NewUserHandler(userInteractor app.UserInteractor, log *log.Logger) *UserHan
 func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var loginRequestData loginUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&loginRequestData); err != nil {
-		h.writeErrorResponse(w, shared.ServiceError{
-			Code:    http.StatusBadRequest,
-			Message: "failed to decode login request body",
-			Err:     err})
+		h.writeErrorResponse(w, shared.NewError(shared.ErrInvalidInput, "failed to decode login request body", err))
 		return
 	}
 
@@ -58,7 +56,7 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	loginRequestData.normalize()
 
-	token, err := h.UserInteractor.Login(loginRequestData.Email, loginRequestData.Password)
+	token, err := h.UserInteractor.Login(r.Context(), loginRequestData.Email, loginRequestData.Password)
 	if err != nil {
 		h.writeErrorResponse(w, err)
 		return
@@ -84,10 +82,7 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var createUserRequestData createUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&createUserRequestData); err != nil {
-		h.writeErrorResponse(w, shared.ServiceError{
-			Code:    http.StatusBadRequest,
-			Message: "failed to decode create user request body",
-			Err:     err})
+		h.writeErrorResponse(w, shared.NewError(shared.ErrInvalidInput, "failed to decode create user request body", err))
 		return
 	}
 
@@ -105,12 +100,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	createUserRequestData.normalize()
 
-	userId, err := h.UserInteractor.Create(app.RegisterUserCommand{
-		Email:    createUserRequestData.Email,
-		Name:     createUserRequestData.Name,
-		Lastname: createUserRequestData.LastName,
-		Password: createUserRequestData.Password,
-	})
+	userId, err := h.UserInteractor.Create(r.Context(), toDomainUser(createUserRequestData), createUserRequestData.Password)
 	if err != nil {
 		h.writeErrorResponse(w, err)
 		return
@@ -136,27 +126,22 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	userID, err := uuid.Parse(mux.Vars(r)["id"])
 	if err != nil {
-		h.writeErrorResponse(w, shared.ServiceError{
-			Code:    http.StatusBadRequest,
-			Message: "unparsable user id"})
+		h.writeErrorResponse(w, shared.NewError(shared.ErrInvalidInput, "invalid user id format", err))
 		return
 	}
 
 	if userID == uuid.Nil {
-		h.writeErrorResponse(w, shared.ServiceError{
-			Code:    http.StatusBadRequest,
-			Message: "empty user ID",
-		})
+		h.writeErrorResponse(w, shared.NewError(shared.ErrInvalidInput, "user ID cannot be empty", nil))
 		return
 	}
 
-	getUserResult, err := h.UserInteractor.Get(userID)
+	user, err := h.UserInteractor.Get(r.Context(), userID)
 	if err != nil {
 		h.writeErrorResponse(w, err)
 		return
 	}
 
-	h.writeResponse(w, getUserResult, http.StatusOK)
+	h.writeResponse(w, user, http.StatusOK)
 }
 
 func (h *UserHandler) writeResponse(w http.ResponseWriter, v any, code int) {
@@ -173,9 +158,23 @@ func (h *UserHandler) writeErrorResponse(w http.ResponseWriter, vErr error) {
 	w.Header().Set("Content-Type", "application/json")
 
 	switch vErr := vErr.(type) {
-	case shared.ServiceError:
-		h.log.Println("ServiceError: %w", vErr.Err)
-		w.WriteHeader(vErr.Code)
+	case shared.Error:
+		h.log.Printf("Error: %s\n", vErr.Err.Error())
+
+		statusCode := http.StatusInternalServerError
+		switch vErr.Code {
+		case shared.ErrUnauthorized:
+			statusCode = http.StatusUnauthorized
+		case shared.ErrNotFound:
+			statusCode = http.StatusNotFound
+		case shared.ErrInvalidInput:
+			statusCode = http.StatusBadRequest
+		case shared.ErrInternal:
+			statusCode = http.StatusInternalServerError
+		}
+
+		w.WriteHeader(statusCode)
+
 		err := json.NewEncoder(w).Encode(serviceErrorResponse{
 			Message: vErr.Message,
 		})
@@ -184,7 +183,8 @@ func (h *UserHandler) writeErrorResponse(w http.ResponseWriter, vErr error) {
 		}
 
 	case validator.ValidationErrors:
-		h.log.Println("Validation request body error: %w", vErr[0])
+		h.log.Printf("Validation request body error: %s\n", vErr[0])
+
 		w.WriteHeader(http.StatusBadRequest)
 		err := json.NewEncoder(w).Encode(serviceErrorResponse{
 			Message: "invalid field: " + vErr[0].Field(),
@@ -194,7 +194,7 @@ func (h *UserHandler) writeErrorResponse(w http.ResponseWriter, vErr error) {
 		}
 
 	case error:
-		h.log.Println("Fallback error: %w", vErr)
+		h.log.Printf("Fallback error: %s\n", vErr.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		err := json.NewEncoder(w).Encode(serviceErrorResponse{
 			Message: "internal error",
@@ -202,5 +202,13 @@ func (h *UserHandler) writeErrorResponse(w http.ResponseWriter, vErr error) {
 		if err != nil {
 			h.log.Println("Error encoding error response body:", err)
 		}
+	}
+}
+
+func toDomainUser(r createUserRequest) domain.User {
+	return domain.User{
+		Email:    r.Email,
+		Name:     r.Name,
+		LastName: r.LastName,
 	}
 }

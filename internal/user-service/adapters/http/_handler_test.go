@@ -40,7 +40,7 @@ func TestValidCreateUserRequest(t *testing.T) {
 			r := mux.NewRouter()
 			SetupRouter(r, h)
 
-			s.EXPECT().Create(gomock.Any()).Return(expUserID, nil).MaxTimes(1)
+			s.EXPECT().Create(gomock.Any(), gomock.Any(), gomock.Any()).Return(expUserID, nil).MaxTimes(1)
 
 			rec := httptest.NewRecorder()
 
@@ -126,7 +126,7 @@ func TestInvalidCreateUserRequest(t *testing.T) {
 			r := mux.NewRouter()
 			SetupRouter(r, h)
 
-			s.EXPECT().Create(gomock.Any()).MaxTimes(0)
+			s.EXPECT().Create(gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(0)
 
 			rec := httptest.NewRecorder()
 

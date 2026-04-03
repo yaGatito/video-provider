@@ -5,8 +5,9 @@
 package mock_app
 
 import (
+	context "context"
 	reflect "reflect"
-	app "video-provider/internal/user-service/app"
+	domain "video-provider/internal/user-service/domain"
 
 	gomock "github.com/golang/mock/gomock"
 	uuid "github.com/google/uuid"
@@ -36,60 +37,60 @@ func (m *MockUserInteractor) EXPECT() *MockUserInteractorMockRecorder {
 }
 
 // Create mocks base method.
-func (m *MockUserInteractor) Create(cmd app.RegisterUserCommand) (uuid.UUID, error) {
+func (m *MockUserInteractor) Create(ctx context.Context, user domain.User, password string) (uuid.UUID, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Create", cmd)
+	ret := m.ctrl.Call(m, "Create", ctx, user, password)
 	ret0, _ := ret[0].(uuid.UUID)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Create indicates an expected call of Create.
-func (mr *MockUserInteractorMockRecorder) Create(cmd interface{}) *gomock.Call {
+func (mr *MockUserInteractorMockRecorder) Create(ctx, user, password interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockUserInteractor)(nil).Create), cmd)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Create", reflect.TypeOf((*MockUserInteractor)(nil).Create), ctx, user, password)
 }
 
 // Get mocks base method.
-func (m *MockUserInteractor) Get(id uuid.UUID) (app.GetUserResult, error) {
+func (m *MockUserInteractor) Get(ctx context.Context, id uuid.UUID) (domain.User, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", id)
-	ret0, _ := ret[0].(app.GetUserResult)
+	ret := m.ctrl.Call(m, "Get", ctx, id)
+	ret0, _ := ret[0].(domain.User)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Get indicates an expected call of Get.
-func (mr *MockUserInteractorMockRecorder) Get(id interface{}) *gomock.Call {
+func (mr *MockUserInteractorMockRecorder) Get(ctx, id interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockUserInteractor)(nil).Get), id)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockUserInteractor)(nil).Get), ctx, id)
 }
 
 // Login mocks base method.
-func (m *MockUserInteractor) Login(email, password string) (string, error) {
+func (m *MockUserInteractor) Login(ctx context.Context, email, password string) (string, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Login", email, password)
+	ret := m.ctrl.Call(m, "Login", ctx, email, password)
 	ret0, _ := ret[0].(string)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // Login indicates an expected call of Login.
-func (mr *MockUserInteractorMockRecorder) Login(email, password interface{}) *gomock.Call {
+func (mr *MockUserInteractorMockRecorder) Login(ctx, email, password interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockUserInteractor)(nil).Login), email, password)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Login", reflect.TypeOf((*MockUserInteractor)(nil).Login), ctx, email, password)
 }
 
 // Update mocks base method.
-func (m *MockUserInteractor) Update(cmd app.UpdateUserCommand) error {
+func (m *MockUserInteractor) Update(ctx context.Context, id uuid.UUID, user domain.User) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", cmd)
+	ret := m.ctrl.Call(m, "Update", ctx, id, user)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Update indicates an expected call of Update.
-func (mr *MockUserInteractorMockRecorder) Update(cmd interface{}) *gomock.Call {
+func (mr *MockUserInteractorMockRecorder) Update(ctx, id, user interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockUserInteractor)(nil).Update), cmd)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockUserInteractor)(nil).Update), ctx, id, user)
 }
