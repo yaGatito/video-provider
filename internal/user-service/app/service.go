@@ -2,11 +2,15 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"os"
+	"time"
 	"video-provider/internal/pkg/shared"
 	"video-provider/internal/user-service/domain"
 	"video-provider/internal/user-service/ports"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 )
 
@@ -18,13 +22,14 @@ type UserInteractor interface {
 }
 
 type UserService struct {
-	repo   ports.UserRepository
-	hasher ports.PasswordHasher
-	log    log.Logger
+	repo         ports.UserRepository
+	hasher       ports.PasswordHasher
+	log          log.Logger
+	getJWTSecret func() []byte
 }
 
 func NewUserService(repo ports.UserRepository, hasher ports.PasswordHasher) *UserService {
-	return &UserService{repo: repo, hasher: hasher}
+	return &UserService{repo: repo, hasher: hasher, getJWTSecret: GetJWTSecret}
 }
 
 func (us *UserService) Create(ctx context.Context, user domain.User, password string) (uuid.UUID, error) {
@@ -77,7 +82,7 @@ func (us *UserService) Login(ctx context.Context, email string, password []byte)
 		return "", shared.NewError(shared.ErrInvalidInput, "password is required", nil)
 	}
 
-	_, hash, err := us.repo.GetPasswordHash(ctx, email)
+	userID, hash, err := us.repo.GetPasswordHash(ctx, email)
 	if err != nil {
 		return "", err
 	}
@@ -87,7 +92,30 @@ func (us *UserService) Login(ctx context.Context, email string, password []byte)
 		return "", shared.NewError(shared.ErrUnauthorized, "failed to compare password", nil)
 	}
 
-	// TODO: Generate and return a JWT token or session ID here
+	claims := jwt.MapClaims{
+		"user_id": userID,
+		"exp":     time.Now().Add(24 * time.Hour).Unix(),
+	}
 
-	return "success", nil
+	token := jwt.NewWithClaims(jwt.GetSigningMethod("HS256"), claims)
+
+	signedToken, err := token.SignedString(us.getSecret())
+
+	fmt.Printf("Signed JWT token: %s; signedToken: %s\n", token.Raw, signedToken)
+
+	if err != nil {
+		return "", err
+	}
+
+	return signedToken, nil
+}
+
+func (us *UserService) getSecret() []byte {
+	return us.getJWTSecret()
+}
+
+const jwtSecretEnvVar = "JWT_SECRET"
+
+var GetJWTSecret = func() []byte {
+	return []byte(os.Getenv(jwtSecretEnvVar))
 }
