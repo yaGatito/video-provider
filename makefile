@@ -43,13 +43,14 @@ MOCKGEN := mockgen$(EXE)
 SQLC := sqlc$(EXE)
 GOLANGCI_LINT := golangci-lint$(EXE)
 SWAG := swag$(EXE)
+GQLGEN := gqlgen$(EXE)
 
 .DEFAULT_GOAL := help
 
 #   --- Common Commands ---
 .PHONY: help
 help:
-	@echo "Usage: make <target> [CONFIG=user|video]"
+	@echo "Usage: make <target> [config=user|video]"
 	@echo ""
 	@echo "Common targets:"
 	@echo "  make bootstrap      - check required local tools"
@@ -106,7 +107,7 @@ run:
 	go run cmd/$(SERVICE_NAME)/app.go -config=$(CONFIG_PATH)
 
 .PHONY: gen
-gen: sqlc swag mocks
+gen: sqlc swag gqlgen mocks
 
 .PHONY: lint
 lint:
@@ -119,6 +120,13 @@ swag:
 	$(call log, "Swagger generate: $(MAIN)")
 	$(call log, "Swagger output: docs")
 	${SWAG} init -g $(MAIN) -o docs
+
+.PHONY: gqlgen
+gqlgen:
+ifeq ("$(config)","user")
+	$(call log, "GQLGen generate by file: gqlgen.yml")
+	$(GQLGEN) generate
+endif
 
 .PHONY: sqlc
 sqlc:
@@ -207,6 +215,7 @@ go-tools:
 	go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.26.0
 	go install github.com/swaggo/swag/cmd/swag@latest
 	go install github.com/pressly/goose/v3/cmd/goose@latest
+#   TODO: add gqlgen 
 
 go-win-tools: go-tools
 
