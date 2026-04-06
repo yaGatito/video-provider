@@ -81,20 +81,20 @@ func (mr *MockUserRepositoryMockRecorder) FindByID(ctx, id interface{}) *gomock.
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "FindByID", reflect.TypeOf((*MockUserRepository)(nil).FindByID), ctx, id)
 }
 
-// GetPassword mocks base method.
-func (m *MockUserRepository) GetPassword(ctx context.Context, email string) (uuid.UUID, string, error) {
+// GetPasswordHash mocks base method.
+func (m *MockUserRepository) GetPasswordHash(ctx context.Context, email string) (uuid.UUID, []byte, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetPassword", ctx, email)
+	ret := m.ctrl.Call(m, "GetPasswordHash", ctx, email)
 	ret0, _ := ret[0].(uuid.UUID)
-	ret1, _ := ret[1].(string)
+	ret1, _ := ret[1].([]byte)
 	ret2, _ := ret[2].(error)
 	return ret0, ret1, ret2
 }
 
-// GetPassword indicates an expected call of GetPassword.
-func (mr *MockUserRepositoryMockRecorder) GetPassword(ctx, email interface{}) *gomock.Call {
+// GetPasswordHash indicates an expected call of GetPasswordHash.
+func (mr *MockUserRepositoryMockRecorder) GetPasswordHash(ctx, email interface{}) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPassword", reflect.TypeOf((*MockUserRepository)(nil).GetPassword), ctx, email)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetPasswordHash", reflect.TypeOf((*MockUserRepository)(nil).GetPasswordHash), ctx, email)
 }
 
 // Update mocks base method.

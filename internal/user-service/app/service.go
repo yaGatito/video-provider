@@ -14,7 +14,7 @@ type UserInteractor interface {
 	Create(ctx context.Context, user domain.User, password string) (uuid.UUID, error)
 	Get(ctx context.Context, id uuid.UUID) (domain.User, error)
 	Update(ctx context.Context, id uuid.UUID, user domain.User) error
-	Login(ctx context.Context, email, password string) (string, error)
+	Login(ctx context.Context, email string, password []byte) (string, error)
 }
 
 type UserService struct {
@@ -42,12 +42,7 @@ func (us *UserService) Create(ctx context.Context, user domain.User, password st
 }
 
 func (us *UserService) Get(ctx context.Context, id uuid.UUID) (domain.User, error) {
-	user, err := us.repo.FindByID(ctx, id)
-	if err != nil {
-		return domain.User{}, err
-	}
-
-	return user, nil
+	return us.repo.FindByID(ctx, id)
 }
 
 func (us *UserService) Update(ctx context.Context, id uuid.UUID, toUpdate domain.User) error {
@@ -74,15 +69,22 @@ func (us *UserService) Update(ctx context.Context, id uuid.UUID, toUpdate domain
 	return nil
 }
 
-func (us *UserService) Login(ctx context.Context, email, password string) (string, error) {
-	_, hash, err := us.repo.GetPassword(ctx, email)
+func (us *UserService) Login(ctx context.Context, email string, password []byte) (string, error) {
+	if email == "" {
+		return "", shared.NewError(shared.ErrInvalidInput, "email is required", nil)
+	}
+	if len(password) == 0 {
+		return "", shared.NewError(shared.ErrInvalidInput, "password is required", nil)
+	}
+
+	_, hash, err := us.repo.GetPasswordHash(ctx, email)
 	if err != nil {
 		return "", err
 	}
 
 	err = us.hasher.CompareHashAndPassword(hash, password)
 	if err != nil {
-		return "", shared.NewError(shared.ErrUnauthorized, "failed to compare password", err)
+		return "", shared.NewError(shared.ErrUnauthorized, "failed to compare password", nil)
 	}
 
 	// TODO: Generate and return a JWT token or session ID here

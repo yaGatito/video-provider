@@ -19,6 +19,6 @@ func (h *BcryptPasswordHasher) Hash(password string) ([]byte, error) {
 	return bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 }
 
-func (h *BcryptPasswordHasher) CompareHashAndPassword(hash, password string) error {
-	return bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
+func (h *BcryptPasswordHasher) CompareHashAndPassword(hash, password []byte) error {
+	return bcrypt.CompareHashAndPassword(hash, password)
 }

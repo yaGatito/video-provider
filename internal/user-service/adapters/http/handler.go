@@ -20,7 +20,7 @@ type UserHandler struct {
 }
 
 func NewUserHandler(userInteractor app.UserInteractor, log *log.Logger) *UserHandler {
-	return &UserHandler{UserInteractor: userInteractor, log: log, validate: NewUserValidate()}
+	return &UserHandler{UserInteractor: userInteractor, log: log, validate: newUserValidate()}
 }
 
 // Login godoc
@@ -56,7 +56,7 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	loginRequestData.normalize()
 
-	token, err := h.UserInteractor.Login(r.Context(), loginRequestData.Email, loginRequestData.Password)
+	token, err := h.UserInteractor.Login(r.Context(), loginRequestData.Email, []byte(loginRequestData.Password))
 	if err != nil {
 		h.writeErrorResponse(w, err)
 		return

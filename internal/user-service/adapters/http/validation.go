@@ -11,7 +11,7 @@ import (
 
 var textRe = regexp.MustCompile(fmt.Sprintf(`^[A-Za-z]{%d,%d}$`, policy.MinInputTextLen, policy.MaxInputTextLen))
 
-func NewUserValidate() *validator.Validate {
+func newUserValidate() *validator.Validate {
 	validate := validator.New(validator.WithRequiredStructEnabled())
 
 	validate.RegisterValidation("text64", func(fl validator.FieldLevel) bool {

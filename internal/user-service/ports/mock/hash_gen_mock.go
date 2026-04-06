@@ -34,7 +34,7 @@ func (m *MockPasswordHasher) EXPECT() *MockPasswordHasherMockRecorder {
 }
 
 // CompareHashAndPassword mocks base method.
-func (m *MockPasswordHasher) CompareHashAndPassword(hash, password string) error {
+func (m *MockPasswordHasher) CompareHashAndPassword(hash, password []byte) error {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "CompareHashAndPassword", hash, password)
 	ret0, _ := ret[0].(error)

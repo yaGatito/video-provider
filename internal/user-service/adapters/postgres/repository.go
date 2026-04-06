@@ -102,15 +102,15 @@ func (r *PostgresUserRepository) Update(ctx context.Context, id uuid.UUID, user 
 	return nil
 }
 
-func (r *PostgresUserRepository) GetPassword(ctx context.Context, email string) (uuid.UUID, string, error) {
+func (r *PostgresUserRepository) GetPasswordHash(ctx context.Context, email string) (uuid.UUID, []byte, error) {
 	row, err := r.q.GetPassword(ctx, email)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return uuid.UUID{}, "", shared.NewError(shared.ErrNotFound, "not found password and email combination for email: "+email, err)
+			return uuid.UUID{}, nil, shared.NewError(shared.ErrNotFound, "not found password and email combination for email: "+email, err)
 		} else {
-			return uuid.UUID{}, "", shared.NewError(shared.ErrInternal, "failed to retrieve password", err)
+			return uuid.UUID{}, nil, shared.NewError(shared.ErrInternal, "failed to retrieve password", err)
 		}
 	}
 
-	return row.ID, row.Password, nil
+	return row.ID, []byte(row.Password), nil
 }

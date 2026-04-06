@@ -49,13 +49,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
+                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
+                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     }
                 }
@@ -95,19 +95,19 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
+                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
+                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
+                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     }
                 }
@@ -140,13 +140,13 @@ const docTemplate = `{
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
+                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
+                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     }
                 }
@@ -437,7 +437,7 @@ const docTemplate = `{
                 }
             }
         },
-        "video-provider_internal_user-service_adapters_http.serviceErrorResponse": {
+        "internal_user-service_adapters_http.serviceErrorResponse": {
             "type": "object",
             "properties": {
                 "msg": {

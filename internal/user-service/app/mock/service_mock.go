@@ -67,7 +67,7 @@ func (mr *MockUserInteractorMockRecorder) Get(ctx, id interface{}) *gomock.Call 
 }
 
 // Login mocks base method.
-func (m *MockUserInteractor) Login(ctx context.Context, email, password string) (string, error) {
+func (m *MockUserInteractor) Login(ctx context.Context, email string, password []byte) (string, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "Login", ctx, email, password)
 	ret0, _ := ret[0].(string)
