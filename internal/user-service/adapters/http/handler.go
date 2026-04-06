@@ -38,7 +38,7 @@ func NewUserHandler(userInteractor app.UserInteractor, log *log.Logger) *UserHan
 func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var loginRequestData loginUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&loginRequestData); err != nil {
-		h.writeErrorResponse(w, shared.NewError(shared.ErrInvalidInput, "failed to decode login request body", err))
+		h.writeErrorResponse(w, shared.NewError(http.StatusBadRequest, "failed to decode login request body", err))
 		return
 	}
 
@@ -82,7 +82,7 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var createUserRequestData createUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&createUserRequestData); err != nil {
-		h.writeErrorResponse(w, shared.NewError(shared.ErrInvalidInput, "failed to decode create user request body", err))
+		h.writeErrorResponse(w, shared.NewError(http.StatusBadRequest, "failed to decode create user request body", err))
 		return
 	}
 
@@ -126,12 +126,12 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	userID, err := uuid.Parse(mux.Vars(r)["id"])
 	if err != nil {
-		h.writeErrorResponse(w, shared.NewError(shared.ErrInvalidInput, "invalid user id format", err))
+		h.writeErrorResponse(w, shared.NewError(http.StatusBadRequest, "invalid user id format", err))
 		return
 	}
 
 	if userID == uuid.Nil {
-		h.writeErrorResponse(w, shared.NewError(shared.ErrInvalidInput, "user ID cannot be empty", nil))
+		h.writeErrorResponse(w, shared.NewError(http.StatusBadRequest, "user ID cannot be empty", nil))
 		return
 	}
 
@@ -159,22 +159,9 @@ func (h *UserHandler) writeErrorResponse(w http.ResponseWriter, vErr error) {
 
 	switch vErr := vErr.(type) {
 	case shared.Error:
-		h.log.Printf("Error: %s\n", vErr.Err.Error())
+		h.log.Printf("Error: %s\n", vErr.Message)
 
-		statusCode := http.StatusInternalServerError
-		switch vErr.Code {
-		case shared.ErrUnauthorized:
-			statusCode = http.StatusUnauthorized
-		case shared.ErrNotFound:
-			statusCode = http.StatusNotFound
-		case shared.ErrInvalidInput:
-			statusCode = http.StatusBadRequest
-		case shared.ErrInternal:
-			statusCode = http.StatusInternalServerError
-		}
-
-		w.WriteHeader(statusCode)
-
+		w.WriteHeader(int(vErr.Code))
 		err := json.NewEncoder(w).Encode(serviceErrorResponse{
 			Message: vErr.Message,
 		})
@@ -183,7 +170,7 @@ func (h *UserHandler) writeErrorResponse(w http.ResponseWriter, vErr error) {
 		}
 
 	case validator.ValidationErrors:
-		h.log.Printf("Validation request body error: %s\n", vErr[0])
+		h.log.Printf("Validation request body error: %s\n", vErr[0].Error())
 
 		w.WriteHeader(http.StatusBadRequest)
 		err := json.NewEncoder(w).Encode(serviceErrorResponse{
@@ -195,6 +182,7 @@ func (h *UserHandler) writeErrorResponse(w http.ResponseWriter, vErr error) {
 
 	case error:
 		h.log.Printf("Fallback error: %s\n", vErr.Error())
+
 		w.WriteHeader(http.StatusInternalServerError)
 		err := json.NewEncoder(w).Encode(serviceErrorResponse{
 			Message: "internal error",
