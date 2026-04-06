@@ -4,13 +4,14 @@ import "errors"
 
 var ErrEmptyValue = errors.New("empty value error")
 
-type ErrorCode string
+type ErrorCode int
 
 const (
-	ErrInvalidInput ErrorCode = "ERR_INVALID_INPUT"
-	ErrNotFound     ErrorCode = "ERR_NOT_FOUND"
-	ErrInternal     ErrorCode = "ERR_INTERNAL"
-	ErrUnauthorized ErrorCode = "ERR_UNAUTHORIZED"
+	ErrInvalidInput ErrorCode = 400
+	ErrNotFound     ErrorCode = 404
+	ErrUnauthorized ErrorCode = 401
+	ErrForbidden    ErrorCode = 403
+	ErrInternal     ErrorCode = 500
 )
 
 type Error struct {

@@ -10,7 +10,6 @@ import (
 	config "video-provider/internal/pkg/config"
 	"video-provider/internal/pkg/middleware"
 	httpadp "video-provider/internal/video-service/adapters/http"
-	"video-provider/internal/video-service/adapters/idgen"
 	"video-provider/internal/video-service/adapters/postgres"
 	"video-provider/internal/video-service/app"
 
@@ -56,12 +55,11 @@ func run() error {
 	}
 	defer pool.Close()
 
-	idGen := idgen.New()
 	mwLog := middleware.NewMiddlewareLogger(os.Stdout, "[VIDSVC]")
 
 	videoRepository := postgres.NewVideoRepoPostgreSQL(pool)
 	videoService := app.NewVideoInteractor(videoRepository)
-	videoHandler := httpadp.NewVideoHandler(videoService, idGen, mwLog.Log)
+	videoHandler := httpadp.NewVideoHandler(videoService, mwLog.Log)
 
 	router := mux.NewRouter()
 	router.Use(mwLog.LoggingMiddleware)

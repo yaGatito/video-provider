@@ -9,7 +9,6 @@ import (
 	"strings"
 	"testing"
 	"time"
-	"video-provider/internal/video-service/adapters/idgen"
 	mock_app "video-provider/internal/video-service/app/mock"
 	"video-provider/internal/video-service/domain"
 	"video-provider/internal/video-service/policy"
@@ -67,7 +66,7 @@ func TestCreateVideo(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			s := mock_app.NewMockVideoService(ctrl)
-			h := NewVideoHandler(s, idgen.New(), log.New(io.Discard, "", 0))
+			h := NewVideoHandler(s, log.New(io.Discard, "", 0))
 			r := mux.NewRouter()
 			SetupRouter(r, h)
 
@@ -105,7 +104,7 @@ func TestCreateVideo(t *testing.T) {
 func TestGetVideoById(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	s := mock_app.NewMockVideoService(ctrl)
-	h := NewVideoHandler(s, idgen.New(), log.New(io.Discard, "", 0))
+	h := NewVideoHandler(s, log.New(io.Discard, "", 0))
 	r := mux.NewRouter()
 	SetupRouter(r, h)
 
@@ -223,7 +222,7 @@ func TestGetByPublisherVideos(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			s := mock_app.NewMockVideoService(ctrl)
-			h := NewVideoHandler(s, idgen.New(), log.New(io.Discard, "", 0))
+			h := NewVideoHandler(s, log.New(io.Discard, "", 0))
 			r := mux.NewRouter()
 			SetupRouter(r, h)
 
@@ -313,7 +312,7 @@ func TestSearchPublisherVideos(t *testing.T) {
 
 			ctrl := gomock.NewController(t)
 			s := mock_app.NewMockVideoService(ctrl)
-			h := NewVideoHandler(s, idgen.New(), log.New(io.Discard, "", 0))
+			h := NewVideoHandler(s, log.New(io.Discard, "", 0))
 			r := mux.NewRouter()
 			SetupRouter(r, h)
 
