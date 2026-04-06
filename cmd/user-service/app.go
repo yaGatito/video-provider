@@ -8,7 +8,7 @@ import (
 	"os"
 	_ "video-provider/docs"
 	"video-provider/internal/pkg/config"
-	logger "video-provider/internal/pkg/middleware"
+	"video-provider/internal/pkg/middleware"
 
 	cryptoadp "video-provider/internal/user-service/adapters/crypto"
 	httpadp "video-provider/internal/user-service/adapters/http"
@@ -57,7 +57,7 @@ func run() error {
 	}
 	defer dbPool.Close()
 
-	mwLog := logger.NewMiddlewareLogger(os.Stdout, "[USRSVC]")
+	mwLog := middleware.NewMiddlewareLogger(os.Stdout, "[USRSVC]")
 
 	userRepository := postgres.NewPostgresUserRepository(dbPool)
 	pwHasher := cryptoadp.NewBCryptPasswordHasher()
@@ -65,7 +65,7 @@ func run() error {
 	userHandler := httpadp.NewUserHandler(userInteractor, mwLog.Log)
 
 	router := mux.NewRouter()
-	router.Use(logger.CORSMiddleware)
+	router.Use(middleware.CORSMiddleware)
 	router.Use(mwLog.LoggingMiddleware)
 
 	httpadp.SetupRouter(router, userHandler)

@@ -14,13 +14,13 @@ import (
 )
 
 type UserHandler struct {
-	UserInteractor app.UserInteractor
+	userInteractor app.UserInteractor
 	validate       *validator.Validate
 	log            *log.Logger
 }
 
 func NewUserHandler(userInteractor app.UserInteractor, log *log.Logger) *UserHandler {
-	return &UserHandler{UserInteractor: userInteractor, log: log, validate: newUserValidate()}
+	return &UserHandler{userInteractor: userInteractor, log: log, validate: newUserValidate()}
 }
 
 // Login godoc
@@ -56,7 +56,7 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	loginRequestData.normalize()
 
-	token, err := h.UserInteractor.Login(r.Context(), loginRequestData.Email, []byte(loginRequestData.Password))
+	token, err := h.userInteractor.Login(r.Context(), loginRequestData.Email, []byte(loginRequestData.Password))
 	if err != nil {
 		h.writeErrorResponse(w, err)
 		return
@@ -100,7 +100,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	createUserRequestData.normalize()
 
-	userId, err := h.UserInteractor.Create(r.Context(), toDomainUser(createUserRequestData), createUserRequestData.Password)
+	userId, err := h.userInteractor.Create(r.Context(), toDomainUser(createUserRequestData), createUserRequestData.Password)
 	if err != nil {
 		h.writeErrorResponse(w, err)
 		return
@@ -135,7 +135,7 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.UserInteractor.Get(r.Context(), userID)
+	user, err := h.userInteractor.Get(r.Context(), userID)
 	if err != nil {
 		h.writeErrorResponse(w, err)
 		return

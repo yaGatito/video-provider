@@ -35,10 +35,6 @@ func CORSMiddleware(next http.Handler) http.Handler {
 }
 
 func SetupRouter(r *mux.Router, h VideoHandler) {
-	// Apply CORS middleware to all routes
-	r.Use(CORSMiddleware)
-
-	// Video endpoints
 	r.HandleFunc(RouteVideo, h.GetByID).
 		Methods(http.MethodGet, http.MethodOptions)
 

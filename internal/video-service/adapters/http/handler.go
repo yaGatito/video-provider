@@ -27,7 +27,7 @@ const (
 )
 
 type VideoHandler struct {
-	VideoInteractor app.VideoService
+	videoInteractor app.VideoService
 	log             *log.Logger
 	validate        *validator.Validate
 }
@@ -36,7 +36,7 @@ func NewVideoHandler(
 	userInteractor app.VideoService,
 	log *log.Logger,
 ) VideoHandler {
-	return VideoHandler{VideoInteractor: userInteractor, log: log, validate: NewVideoValidator()}
+	return VideoHandler{videoInteractor: userInteractor, log: log, validate: newVideoValidator()}
 }
 
 // Create godoc
@@ -71,7 +71,7 @@ func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	video, err := h.VideoInteractor.Create(r.Context(), domain.Video{
+	video, err := h.videoInteractor.Create(r.Context(), domain.Video{
 		PublisherID: publisherID,
 		Topic:       createVideoRequestData.Topic,
 		Description: createVideoRequestData.Description,
@@ -102,7 +102,7 @@ func (h *VideoHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	video, err := h.VideoInteractor.GetByID(r.Context(), domain.UUID(videoID))
+	video, err := h.videoInteractor.GetByID(r.Context(), domain.UUID(videoID))
 	h.writeResponse(w, dtoVideo(video), http.StatusOK)
 }
 
@@ -161,7 +161,7 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pageParams, err := NewVideoPageParams(orderBy, offset, limit, asc)
+	pageParams, err := newVideoPageParams(orderBy, offset, limit, asc)
 	if err != nil {
 		h.writeErrorResponse(w, err)
 		return
@@ -169,7 +169,7 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 
 	var videos []domain.Video
 	if search == "" {
-		videos, err = h.VideoInteractor.GetByPublisher(r.Context(), publisherID, pageParams)
+		videos, err = h.videoInteractor.GetByPublisher(r.Context(), publisherID, pageParams)
 		if err != nil {
 			h.writeErrorResponse(w, err)
 			return
@@ -181,7 +181,7 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		videos, err = h.VideoInteractor.SearchPublisher(r.Context(), publisherID, search, pageParams)
+		videos, err = h.videoInteractor.SearchPublisher(r.Context(), publisherID, search, pageParams)
 		if err != nil {
 			h.writeErrorResponse(w, err)
 			return
@@ -227,13 +227,13 @@ func (h *VideoHandler) SearchGlobal(w http.ResponseWriter, r *http.Request) {
 	orderBy := resStr[1]
 	asc := resStr[2]
 
-	pageParams, err := NewVideoPageParams(orderBy, offset, limit, asc)
+	pageParams, err := newVideoPageParams(orderBy, offset, limit, asc)
 	if err != nil {
 		h.writeErrorResponse(w, err)
 		return
 	}
 
-	videos, err := h.VideoInteractor.SearchGlobal(r.Context(), search, pageParams)
+	videos, err := h.videoInteractor.SearchGlobal(r.Context(), search, pageParams)
 	if err != nil {
 		h.writeErrorResponse(w, err)
 		return
@@ -343,7 +343,10 @@ func (h *VideoHandler) writeErrorResponse(w http.ResponseWriter, vErr error) {
 
 	switch vErr := vErr.(type) {
 	case shared.Error:
-		h.log.Printf("Error: %s\n", vErr.Err.Error())
+		h.log.Printf("Error: %s\n", vErr.Message)
+		if vErr.Err != nil {
+			h.log.Printf("Details: %s\n", vErr.Err.Error())
+		}
 
 		w.WriteHeader(int(vErr.Code))
 		err := json.NewEncoder(w).Encode(serviceErrorResponse{

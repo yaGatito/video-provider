@@ -62,7 +62,9 @@ func run() error {
 	videoHandler := httpadp.NewVideoHandler(videoService, mwLog.Log)
 
 	router := mux.NewRouter()
+	router.Use(middleware.CORSMiddleware)
 	router.Use(mwLog.LoggingMiddleware)
+
 	httpadp.SetupRouter(router, videoHandler)
 
 	log.Printf("Video-service starting on port %s", cfg.Api.Port)

@@ -10,7 +10,7 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-func NewVideoValidator() *validator.Validate {
+func newVideoValidator() *validator.Validate {
 	validate := validator.New(validator.WithRequiredStructEnabled())
 
 	validate.RegisterValidation("maxTopic", func(fl validator.FieldLevel) bool {
@@ -26,7 +26,7 @@ func NewVideoValidator() *validator.Validate {
 	return validate
 }
 
-func NewVideoPageParams(
+func newVideoPageParams(
 	orderByStr string,
 	offset int32,
 	limit int32,

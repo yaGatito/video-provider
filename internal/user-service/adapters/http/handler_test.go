@@ -47,7 +47,7 @@ func TestValidCreateUserRequest(t *testing.T) {
 			r.ServeHTTP(rec,
 				httptest.NewRequest(
 					http.MethodPost,
-					RouteUsers,
+					routeUsers,
 					strings.NewReader(c.reqBody)))
 
 			require.Equal(t, http.StatusCreated, rec.Code)
@@ -133,7 +133,7 @@ func TestInvalidCreateUserRequest(t *testing.T) {
 			r.ServeHTTP(rec,
 				httptest.NewRequest(
 					http.MethodPost,
-					RouteUsers,
+					routeUsers,
 					strings.NewReader(c.reqBody)))
 
 			require.Equal(t, c.expStatusCode, rec.Code)
