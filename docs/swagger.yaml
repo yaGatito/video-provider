@@ -54,16 +54,16 @@ definitions:
       topic:
         type: string
     type: object
-  video-provider_internal_user-service_adapters_http.serviceErrorResponse:
+  internal_user-service_adapters_http.serviceErrorResponse:
     properties:
       msg:
         type: string
     type: object
-host: localhost:8080
+host: localhost:8081
 info:
   contact: {}
-  description: Service for managing video content.
-  title: Video Service API
+  description: Service for managing users.
+  title: User Service API
   version: "1.0"
 paths:
   /v1/users:
@@ -88,11 +88,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse'
+            $ref: '#/definitions/internal_user-service_adapters_http.serviceErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse'
+            $ref: '#/definitions/internal_user-service_adapters_http.serviceErrorResponse'
       summary: Creates a new user
       tags:
       - Users
@@ -114,11 +114,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse'
+            $ref: '#/definitions/internal_user-service_adapters_http.serviceErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse'
+            $ref: '#/definitions/internal_user-service_adapters_http.serviceErrorResponse'
       summary: Get user by ID
       tags:
       - Users
@@ -144,15 +144,15 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse'
+            $ref: '#/definitions/internal_user-service_adapters_http.serviceErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse'
+            $ref: '#/definitions/internal_user-service_adapters_http.serviceErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse'
+            $ref: '#/definitions/internal_user-service_adapters_http.serviceErrorResponse'
       summary: User login
       tags:
       - Users

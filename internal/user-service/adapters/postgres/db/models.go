@@ -10,13 +10,12 @@ import (
 )
 
 type User struct {
-	ID           uuid.UUID
-	Name         string
-	Lastname     string
-	Email        string
-	PasswordHash string
-	PasswordSalt string
-	CreatedAt    pgtype.Timestamp
-	Status       string
-	IsAdmin      bool
+	ID        uuid.UUID
+	Name      string
+	Lastname  string
+	Email     string
+	Password  string
+	CreatedAt pgtype.Timestamp
+	Status    string
+	IsAdmin   bool
 }

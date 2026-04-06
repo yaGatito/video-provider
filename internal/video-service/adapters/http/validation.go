@@ -3,13 +3,14 @@ package httpadp
 import (
 	"fmt"
 	"strings"
+	"video-provider/internal/pkg/shared"
 	"video-provider/internal/video-service/domain"
 	"video-provider/internal/video-service/policy"
 
 	"github.com/go-playground/validator/v10"
 )
 
-func NewVideoValidator() *validator.Validate {
+func newVideoValidator() *validator.Validate {
 	validate := validator.New(validator.WithRequiredStructEnabled())
 
 	validate.RegisterValidation("maxTopic", func(fl validator.FieldLevel) bool {
@@ -25,7 +26,7 @@ func NewVideoValidator() *validator.Validate {
 	return validate
 }
 
-func NewVideoPageParams(
+func newVideoPageParams(
 	orderByStr string,
 	offset int32,
 	limit int32,
@@ -61,10 +62,18 @@ func validateSearchQuery(query string) (string, error) {
 	query = strings.TrimSpace(query)
 
 	if len(query) < policy.SearchMinLen {
-		return "", fmt.Errorf("%s size is less than threshold: %d", query, policy.SearchMinLen)
+		return "", shared.NewError(
+			shared.ErrInvalidInput,
+			fmt.Sprintf("%s size is less than threshold: %d", query, policy.SearchMinLen),
+			nil,
+		)
 	}
 	if !policy.GetWordsFormatRE128().MatchString(query) {
-		return "", fmt.Errorf("query string contains prohibited characters")
+		return "", shared.NewError(
+			shared.ErrInvalidInput,
+			"query string contains prohibited characters",
+			nil,
+		)
 	}
 
 	return query, nil
@@ -72,17 +81,29 @@ func validateSearchQuery(query string) (string, error) {
 
 func validateLimit(limit int32) (int32, error) {
 	if limit < policy.ThresholdVideosLimit {
-		return 0, fmt.Errorf("limit is less then threshold(%d): %d", policy.ThresholdVideosLimit, limit)
+		return 0, shared.NewError(
+			shared.ErrInvalidInput,
+			fmt.Sprintf("limit is less then threshold(%d): %d", policy.ThresholdVideosLimit, limit),
+			nil,
+		)
 	}
 	if limit > policy.VideosMaxLimit {
-		return 0, fmt.Errorf("limit reached maximum allowed value: %d", limit)
+		return 0, shared.NewError(
+			shared.ErrInvalidInput,
+			fmt.Sprintf("limit reached maximum allowed value: %d", limit),
+			nil,
+		)
 	}
 	return limit, nil
 }
 
 func validateOffset(offset int32) (int32, error) {
 	if offset < 0 {
-		return 0, fmt.Errorf("offset is zero or less: %d", offset)
+		return 0, shared.NewError(
+			shared.ErrInvalidInput,
+			fmt.Sprintf("offset is zero or less: %d", offset),
+			nil,
+		)
 	}
 	return offset, nil
 }
@@ -92,8 +113,12 @@ func validateOrderBy(orderBy string) (string, error) {
 	case domain.OrderByDate:
 		return orderBy, nil
 	default:
+		return "", shared.NewError(
+			shared.ErrInvalidInput,
+			fmt.Sprintf("invalid orderBy argument: %s", orderBy),
+			nil,
+		)
 	}
-	return "", fmt.Errorf("invalid orderBy argument: %s", orderBy)
 }
 
 func validateIsAsc(asc string) (string, error) {
@@ -103,6 +128,10 @@ func validateIsAsc(asc string) (string, error) {
 	case domain.DescOrder:
 		return domain.DescOrder, nil
 	default:
-		return "", fmt.Errorf("invalid asc argument: %s; only `t` and `f` are allowed", asc)
+		return "", shared.NewError(
+			shared.ErrInvalidInput,
+			fmt.Sprintf("invalid asc argument: %s; only `t` and `f` are allowed", asc),
+			nil,
+		)
 	}
 }

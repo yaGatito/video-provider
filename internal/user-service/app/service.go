@@ -1,151 +1,93 @@
 package app
 
 import (
-	"fmt"
+	"context"
 	"log"
-	"time"
+	"video-provider/internal/pkg/shared"
 	"video-provider/internal/user-service/domain"
 	"video-provider/internal/user-service/ports"
 
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 )
 
-type RegisterUserCommand struct {
-	Email    string
-	Name     string
-	Lastname string
-	Password string
-}
-
-// LoginUserCommand represents the data needed to login a user.
-type LoginUserCommand struct {
-	Email    string
-	Password string
-}
-
-type UpdateUserCommand struct {
-	ID       uuid.UUID
-	Email    *string
-	Name     *string
-	Lastname *string
-	Password *string
-}
-
-type GetUserResult struct {
-	Name     string
-	Email    string
-	Lastname string
-	CreateAt time.Time
-}
-
 type UserInteractor interface {
-	Create(cmd RegisterUserCommand) (uuid.UUID, error)
-	Get(id uuid.UUID) (GetUserResult, error)
-	Update(cmd UpdateUserCommand) error
-	Login(email, password string) (string, error)
+	Create(ctx context.Context, user domain.User, password string) (uuid.UUID, error)
+	Get(ctx context.Context, id uuid.UUID) (domain.User, error)
+	Update(ctx context.Context, id uuid.UUID, user domain.User) error
+	Login(ctx context.Context, email string, password []byte) (string, error)
 }
 
 type UserService struct {
-	Repo ports.UserRepository
-	log  log.Logger
+	repo   ports.UserRepository
+	hasher ports.PasswordHasher
+	log    log.Logger
 }
 
-func NewUserService(repo ports.UserRepository) *UserService {
-	return &UserService{Repo: repo}
+func NewUserService(repo ports.UserRepository, hasher ports.PasswordHasher) *UserService {
+	return &UserService{repo: repo, hasher: hasher}
 }
 
-func (us *UserService) Create(cmd RegisterUserCommand) (uuid.UUID, error) {
-	user := domain.NewUser(cmd.Email, cmd.Name, cmd.Lastname)
-	fmt.Println("Received RegisterUserCommand with valid email", user.Email)
-
-	// TODO: use hashing mechanism
-	id, err := us.Repo.Create(user, cmd.Password, cmd.Password)
+func (us *UserService) Create(ctx context.Context, user domain.User, password string) (uuid.UUID, error) {
+	hash, err := us.hasher.Hash(password)
 	if err != nil {
-		return uuid.UUID{}, fmt.Errorf("error creating user: %w", err)
+		return uuid.UUID{}, shared.NewError(shared.ErrInternal, "failed to hash password", err)
 	}
 
-	log.Printf("User created and saved into DB with ID: %s\n", id.String())
+	id, err := us.repo.Create(ctx, user, hash)
+	if err != nil {
+		return uuid.UUID{}, err
+	}
+
 	return id, nil
 }
 
-func (us *UserService) Get(id uuid.UUID) (GetUserResult, error) {
-	user, err := us.Repo.FindByID(id)
-	if err != nil {
-		log.Printf("Error retrieving user with ID %s: %v\n", id.String(), err)
-		return GetUserResult{}, err
-	}
-	return GetUserResult{
-		Email:    user.Email,
-		Name:     user.Name,
-		Lastname: user.LastName,
-		CreateAt: user.CreatedAt,
-	}, nil
+func (us *UserService) Get(ctx context.Context, id uuid.UUID) (domain.User, error) {
+	return us.repo.FindByID(ctx, id)
 }
 
-func (us *UserService) Update(cmd UpdateUserCommand) error {
-	user, err := us.Repo.FindByID(cmd.ID)
+func (us *UserService) Update(ctx context.Context, id uuid.UUID, toUpdate domain.User) error {
+	user, err := us.repo.FindByID(ctx, id)
 	if err != nil {
-		return fmt.Errorf("error finding user by ID: %w", err)
+		return err
 	}
 
-	if cmd.Email != nil {
-		user.Email = *cmd.Email
+	if toUpdate.Email != "" {
+		user.Email = toUpdate.Email
 	}
-	if cmd.Name != nil {
-		user.Name = *cmd.Name
+	if toUpdate.Name != "" {
+		user.Name = toUpdate.Name
 	}
-	if cmd.Lastname != nil {
-		user.LastName = *cmd.Lastname
-	}
-	if cmd.Password != nil {
-		// pass := domain.Password(*cmd.Password)
-		// if err := pass.ValidatePassword(); err != nil {
-		// 	return fmt.Errorf("error validating user password: %w", err)
-		// }
-		// var passHash = string(pass)
-		// var passSalt = string(pass)
-
-		// err := us.Repo.UpdatePass(cmd.ID, passHash, passSalt)
-		// if err != nil {
-		// 	return fmt.Errorf("error updating user password: %w", err)
-		// }
+	if toUpdate.LastName != "" {
+		user.LastName = toUpdate.LastName
 	}
 
-	err = us.Repo.Update(user)
+	err = us.repo.Update(ctx, id, user)
 	if err != nil {
-		return fmt.Errorf("error updating user: %w", err)
+		return err
 	}
 
-	log.Printf("User updated with ID: %s\n", cmd.ID.String())
 	return nil
 }
 
-func (us *UserService) Login(email, password string) (string, error) {
-	// Find user by email
-	user, err := us.Repo.FindByEmail(email)
-	if err != nil {
-		log.Printf("Error finding user by email: %v\n", err)
-		return "", fmt.Errorf("error finding user by email: %w", err)
+func (us *UserService) Login(ctx context.Context, email string, password []byte) (string, error) {
+	if email == "" {
+		return "", shared.NewError(shared.ErrInvalidInput, "email is required", nil)
+	}
+	if len(password) == 0 {
+		return "", shared.NewError(shared.ErrInvalidInput, "password is required", nil)
 	}
 
-	// Validate password
-	// if !user.PasswordMatches(password) {
-	// 	return "", fmt.Errorf("invalid credentials")
-	// }
-
-	// Generate JWT token
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub": user.ID,
-		"exp": time.Now().Add(24 * time.Hour).Unix(),
-	})
-
-	// Sign token with a secret key (you should use a secure key in production)
-	secretKey := "your-secret-key-here"
-	tokenString, err := token.SignedString([]byte(secretKey))
+	_, hash, err := us.repo.GetPasswordHash(ctx, email)
 	if err != nil {
-		return "", fmt.Errorf("error generating token: %w", err)
+		return "", err
 	}
 
-	return tokenString, nil
+	err = us.hasher.CompareHashAndPassword(hash, password)
+	if err != nil {
+		return "", shared.NewError(shared.ErrUnauthorized, "failed to compare password", nil)
+	}
+
+	// TODO: Generate and return a JWT token or session ID here
+
+	return "success", nil
 }

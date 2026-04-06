@@ -4,21 +4,15 @@ WORKDIR /app
 
 COPY go.mod go.sum ./
 RUN go mod download
-
 COPY . .
-
-RUN go build -o video-service ../cmd/app.go
+RUN go build -o video-service cmd/video-service/app.go
 
 FROM alpine:latest
 
 WORKDIR /app
 
 COPY --from=builder /app/video-service .
-COPY config/app.yml config/app.yml
-# Optional if env is used
+COPY config/video-service.yml /app/config/video-service.yml
 COPY .env .env
 
-# Expose port (adjust if needed after checking app.go)
-EXPOSE 8080
-
-CMD ["./cmd/video-service"]
+CMD ["./video-service"]

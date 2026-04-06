@@ -2,7 +2,6 @@ package httpadp
 
 import (
 	"fmt"
-	"net/http"
 	"regexp"
 	"video-provider/internal/pkg/shared"
 	"video-provider/internal/user-service/policy"
@@ -12,7 +11,7 @@ import (
 
 var textRe = regexp.MustCompile(fmt.Sprintf(`^[A-Za-z]{%d,%d}$`, policy.MinInputTextLen, policy.MaxInputTextLen))
 
-func NewUserValidate() *validator.Validate {
+func newUserValidate() *validator.Validate {
 	validate := validator.New(validator.WithRequiredStructEnabled())
 
 	validate.RegisterValidation("text64", func(fl validator.FieldLevel) bool {
@@ -33,40 +32,22 @@ var passReqSpecGroup = regexp.MustCompile(`.*[!@#$%^&*()_=+-]+.*`)
 
 func validatePassword(password []byte) error {
 	if len(password) < policy.MinPasswordLen || len(password) > policy.MaxInputTextLen {
-		return shared.ServiceError{
-			Code:    http.StatusBadRequest,
-			Message: fmt.Sprintf("password must be between %d and %d characters long", policy.MinPasswordLen, policy.MaxInputTextLen),
-		}
+		return shared.NewError(shared.ErrInvalidInput, fmt.Sprintf("password must be between %d and %d characters long", policy.MinPasswordLen, policy.MaxInputTextLen), nil)
 	}
 	if !passRe.Match(password) {
-		return shared.ServiceError{
-			Code:    http.StatusBadRequest,
-			Message: "password contains invalid characters",
-		}
+		return shared.NewError(shared.ErrInvalidInput, "password contains invalid characters", nil)
 	}
 	if !passReqDigGroup.Match(password) {
-		return shared.ServiceError{
-			Code:    http.StatusBadRequest,
-			Message: "password must contain at least one digit",
-		}
+		return shared.NewError(shared.ErrInvalidInput, "password must contain at least one digit", nil)
 	}
 	if !passReqLowGroup.Match(password) {
-		return shared.ServiceError{
-			Code:    http.StatusBadRequest,
-			Message: "password must contain at least one lowercase letter",
-		}
+		return shared.NewError(shared.ErrInvalidInput, "password must contain at least one lowercase letter", nil)
 	}
 	if !passReqCapGroup.Match(password) {
-		return shared.ServiceError{
-			Code:    http.StatusBadRequest,
-			Message: "password must contain at least one uppercase letter",
-		}
+		return shared.NewError(shared.ErrInvalidInput, "password must contain at least one uppercase letter", nil)
 	}
 	if !passReqSpecGroup.Match(password) {
-		return shared.ServiceError{
-			Code:    http.StatusBadRequest,
-			Message: "password must contain at least one special character",
-		}
+		return shared.NewError(shared.ErrInvalidInput, "password must contain at least one special character", nil)
 	}
 	return nil
 }

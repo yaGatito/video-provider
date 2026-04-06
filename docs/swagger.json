@@ -1,12 +1,12 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "Service for managing video content.",
-        "title": "Video Service API",
+        "description": "Service for managing users.",
+        "title": "User Service API",
         "contact": {},
         "version": "1.0"
     },
-    "host": "localhost:8080",
+    "host": "localhost:8081",
     "basePath": "/",
     "paths": {
         "/v1/users": {
@@ -43,13 +43,13 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
+                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
+                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     }
                 }
@@ -89,19 +89,19 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
+                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
+                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
+                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     }
                 }
@@ -134,13 +134,13 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
+                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/video-provider_internal_user-service_adapters_http.serviceErrorResponse"
+                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
                         }
                     }
                 }
@@ -431,7 +431,7 @@
                 }
             }
         },
-        "video-provider_internal_user-service_adapters_http.serviceErrorResponse": {
+        "internal_user-service_adapters_http.serviceErrorResponse": {
             "type": "object",
             "properties": {
                 "msg": {

@@ -11,7 +11,6 @@ import (
 	"video-provider/internal/video-service/app"
 	"video-provider/internal/video-service/domain"
 	"video-provider/internal/video-service/policy"
-	"video-provider/internal/video-service/ports"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -28,18 +27,16 @@ const (
 )
 
 type VideoHandler struct {
-	VideoInteractor app.VideoService
-	IDGen           ports.IDGen
+	videoInteractor app.VideoService
 	log             *log.Logger
 	validate        *validator.Validate
 }
 
 func NewVideoHandler(
 	userInteractor app.VideoService,
-	idGen ports.IDGen,
 	log *log.Logger,
 ) VideoHandler {
-	return VideoHandler{VideoInteractor: userInteractor, IDGen: idGen, log: log, validate: NewVideoValidator()}
+	return VideoHandler{videoInteractor: userInteractor, log: log, validate: newVideoValidator()}
 }
 
 // Create godoc
@@ -63,10 +60,8 @@ func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 	var createVideoRequestData createVideoRequestBody
 	if err := json.NewDecoder(r.Body).Decode(&createVideoRequestData); err != nil {
-		h.writeErrorResponse(w, shared.ServiceError{
-			Code:    http.StatusBadRequest,
-			Message: "failed to decode request body",
-			Err:     err})
+		h.writeErrorResponse(w, shared.NewError(
+			http.StatusBadRequest, "failed to decode request body", err))
 		return
 	}
 
@@ -76,7 +71,7 @@ func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	video, err := h.VideoInteractor.Create(r.Context(), domain.Video{
+	video, err := h.videoInteractor.Create(r.Context(), domain.Video{
 		PublisherID: publisherID,
 		Topic:       createVideoRequestData.Topic,
 		Description: createVideoRequestData.Description,
@@ -103,14 +98,11 @@ func (h *VideoHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if videoID == uuid.Nil {
-		h.writeErrorResponse(w, shared.ServiceError{
-			Code:    http.StatusBadRequest,
-			Message: "empty video ID",
-		})
+		h.writeErrorResponse(w, shared.NewError(http.StatusBadRequest, "empty video ID", nil))
 		return
 	}
 
-	video, err := h.VideoInteractor.GetByID(r.Context(), domain.UUID(videoID))
+	video, err := h.videoInteractor.GetByID(r.Context(), domain.UUID(videoID))
 	h.writeResponse(w, dtoVideo(video), http.StatusOK)
 }
 
@@ -135,10 +127,9 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if publisherID == uuid.Nil {
-		h.writeErrorResponse(w, shared.ServiceError{
-			Code:    http.StatusBadRequest,
-			Message: "empty publisher ID",
-		})
+		h.writeErrorResponse(w, shared.NewError(
+			http.StatusBadRequest, "empty publisher ID", nil),
+		)
 		return
 	}
 
@@ -170,7 +161,7 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	pageParams, err := NewVideoPageParams(orderBy, offset, limit, asc)
+	pageParams, err := newVideoPageParams(orderBy, offset, limit, asc)
 	if err != nil {
 		h.writeErrorResponse(w, err)
 		return
@@ -178,7 +169,7 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 
 	var videos []domain.Video
 	if search == "" {
-		videos, err = h.VideoInteractor.GetByPublisher(r.Context(), publisherID, pageParams)
+		videos, err = h.videoInteractor.GetByPublisher(r.Context(), publisherID, pageParams)
 		if err != nil {
 			h.writeErrorResponse(w, err)
 			return
@@ -190,7 +181,7 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		videos, err = h.VideoInteractor.SearchPublisher(r.Context(), publisherID, search, pageParams)
+		videos, err = h.videoInteractor.SearchPublisher(r.Context(), publisherID, search, pageParams)
 		if err != nil {
 			h.writeErrorResponse(w, err)
 			return
@@ -236,13 +227,13 @@ func (h *VideoHandler) SearchGlobal(w http.ResponseWriter, r *http.Request) {
 	orderBy := resStr[1]
 	asc := resStr[2]
 
-	pageParams, err := NewVideoPageParams(orderBy, offset, limit, asc)
+	pageParams, err := newVideoPageParams(orderBy, offset, limit, asc)
 	if err != nil {
 		h.writeErrorResponse(w, err)
 		return
 	}
 
-	videos, err := h.VideoInteractor.SearchGlobal(r.Context(), search, pageParams)
+	videos, err := h.videoInteractor.SearchGlobal(r.Context(), search, pageParams)
 	if err != nil {
 		h.writeErrorResponse(w, err)
 		return
@@ -253,16 +244,13 @@ func (h *VideoHandler) SearchGlobal(w http.ResponseWriter, r *http.Request) {
 
 func (h *VideoHandler) parseUrlValues(query string) (url.Values, error) {
 	if len(query) > policy.UrlMaxLen {
-		return nil, shared.ServiceError{
-			Code:    http.StatusBadRequest,
-			Message: "too large url"}
+		return nil, shared.NewError(http.StatusBadRequest, "too large url", nil)
 	}
 	urlValues, err := url.ParseQuery(query)
 	if err != nil {
 		h.log.Println(err)
-		return nil, shared.ServiceError{
-			Code:    http.StatusBadRequest,
-			Message: "unparsable url query", Err: err}
+		return nil, shared.NewError(
+			http.StatusBadRequest, "unparsable url query", err)
 	}
 	return urlValues, nil
 }
@@ -276,10 +264,9 @@ func (h *VideoHandler) parseIntsUrlParams(
 	for i, param := range params {
 		val, err := strconv.ParseInt(values.Get(param), 10, 32)
 		if err != nil {
-			return nil, shared.ServiceError{
-				Code:    http.StatusBadRequest,
-				Message: "unparsable url param (int): " + param,
-				Err:     err}
+			return nil, shared.NewError(
+				http.StatusBadRequest, "unparsable url param (int): "+param, err,
+			)
 		}
 		res[i] = int32(val)
 	}
@@ -296,10 +283,8 @@ func (h *VideoHandler) parseStringsUrlParams(
 	for i, param := range params {
 		val, err := h.extractUrlVarString(values, param)
 		if err != nil {
-			return nil, shared.ServiceError{
-				Code:    http.StatusBadRequest,
-				Message: "unparsable url param (string): " + param,
-				Err:     err}
+			return nil, shared.NewError(
+				http.StatusBadRequest, "unparsable url param (string): "+param, err)
 		}
 		res[i] = val
 	}
@@ -313,16 +298,13 @@ func (h *VideoHandler) pathVarHandler(
 ) (domain.UUID, error) {
 	val, ok := mux.Vars(r)[varName]
 	if !ok {
-		return domain.UUID{}, shared.ServiceError{
-			Code:    http.StatusBadRequest,
-			Message: "path var not specified: " + varName}
+		return domain.UUID{}, shared.NewError(
+			http.StatusBadRequest, "path var not specified: "+varName, nil)
 	}
-	res, err := h.IDGen.Parse(val)
+	res, err := uuid.Parse(val)
 	if err != nil {
-		return domain.UUID{}, shared.ServiceError{
-			Code:    http.StatusBadRequest,
-			Message: "unparsable ID: " + varName,
-			Err:     err}
+		return domain.UUID{}, shared.NewError(
+			http.StatusBadRequest, "unparsable ID: "+varName, err)
 	}
 
 	return res, nil
@@ -339,10 +321,8 @@ func (h *VideoHandler) extractUrlVarString(
 	}
 	value, err := url.QueryUnescape(value)
 	if err != nil {
-		return "", shared.ServiceError{
-			Code:    http.StatusBadRequest,
-			Message: "failed to unescape url param: " + paramName,
-			Err:     err}
+		return "", shared.NewError(
+			http.StatusBadRequest, "failed to unescape url param: "+paramName, err)
 	}
 
 	return value, nil
@@ -362,9 +342,13 @@ func (h *VideoHandler) writeErrorResponse(w http.ResponseWriter, vErr error) {
 	w.Header().Set("Content-Type", "application/json")
 
 	switch vErr := vErr.(type) {
-	case shared.ServiceError:
-		h.log.Println("ServiceError: %w", vErr.Err)
-		w.WriteHeader(vErr.Code)
+	case shared.Error:
+		h.log.Printf("Error: %s\n", vErr.Message)
+		if vErr.Err != nil {
+			h.log.Printf("Details: %s\n", vErr.Err.Error())
+		}
+
+		w.WriteHeader(int(vErr.Code))
 		err := json.NewEncoder(w).Encode(serviceErrorResponse{
 			Message: vErr.Message,
 		})
@@ -373,7 +357,7 @@ func (h *VideoHandler) writeErrorResponse(w http.ResponseWriter, vErr error) {
 		}
 
 	case validator.ValidationErrors:
-		h.log.Println("Validation request body error: %w", vErr[0])
+		h.log.Printf("Validation request body error: %s\n", vErr[0].Error())
 		w.WriteHeader(http.StatusBadRequest)
 		err := json.NewEncoder(w).Encode(serviceErrorResponse{
 			Message: "invalid field: " + vErr[0].Field(),
@@ -383,7 +367,7 @@ func (h *VideoHandler) writeErrorResponse(w http.ResponseWriter, vErr error) {
 		}
 
 	case error:
-		h.log.Println("Fallback error: %w", vErr)
+		h.log.Printf("Fallback error: %s\n", vErr.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		err := json.NewEncoder(w).Encode(serviceErrorResponse{
 			Message: "internal error",

@@ -3,13 +3,13 @@ ifneq (,$(wildcard ./.env))
     export
 endif
 
-# default config if not passed (example: make run CONFIG=video)
-CONFIG ?= video
-SERVICE_NAME = $(CONFIG)-service
+# default config if not passed (example: make run config=video)
+config ?= video
+SERVICE_NAME = $(config)-service
 CONFIG_PATH := config/$(SERVICE_NAME).yml
 
 ifeq ("$(wildcard $(CONFIG_PATH))","")
-$(error Config not found: $(CONFIG_PATH). Use CONFIG=user or CONFIG=video)
+$(error Config not found: $(CONFIG_PATH). Use config=user or config=video)
 endif
 
 ifeq ($(OS),Windows_NT)
@@ -31,6 +31,10 @@ DB_HOST      	= $(call get-cfg, '.db.host')
 DB_PORT      	= $(call get-cfg, '.db.port')
 # DB_MAX_CONN 	:= $(call get-cfg, '.db.maxconns')
 MIGRATIONS_DIR 	= $(call get-cfg, '.db.migrationdir')
+
+API_PORT    	= $(call get-cfg, '.api.port')
+API_NAME		= $(call get-cfg, '.api.name')
+
 DB_URL = $(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
 
 DB_CONTAINER_NAME = $(DB_NAME)-$(DB_VENDOR)-$(DB_VERSION)
@@ -52,12 +56,16 @@ help:
 	@echo "Usage: make <target> [CONFIG=user|video]"
 	@echo ""
 	@echo "Common targets:"
-	@echo "  make bootstrap      - check required local tools"
-	@echo "  make setup          - run DB containers + init + migrations for user and video"
-	@echo "  make run CONFIG=... - run service (user or video)"
-	@echo "  make test           - run selected package test"
-	@echo "  make tests          - run all tests"
-	@echo "  make db-status      - print DB settings for current CONFIG"
+	@echo "  make bootstrap      	- check required local tools"
+	@echo "  make setup          	- run DB containers + init + migrations for user and video"
+	@echo "  make go-run config=... - run service (user or video)"
+	@echo "  make do-run config=... - run service via docker (user or video)"
+	@echo "  make image      	 	- build docker image (user or video)"
+	@echo "  make web 			 	- run web application"
+	@echo "  make gen            	- run generations scripts: sqlc, swagger, gqlgen, mocks"
+	@echo "  make test           	- run selected package test"
+	@echo "  make tests          	- run all tests"
+	@echo "  make db-status      	- print DB settings for current config"
 
 .PHONY: bootstrap
 bootstrap:
@@ -72,36 +80,36 @@ bootstrap:
 .PHONY: setup
 setup:
 	$(call log, "Starting user database...")
-	$(MAKE) db-up CONFIG=user
+	$(MAKE) db-up config=user
 	$(SLEEP_5)
 	$(call log, "Initializing user database...")
-	$(MAKE) db-init CONFIG=user
+	$(MAKE) db-init config=user
 	
 	$(call log, "Starting video database...")
-	$(MAKE) db-up CONFIG=video
+	$(MAKE) db-up config=video
 	$(SLEEP_5)
 	$(call log, "Initializing video database...")
-	$(MAKE) db-init CONFIG=video
+	$(MAKE) db-init config=video
 	
 	$(call log, "Running migrations for user database...")
-	$(MAKE) migrate-up CONFIG=user
+	$(MAKE) migrate-up config=user
 	
 	$(call log, "Running migrations for video database...")
-	$(MAKE) migrate-up CONFIG=video
+	$(MAKE) migrate-up config=video
 	
 # 	$(call log, "Running user-service...")
-# 	$(MAKE) run CONFIG=user
+# 	$(MAKE) run config=user
 
 # 	$(call log, "Running video-service...")
-# 	$(MAKE) run CONFIG=video
+# 	$(MAKE) run config=video
 
-.PHONY: front
-front:
+.PHONY: web
+web:
 	$(call log, "Starting frontend application...")
 	cd ./web && npm start
 
-.PHONY: run
-run:
+.PHONY: go-run
+go-run:
 	$(call log, "Checking config: $(CONFIG_PATH)...")
 	go run cmd/$(SERVICE_NAME)/app.go -config=$(CONFIG_PATH)
 
@@ -127,16 +135,17 @@ sqlc:
 
 .PHONY: mocks
 mocks:
-ifeq ("$(CONFIG)","video")
+ifeq ("$(config)","video")
 	$(MOCKGEN) -source="./internal/$(SERVICE_NAME)/app/video_service.go" -destination="./internal/$(SERVICE_NAME)/app/mock/video_service_mock.go" -mock_names=VideoService=MockVideoService
 	$(MOCKGEN) -source="./internal/$(SERVICE_NAME)/ports/video_repo.go" -destination="./internal/$(SERVICE_NAME)/ports/mock/video_repo_mock.go" -mock_names=VideoRepository=MockVideoRepository
 	$(MOCKGEN) -source="./internal/$(SERVICE_NAME)/ports/id_gen.go" -destination="./internal/$(SERVICE_NAME)/ports/mock/id_gen_mock.go" -mock_names=IDGen=MockIDGen
 	$(call log, "$(SERVICE_NAME) mocks generated")
 endif
 
-ifeq ("$(CONFIG)","user")
+ifeq ("$(config)","user")
 	$(MOCKGEN) -source="./internal/$(SERVICE_NAME)/app/service.go" -destination="./internal/$(SERVICE_NAME)/app/mock/service_mock.go" -mock_names=UserInteractor=MockUserInteractor
 	$(MOCKGEN) -source="./internal/$(SERVICE_NAME)/ports/user_repo.go" -destination="./internal/$(SERVICE_NAME)/ports/mock/user_repo_mock.go" -mock_names=UserRepository=MockUserRepository
+	$(MOCKGEN) -source="./internal/$(SERVICE_NAME)/ports/hash_gen.go" -destination="./internal/$(SERVICE_NAME)/ports/mock/hash_gen_mock.go" -mock_names=PasswordHasher=MockPasswordHasher
 	$(call log, "$(SERVICE_NAME) mocks generated")
 endif
 
@@ -153,16 +162,26 @@ tests: mocks
 	go test ./...
 
 #   ---  Usage scanario --- 
-# make db-up CONFIG=video
-# make db-init CONFIG=video
-# make run CONFIG=video
+# make db-up config=video
+# make db-init config=video
+# make run config=video
 
 #   --- Docker ---
-.PHONY: db-up 
+.PHONY: image
+image:
+	docker build -D -t $(SERVICE_NAME) -f internal/$(SERVICE_NAME)/Dockerfile .
+
+.PHONY: do-run
+do-run:
+	docker rm -f $(SERVICE_NAME)
+# 	docker run --rm -p 8081:8081 --env-file .env $(SERVICE_NAME)
+	docker run  --name $(SERVICE_NAME) --rm -p $(API_PORT):$(API_PORT) $(SERVICE_NAME)
+
+.PHONY: db-up
 db-up:
-	-docker rm -f $(DB_CONTAINER_NAME)
+	docker rm -f $(DB_CONTAINER_NAME)
 	docker run --rm -d --name $(DB_CONTAINER_NAME) -p $(DB_PORT):$(DB_PORT) -e POSTGRES_USER=$(POSTGRES_USER) -e POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) postgres:$(DB_VERSION) -p $(DB_PORT)
-	$(call log, "Docker contained started with name $(DB_CONTAINER_NAME) on $(DB_PORT)")
+	$(call log, "Docker container started with name $(DB_CONTAINER_NAME) on $(DB_PORT)")
 
 .PHONY: db-down
 db-down:
