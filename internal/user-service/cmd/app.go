@@ -8,7 +8,7 @@ import (
 	"os"
 	_ "user-service/docs"
 
-	"github.com/yaGatito/video-provider/internal/pkg/middleware	"
+	"user-service/pkg/middleware"
 
 	cryptoadp "user-service/adapters/crypto"
 	httpadp "user-service/adapters/http"
@@ -17,23 +17,23 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
-	"github.com/joho/godotenv"
 )
 
 const (
-	dbUser  = "POSTGRES_USER"
-	dbPass  = "POSTGRES_PASSWORD"
-	dbHost  = "USER_DB_HOST"
-	dbPort  = "USER_DB_PORT"
-	dbName  = "USER_DB_NAME"
-	apiPort = "API_PORT"
+	dbUser       = "POSTGRES_USER"
+	dbPass       = "POSTGRES_PASSWORD"
+	dbHost       = "USER_DB_HOST"
+	dbDockerHost = "USER_DB_DOCKER_HOST"
+	dbPort       = "USER_DB_PORT"
+	dbName       = "USER_DB_NAME"
+	apiPort      = "USER_API_PORT"
 )
 
-// @title           User Service API
-// @version         1.0
-// @description     Service for managing users.
-// @host            localhost:8081
-// @BasePath        /
+// @title			User Service API
+// @version		1.0
+// @description	Service for managing users.
+// @host			localhost:8081
+// @BasePath		/
 func main() {
 	if err := run(); err != nil {
 		log.Println(err)
@@ -42,12 +42,8 @@ func main() {
 
 func run() error {
 	ctx := context.Background()
-	err := godotenv.Load()
-	if err != nil {
-		return fmt.Errorf("failed to load .env file: %w", err)
-	}
 
-	pgConfig, err := pgxpool.ParseConfig(dbUrl())
+	pgConfig, err := pgxpool.ParseConfig(dbDockerUrl())
 	if err != nil {
 		return fmt.Errorf("failed to parse connection string: %w", err)
 	}
@@ -57,6 +53,11 @@ func run() error {
 	if err != nil {
 		return fmt.Errorf("failed to create connection pool: %w", err)
 	}
+	err = dbPool.Ping(ctx)
+	if err != nil {
+		log.Default().Printf("failed to ping database: %s\n", err.Error())
+	}
+
 	defer dbPool.Close()
 
 	mwLog := middleware.NewMiddlewareLogger(os.Stdout, "[USRSVC]")
@@ -86,4 +87,10 @@ func dbUrl() string {
 	return fmt.Sprintf(
 		"%s://%s:%s@%s:%s/%s?sslmode=disable&pool_max_conns=%s&pool_max_conn_lifetime=1h30m",
 		"postgres", os.Getenv(dbUser), os.Getenv(dbPass), os.Getenv(dbHost), os.Getenv(dbPort), os.Getenv(dbName), "30")
+}
+
+func dbDockerUrl() string {
+	return fmt.Sprintf(
+		"%s://%s:%s@%s:5432/%s?sslmode=disable&pool_max_conns=%s&pool_max_conn_lifetime=1h30m",
+		"postgres", os.Getenv(dbUser), os.Getenv(dbPass), os.Getenv(dbDockerHost), os.Getenv(dbName), "30")
 }

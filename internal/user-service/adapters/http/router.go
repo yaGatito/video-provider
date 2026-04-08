@@ -10,9 +10,10 @@ import (
 const (
 	pathVarUserID = "userID"
 
-	routeUsers = "/v1/users"
-	routeUser  = "/v1/users/{" + pathVarUserID + "}"
-	routeLogin = "/v1/users/login"
+	routeUsers   = "/v1/users"
+	routeUser    = "/v1/users/{" + pathVarUserID + "}"
+	routeLogin   = "/v1/users/login"
+	routeSwagger = "/v1/swagger/"
 )
 
 func SetupRouter(r *mux.Router, h *UserHandler) {
@@ -26,5 +27,5 @@ func SetupRouter(r *mux.Router, h *UserHandler) {
 	r.HandleFunc(routeLogin, h.Login).
 		Methods(http.MethodPost, http.MethodOptions)
 
-	r.PathPrefix("/v1/swagger/").HandlerFunc(httpSwagger.WrapHandler)
+	r.PathPrefix(routeSwagger).HandlerFunc(httpSwagger.WrapHandler)
 }

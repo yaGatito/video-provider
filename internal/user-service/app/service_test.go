@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/yaGatito/video-provider/internal/pkg/shared"
+	"user-service/pkg/shared"
 	"testing"
 	"time"
 	"user-service/domain"

@@ -3,9 +3,8 @@ package httpadp
 import (
 	"fmt"
 	"regexp"
+	"user-service/pkg/shared"
 	"user-service/policy"
-
-	"github.com/yaGatito/video-provider/internal/pkg/shared"
 
 	"github.com/go-playground/validator/v10"
 )

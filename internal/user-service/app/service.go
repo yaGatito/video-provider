@@ -3,11 +3,11 @@ package app
 import (
 	"context"
 	"fmt"
-	"github.com/yaGatito/video-provider/internal/pkg/shared"
 	"log"
 	"os"
 	"time"
 	"user-service/domain"
+	"user-service/pkg/shared"
 	"user-service/ports"
 
 	"github.com/golang-jwt/jwt/v4"

@@ -75,8 +75,8 @@ func TestCreateVideo(t *testing.T) {
 			req := httptest.NewRequest(
 				http.MethodPost,
 				strings.Replace(
-					RoutePublisherVideos,
-					"{"+PathVarPublisherID+"}",
+					routePublisherVideos,
+					"{"+pathVarPublisherID+"}",
 					c.pubID,
 					1,
 				),
@@ -136,8 +136,8 @@ func TestGetVideoById(t *testing.T) {
 			req := httptest.NewRequest(
 				http.MethodGet,
 				strings.Replace(
-					RouteVideo,
-					"{"+PathVarVideoID+"}",
+					routeVideo,
+					"{"+pathVarVideoID+"}",
 					c.reqVidID,
 					1,
 				),
@@ -235,8 +235,8 @@ func TestGetByPublisherVideos(t *testing.T) {
 			).MaxTimes(c.expCallCnt)
 
 			url := strings.Replace(
-				RoutePublisherVideos,
-				"{"+PathVarPublisherID+"}",
+				routePublisherVideos,
+				"{"+pathVarPublisherID+"}",
 				c.pubID,
 				1,
 			) + c.urlParams
@@ -323,8 +323,8 @@ func TestSearchPublisherVideos(t *testing.T) {
 				gomock.Any()).Return(expectedRes, nil).MaxTimes(c.expCallCnt)
 
 			url := strings.Replace(
-				RoutePublisherVideos,
-				"{"+PathVarPublisherID+"}",
+				routePublisherVideos,
+				"{"+pathVarPublisherID+"}",
 				c.pubID,
 				1,
 			) + c.urlParams

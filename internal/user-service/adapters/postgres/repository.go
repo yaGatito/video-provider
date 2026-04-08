@@ -6,9 +6,8 @@ import (
 
 	postgres "user-service/adapters/postgres/db"
 	"user-service/domain"
+	"user-service/pkg/shared"
 	"user-service/ports"
-
-	"github.com/yaGatito/video-provider/internal/pkg/shared"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"

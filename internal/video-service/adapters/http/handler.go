@@ -9,9 +9,8 @@ import (
 	"strconv"
 	"video-service/app"
 	"video-service/domain"
+	"video-service/pkg/shared"
 	"video-service/policy"
-
-	"github.com/yaGatito/video-provider/internal/pkg/shared"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -20,11 +19,11 @@ import (
 )
 
 const (
-	SearchUrlParam  = "query"
-	LimitUrlParam   = "limit"
-	OffsetUrlParam  = "offset"
-	OrderByUrlParam = "order"
-	IsAscUrlParam   = "asc"
+	SearchUrlParam = "query"
+	LimitUrlParam  = "limit"
+	OffsetUrlParam = "offset"
+	SortByUrlParam = "sort"
+	IsAscUrlParam  = "order"
 )
 
 type VideoHandler struct {
@@ -41,19 +40,20 @@ func NewVideoHandler(
 }
 
 // Create godoc
-// @Summary      Creates new video.
-// @Description  Creates a new video record for the specified publisher.
-// @Tags         videos
-// @Accept       json
-// @Produce      json
-// @Param        publisherID  path      string                 true  "Publisher ID (UUID)"
-// @Param        video        body      createVideoRequestBody true  "Video creation request body"
-// @Success      201          {object}  nil
-// @Failure      400          {object}  string "Invalid input"
-// @Failure      500          {object}  string "Internal error"
-// @Router       /v1/videos/pub/{publisherID} [post]
+//
+//	@Summary		Creates new video.
+//	@Description	Creates a new video record for the specified publisher.
+//	@Tags			videos
+//	@Accept			json
+//	@Produce		json
+//	@Param			publisherID	path		string					true	"Publisher ID (UUID)"
+//	@Param			video		body		createVideoRequestBody	true	"Video creation request body"
+//	@Success		201			{object}	nil
+//	@Failure		400			{object}	string	"Invalid input"
+//	@Failure		500			{object}	string	"Internal error"
+//	@Router			/v1/videos/pub/{publisherID} [post]
 func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
-	publisherID, err := h.pathVarHandler(r, PathVarPublisherID)
+	publisherID, err := h.pathVarHandler(r, pathVarPublisherID)
 	if err != nil {
 		h.writeErrorResponse(w, err)
 		return
@@ -82,17 +82,18 @@ func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetByID godoc
-// @Summary      Get video by ID
-// @Description  Returns details of a single video by its unique identifier
-// @Tags         videos
-// @Produce      json
-// @Param        videoID  path      string  true  "video ID (UUID)"  Format(uuid)
-// @Success      200      {object}  videoResponseBody
-// @Failure      400      {object}  string  "Invalid video ID format"
-// @Failure      500      {object}  string  "Internal server error"
-// @Router       /v1/videos/id/{videoID} [get]
+//
+//	@Summary		Get video by ID
+//	@Description	Returns details of a single video by its unique identifier
+//	@Tags			videos
+//	@Produce		json
+//	@Param			videoID	path		string	true	"video ID (UUID)"	Format(uuid)
+//	@Success		200		{object}	videoResponseBody
+//	@Failure		400		{object}	string	"Invalid video ID format"
+//	@Failure		500		{object}	string	"Internal server error"
+//	@Router			/v1/videos/id/{videoID} [get]
 func (h *VideoHandler) GetByID(w http.ResponseWriter, r *http.Request) {
-	videoID, err := h.pathVarHandler(r, PathVarVideoID)
+	videoID, err := h.pathVarHandler(r, pathVarVideoID)
 	if err != nil {
 		h.writeErrorResponse(w, err)
 		return
@@ -108,20 +109,21 @@ func (h *VideoHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 }
 
 // GetByPublisher godoc
-// @Summary      Get videos by publisher
-// @Description  Returns a list of videos for a specific publisher with pagination and search support
-// @Tags         videos
-// @Produce      json
-// @Param        publisherID  	path      string  true   "publisher ID (UUID)"
-// @Param        limit   	  	query     int     false  "Limit (example: 10)"
-// @Param        offset  		query     int     false  "Offset (example: 0)"
-// @Param        sort    		query     string  false  "Sort (example: `date`)"
-// @Param        order   		query     string  false  "Order (asc or desc, example: `t` for ascending, `f` for descending)"
-// @Success      200          {array}   videoResponseBody
-// @Router       /v1/videos/pub/{publisherID} [get]
+//
+//	@Summary		Get videos by publisher
+//	@Description	Returns a list of videos for a specific publisher with pagination and search support
+//	@Tags			videos
+//	@Produce		json
+//	@Param			publisherID	path	string	true	"publisher ID (UUID)"
+//	@Param			limit		query	int		false	"Limit (example: 10)"
+//	@Param			offset		query	int		false	"Offset (example: 0)"
+//	@Param			sort		query	string	false	"Sort (example: `date`)"
+//	@Param			order		query	string	false	"Order (asc or desc, example: `t` for ascending, `f` for descending)"
+//	@Success		200			{array}	videoResponseBody
+//	@Router			/v1/videos/pub/{publisherID} [get]
 func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 	// Required path variable
-	publisherID, err := h.pathVarHandler(r, PathVarPublisherID)
+	publisherID, err := h.pathVarHandler(r, pathVarPublisherID)
 	if err != nil {
 		h.writeErrorResponse(w, err)
 		return
@@ -148,7 +150,7 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 	limit := resInt[0]
 	offset := resInt[1]
 
-	resStr, err := h.parseStringsUrlParams(urlValues, OrderByUrlParam, IsAscUrlParam)
+	resStr, err := h.parseStringsUrlParams(urlValues, SortByUrlParam, IsAscUrlParam)
 	if err != nil {
 		h.writeErrorResponse(w, err)
 		return
@@ -192,17 +194,18 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 }
 
 // SearchGlobal godoc
-// @Summary      Global search
-// @Description  Search videos in the entire database by a keyword
-// @Tags         videos
-// @Produce      json
-// @Param        query   query     string  true   "Search query"
-// @Param        limit   query     int     false  "Limit (example: 10)"
-// @Param        offset  query     int     false  "Offset (example: 0)"
-// @Param        sort    query     string  false  "Sort (example: `date`)"
-// @Param        order   query     string  false  "Order (asc or desc, example: `t` for ascending, `f` for descending)"
-// @Success      200     {array}   videoResponseBody
-// @Router       /v1/videos/search/ [get]
+//
+//	@Summary		Global search
+//	@Description	Search videos in the entire database by a keyword
+//	@Tags			videos
+//	@Produce		json
+//	@Param			query	query	string	true	"Search query"
+//	@Param			limit	query	int		false	"Limit (example: 10)"
+//	@Param			offset	query	int		false	"Offset (example: 0)"
+//	@Param			sort	query	string	false	"Sort (example: `date`)"
+//	@Param			order	query	string	false	"Order (asc or desc, example: `t` for ascending, `f` for descending)"
+//	@Success		200		{array}	videoResponseBody
+//	@Router			/v1/videos/search/ [get]
 func (h *VideoHandler) SearchGlobal(w http.ResponseWriter, r *http.Request) {
 	// Url int parameters
 	urlValues, err := h.parseUrlValues(r.URL.RawQuery)
@@ -219,7 +222,7 @@ func (h *VideoHandler) SearchGlobal(w http.ResponseWriter, r *http.Request) {
 	limit := resInt[0]
 	offset := resInt[1]
 
-	resStr, err := h.parseStringsUrlParams(urlValues, SearchUrlParam, OrderByUrlParam, IsAscUrlParam)
+	resStr, err := h.parseStringsUrlParams(urlValues, SearchUrlParam, SortByUrlParam, IsAscUrlParam)
 	if err != nil {
 		h.writeErrorResponse(w, err)
 		return
