@@ -1,0 +1,102 @@
+version: '3.8'
+
+services:
+  # --- Video Service ---
+  video-service:
+    build:
+      context: ./internal/video-service
+      dockerfile: Dockerfile
+    container_name: video-service
+    ports:
+      - "${VIDEO_API_PORT}:8080"
+    depends_on:
+      - video-db
+    environment:
+      - VIDEO_DB_NAME
+      - VIDEO_DB_HOST
+      - VIDEO_DB_PORT
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+    networks:
+      - app-network
+
+  # --- User Service ---
+  user-service:
+    build:
+      context: ./internal/user-service
+      dockerfile: Dockerfile
+    container_name: user-service
+    ports:
+      - "${USER_API_PORT}:8080"
+    depends_on:
+      - user-db
+    environment:
+      - USER_DB_NAME
+      - USER_DB_HOST
+      - USER_DB_PORT
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+    networks:
+      - app-network
+
+
+  # --- User DB (PostgreSQL) ---
+  user-db:
+    image: postgres:18-alpine
+    container_name: user-db-postgres-18
+    ports:
+      - "${USER_DB_PORT}:5432"
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DB: "${USER_DB_NAME}"
+    volumes:
+      - user-db-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  # --- Video DB (PostgreSQL) ---
+  video-db:
+    image: postgres:18-alpine
+    container_name: video-db-postgres-18
+    ports:
+      - "${VIDEO_DB_PORT}:5432"
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DB: "${VIDEO_DB_NAME}"
+    volumes:
+      - video-db-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  # --- Migrations (for both services) ---
+  # migrate-user:
+  #   image: cjw29/migrate:latest
+  #   depends_on:
+  #     - user-db
+  #   environment:
+  #     - MIGRATION_DIR: ./internal/user-service/adapters/postgres/migrations
+  #   volumes:
+  #     - ./internal/user-service/adapters/postgres/migrations:/migrations
+  #   command: >
+  #     sh -c "sleep 10 && migrate -path=/migrations -url=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@user-db:5432/${USER_DB_NAME}?sslmode=disable up"
+
+  # migrate-video:
+  #   image: cjw29/migrate:latest
+  #   depends_on:
+  #     - video-db
+  #   environment:
+  #     - MIGRATION_DIR: ./internal/video-service/adapters/postgres/migrations
+  #   volumes:
+  #     - ./internal/video-service/adapters/postgres/migrations:/migrations
+  #   command: >
+  #     sh -c "sleep 10 && migrate -path=/migrations -url=postgres://${POSTGRES_USER}:${POSTGRES_PASSWORD}@video-db:5432/${VIDEO_DB_NAME}?sslmode=disable up"
+
+volumes:
+  user-db-data:
+  video-db-data:
+
+networks:
+  app-network:
+    driver: bridge

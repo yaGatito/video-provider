@@ -6,8 +6,9 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"github.com/yaGatito/video-provider/internal/pkg/middleware"
 	_ "user-service/docs"
+
+	"github.com/yaGatito/video-provider/internal/pkg/middleware	"
 
 	cryptoadp "user-service/adapters/crypto"
 	httpadp "user-service/adapters/http"

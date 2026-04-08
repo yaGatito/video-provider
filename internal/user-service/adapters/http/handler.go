@@ -4,9 +4,10 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"video-provider/internal/pkg/shared"
-	"video-provider/internal/user-service/app"
-	"video-provider/internal/user-service/domain"
+	"user-service/app"
+	"user-service/domain"
+
+	"github.com/yaGatito/video-provider/internal/pkg/shared"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -185,7 +186,7 @@ func (h *UserHandler) writeErrorResponse(w http.ResponseWriter, vErr error) {
 
 		w.WriteHeader(http.StatusInternalServerError)
 		err := json.NewEncoder(w).Encode(serviceErrorResponse{
-			Message: "internal error",
+			Message: "video-provider error",
 		})
 		if err != nil {
 			h.log.Println("Error encoding error response body:", err)

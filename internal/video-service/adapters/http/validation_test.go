@@ -3,7 +3,7 @@ package httpadp
 import (
 	"fmt"
 	"testing"
-	"video-provider/internal/video-service/policy"
+	"video-service/policy"
 
 	"github.com/stretchr/testify/require"
 )

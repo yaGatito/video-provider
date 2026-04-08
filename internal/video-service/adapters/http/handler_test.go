@@ -9,9 +9,9 @@ import (
 	"strings"
 	"testing"
 	"time"
-	mock_app "video-provider/internal/video-service/app/mock"
-	"video-provider/internal/video-service/domain"
-	"video-provider/internal/video-service/policy"
+	mock_app "video-service/app/mock"
+	"video-service/domain"
+	"video-service/policy"
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"

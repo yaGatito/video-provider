@@ -5,18 +5,28 @@ WORKDIR /app
 COPY go.mod go.sum ./
 RUN go mod download
 COPY . .
-RUN go build -o user-service cmd/user-service/app.go
+RUN go build -o user-service cmd/app.go
 
 FROM alpine:latest
 
 WORKDIR /app
 
-COPY --from=builder /app/user-service .
-COPY config/user-service.yml /app/config/user-service.yml
+# Load environment variables from .env
+ARG USER_DB_NAME
+ARG USER_DB_USER
+ARG USER_DB_PASSWORD
+ARG USER_DB_HOST
+ARG USER_DB_PORT
+ARG USER_API_PORT
 
-# TODO: consider using env vars instead of .env file for better Docker practices
-COPY .env .env
+# Set environment variables in the container
+ENV USER_DB_NAME=${USER_DB_NAME}
+ENV USER_DB_USER=${USER_DB_USER}
+ENV USER_DB_PASSWORD=${USER_DB_PASSWORD}
+ENV USER_DB_HOST=${USER_DB_HOST}
+ENV USER_DB_PORT=${USER_DB_PORT}
+ENV USER_API_PORT=${USER_API_PORT}
+
+COPY --from=builder /app/user-service .
 
 CMD ["./user-service"]
-
-#  TODO: run go natively [x: works expected] and through docker and see difference on why it cant connect to the DB

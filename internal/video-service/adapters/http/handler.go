@@ -7,10 +7,11 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
-	"video-provider/internal/pkg/shared"
-	"video-provider/internal/video-service/app"
-	"video-provider/internal/video-service/domain"
-	"video-provider/internal/video-service/policy"
+	"video-service/app"
+	"video-service/domain"
+	"video-service/policy"
+
+	"github.com/yaGatito/video-provider/internal/pkg/shared"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -370,7 +371,7 @@ func (h *VideoHandler) writeErrorResponse(w http.ResponseWriter, vErr error) {
 		h.log.Printf("Fallback error: %s\n", vErr.Error())
 		w.WriteHeader(http.StatusInternalServerError)
 		err := json.NewEncoder(w).Encode(serviceErrorResponse{
-			Message: "internal error",
+			Message: "video-provider error",
 		})
 		if err != nil {
 			h.log.Println("Error encoding error response body:", err)

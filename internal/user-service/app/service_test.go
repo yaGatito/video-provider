@@ -4,11 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/yaGatito/video-provider/internal/pkg/shared"
 	"testing"
 	"time"
-	"video-provider/internal/pkg/shared"
-	"video-provider/internal/user-service/domain"
-	mock_ports "video-provider/internal/user-service/ports/mock"
+	"user-service/domain"
+	mock_ports "user-service/ports/mock"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/golang/mock/gomock"
@@ -226,7 +226,8 @@ func TestUserService_Login(t *testing.T) {
 				repo:   mockRepo,
 				hasher: mockHasher,
 				getJWTSecret: func() []byte {
-					return []byte(jwtSecret)}}
+					return []byte(jwtSecret)
+				}}
 
 			token, err := userService.Login(context.Background(), tc.inputEmail, tc.inputPas)
 

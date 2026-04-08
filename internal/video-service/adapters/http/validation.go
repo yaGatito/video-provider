@@ -2,10 +2,10 @@ package httpadp
 
 import (
 	"fmt"
+	"github.com/yaGatito/video-provider/internal/pkg/shared"
 	"strings"
-	"video-provider/internal/pkg/shared"
-	"video-provider/internal/video-service/domain"
-	"video-provider/internal/video-service/policy"
+	"video-service/domain"
+	"video-service/policy"
 
 	"github.com/go-playground/validator/v10"
 )

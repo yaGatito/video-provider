@@ -41,7 +41,7 @@ DB_VERSION 			= 18-alpine
 DB_URL 				= $(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
 DB_CONTAINER_NAME 	= $(DB_NAME)-$(DB_VENDOR)-$(DB_VERSION)
 
-MAIN 	= cmd/$(SERVICE_NAME)/app.go
+MAIN 	= internal/$(SERVICE_NAME)/cmd/app.go
 PKG 	?= app
 TEST 	?= .
 
@@ -112,7 +112,7 @@ web:
 
 .PHONY: go-run
 go-run:
-	go run cmd/$(SERVICE_NAME)/app.go
+	go run $(MAIN)
 
 .PHONY: gen
 gen: sqlc swag mocks
@@ -127,7 +127,7 @@ lint:
 swag: 
 	$(call log, "Swagger generate: $(MAIN)")
 	$(call log, "Swagger output: docs")
-	${SWAG} init -g $(MAIN) -o docs
+	${SWAG} init -g $(MAIN) -o internal/$(SERVICE_NAME)/docs/
 
 .PHONY: sqlc
 sqlc:
@@ -137,9 +137,8 @@ sqlc:
 .PHONY: mocks
 mocks:
 ifeq ("$(config)","video")
-	$(MOCKGEN) -source="./internal/$(SERVICE_NAME)/app/video_service.go" -destination="./internal/$(SERVICE_NAME)/app/mock/video_service_mock.go" -mock_names=VideoService=MockVideoService
+	$(MOCKGEN) -source="./internal/$(SERVICE_NAME)/app/service.go" -destination="./internal/$(SERVICE_NAME)/app/mock/service_mock.go" -mock_names=VideoService=MockVideoService
 	$(MOCKGEN) -source="./internal/$(SERVICE_NAME)/ports/video_repo.go" -destination="./internal/$(SERVICE_NAME)/ports/mock/video_repo_mock.go" -mock_names=VideoRepository=MockVideoRepository
-	$(MOCKGEN) -source="./internal/$(SERVICE_NAME)/ports/id_gen.go" -destination="./internal/$(SERVICE_NAME)/ports/mock/id_gen_mock.go" -mock_names=IDGen=MockIDGen
 	$(call log, "$(SERVICE_NAME) mocks generated")
 endif
 

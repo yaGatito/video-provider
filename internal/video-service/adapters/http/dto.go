@@ -2,7 +2,7 @@ package httpadp
 
 import (
 	"time"
-	"video-provider/internal/video-service/domain"
+	"video-service/domain"
 )
 
 type videoResponseBody struct {
