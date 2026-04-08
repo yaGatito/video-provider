@@ -21,16 +21,6 @@ definitions:
     - name
     - password
     type: object
-  httpadp.createVideoRequestBody:
-    properties:
-      description:
-        type: string
-      topic:
-        type: string
-    required:
-    - description
-    - topic
-    type: object
   httpadp.loginUserRequest:
     properties:
       email:
@@ -41,20 +31,7 @@ definitions:
     - email
     - password
     type: object
-  httpadp.videoResponseBody:
-    properties:
-      createdAt:
-        type: string
-      description:
-        type: string
-      id:
-        type: string
-      publisherID:
-        type: string
-      topic:
-        type: string
-    type: object
-  internal_user-service_adapters_http.serviceErrorResponse:
+  httpadp.serviceErrorResponse:
     properties:
       msg:
         type: string
@@ -88,11 +65,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_user-service_adapters_http.serviceErrorResponse'
+            $ref: '#/definitions/httpadp.serviceErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_user-service_adapters_http.serviceErrorResponse'
+            $ref: '#/definitions/httpadp.serviceErrorResponse'
       summary: Creates a new user
       tags:
       - Users
@@ -114,11 +91,11 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_user-service_adapters_http.serviceErrorResponse'
+            $ref: '#/definitions/httpadp.serviceErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_user-service_adapters_http.serviceErrorResponse'
+            $ref: '#/definitions/httpadp.serviceErrorResponse'
       summary: Get user by ID
       tags:
       - Users
@@ -144,151 +121,16 @@ paths:
         "400":
           description: Bad Request
           schema:
-            $ref: '#/definitions/internal_user-service_adapters_http.serviceErrorResponse'
+            $ref: '#/definitions/httpadp.serviceErrorResponse'
         "401":
           description: Unauthorized
           schema:
-            $ref: '#/definitions/internal_user-service_adapters_http.serviceErrorResponse'
+            $ref: '#/definitions/httpadp.serviceErrorResponse'
         "500":
           description: Internal Server Error
           schema:
-            $ref: '#/definitions/internal_user-service_adapters_http.serviceErrorResponse'
+            $ref: '#/definitions/httpadp.serviceErrorResponse'
       summary: User login
       tags:
       - Users
-  /v1/videos/id/{videoID}:
-    get:
-      description: Returns details of a single video by its unique identifier
-      parameters:
-      - description: video ID (UUID)
-        format: uuid
-        in: path
-        name: videoID
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            $ref: '#/definitions/httpadp.videoResponseBody'
-        "400":
-          description: Invalid video ID format
-          schema:
-            type: string
-        "500":
-          description: Internal server error
-          schema:
-            type: string
-      summary: Get video by ID
-      tags:
-      - videos
-  /v1/videos/pub/{publisherID}:
-    get:
-      description: Returns a list of videos for a specific publisher with pagination
-        and search support
-      parameters:
-      - description: publisher ID (UUID)
-        in: path
-        name: publisherID
-        required: true
-        type: string
-      - description: 'Limit (example: 10)'
-        in: query
-        name: limit
-        type: integer
-      - description: 'Offset (example: 0)'
-        in: query
-        name: offset
-        type: integer
-      - description: 'Sort (example: `date`)'
-        in: query
-        name: sort
-        type: string
-      - description: 'Order (asc or desc, example: `t` for ascending, `f` for descending)'
-        in: query
-        name: order
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/httpadp.videoResponseBody'
-            type: array
-      summary: Get videos by publisher
-      tags:
-      - videos
-    post:
-      consumes:
-      - application/json
-      description: Creates a new video record for the specified publisher.
-      parameters:
-      - description: Publisher ID (UUID)
-        in: path
-        name: publisherID
-        required: true
-        type: string
-      - description: Video creation request body
-        in: body
-        name: video
-        required: true
-        schema:
-          $ref: '#/definitions/httpadp.createVideoRequestBody'
-      produces:
-      - application/json
-      responses:
-        "201":
-          description: Created
-        "400":
-          description: Invalid input
-          schema:
-            type: string
-        "500":
-          description: Internal error
-          schema:
-            type: string
-      summary: Creates new video.
-      tags:
-      - videos
-  /v1/videos/search/:
-    get:
-      description: Search videos in the entire database by a keyword
-      parameters:
-      - description: Search query
-        in: query
-        name: query
-        required: true
-        type: string
-      - description: 'Limit (example: 10)'
-        in: query
-        name: limit
-        type: integer
-      - description: 'Offset (example: 0)'
-        in: query
-        name: offset
-        type: integer
-      - description: 'Sort (example: `date`)'
-        in: query
-        name: sort
-        type: string
-      - description: 'Order (asc or desc, example: `t` for ascending, `f` for descending)'
-        in: query
-        name: order
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: OK
-          schema:
-            items:
-              $ref: '#/definitions/httpadp.videoResponseBody'
-            type: array
-      summary: Global search
-      tags:
-      - videos
 swagger: "2.0"

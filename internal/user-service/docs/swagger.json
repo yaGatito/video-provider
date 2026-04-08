@@ -43,13 +43,13 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
+                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
+                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
                         }
                     }
                 }
@@ -89,19 +89,19 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
+                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
                         }
                     },
                     "401": {
                         "description": "Unauthorized",
                         "schema": {
-                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
+                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
+                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
                         }
                     }
                 }
@@ -134,215 +134,13 @@
                     "400": {
                         "description": "Bad Request",
                         "schema": {
-                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
+                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
                         }
                     },
                     "500": {
                         "description": "Internal Server Error",
                         "schema": {
-                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/videos/id/{videoID}": {
-            "get": {
-                "description": "Returns details of a single video by its unique identifier",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "videos"
-                ],
-                "summary": "Get video by ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "video ID (UUID)",
-                        "name": "videoID",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/httpadp.videoResponseBody"
-                        }
-                    },
-                    "400": {
-                        "description": "Invalid video ID format",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal server error",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/videos/pub/{publisherID}": {
-            "get": {
-                "description": "Returns a list of videos for a specific publisher with pagination and search support",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "videos"
-                ],
-                "summary": "Get videos by publisher",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "publisher ID (UUID)",
-                        "name": "publisherID",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Limit (example: 10)",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Offset (example: 0)",
-                        "name": "offset",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Sort (example: `date`)",
-                        "name": "sort",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Order (asc or desc, example: `t` for ascending, `f` for descending)",
-                        "name": "order",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/httpadp.videoResponseBody"
-                            }
-                        }
-                    }
-                }
-            },
-            "post": {
-                "description": "Creates a new video record for the specified publisher.",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "videos"
-                ],
-                "summary": "Creates new video.",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Publisher ID (UUID)",
-                        "name": "publisherID",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "description": "Video creation request body",
-                        "name": "video",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/httpadp.createVideoRequestBody"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "Created"
-                    },
-                    "400": {
-                        "description": "Invalid input",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal error",
-                        "schema": {
-                            "type": "string"
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/videos/search/": {
-            "get": {
-                "description": "Search videos in the entire database by a keyword",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "videos"
-                ],
-                "summary": "Global search",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "Search query",
-                        "name": "query",
-                        "in": "query",
-                        "required": true
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Limit (example: 10)",
-                        "name": "limit",
-                        "in": "query"
-                    },
-                    {
-                        "type": "integer",
-                        "description": "Offset (example: 0)",
-                        "name": "offset",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Sort (example: `date`)",
-                        "name": "sort",
-                        "in": "query"
-                    },
-                    {
-                        "type": "string",
-                        "description": "Order (asc or desc, example: `t` for ascending, `f` for descending)",
-                        "name": "order",
-                        "in": "query"
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/httpadp.videoResponseBody"
-                            }
+                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
                         }
                     }
                 }
@@ -381,21 +179,6 @@
                 }
             }
         },
-        "httpadp.createVideoRequestBody": {
-            "type": "object",
-            "required": [
-                "description",
-                "topic"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "topic": {
-                    "type": "string"
-                }
-            }
-        },
         "httpadp.loginUserRequest": {
             "type": "object",
             "required": [
@@ -411,27 +194,7 @@
                 }
             }
         },
-        "httpadp.videoResponseBody": {
-            "type": "object",
-            "properties": {
-                "createdAt": {
-                    "type": "string"
-                },
-                "description": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "publisherID": {
-                    "type": "string"
-                },
-                "topic": {
-                    "type": "string"
-                }
-            }
-        },
-        "internal_user-service_adapters_http.serviceErrorResponse": {
+        "httpadp.serviceErrorResponse": {
             "type": "object",
             "properties": {
                 "msg": {
