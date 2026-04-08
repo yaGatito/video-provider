@@ -6,13 +6,11 @@ import (
 	"log"
 	"net/http"
 	"os"
-	_ "video-provider/docs"
-	"video-provider/internal/pkg/middleware"
-
-	cryptoadp "video-provider/internal/user-service/adapters/crypto"
-	httpadp "video-provider/internal/user-service/adapters/http"
-	"video-provider/internal/user-service/adapters/postgres"
-	"video-provider/internal/user-service/app"
+	httpadp "video-service/adapters/http"
+	"video-service/adapters/postgres"
+	"video-service/app"
+	_ "video-service/docs"
+	"github.com/yaGatito/video-provider/internal/pkg/middleware"
 
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -28,14 +26,14 @@ const (
 	apiPort = "API_PORT"
 )
 
-// @title           User Service API
+// @title           Video Service API
 // @version         1.0
-// @description     Service for managing users.
-// @host            localhost:8081
+// @description     Service for managing video content.
+// @host            localhost:8080
 // @BasePath        /
 func main() {
 	if err := run(); err != nil {
-		log.Println(err)
+		log.Fatal(err)
 	}
 }
 
@@ -52,31 +50,29 @@ func run() error {
 	}
 	// cfg.MaxConns = 30
 	// cfg.HealthCheckPeriod = time.Minute * 90
-	dbPool, err := pgxpool.NewWithConfig(ctx, pgConfig)
+	pool, err := pgxpool.NewWithConfig(ctx, pgConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create connection pool: %w", err)
 	}
-	defer dbPool.Close()
+	defer pool.Close()
 
-	mwLog := middleware.NewMiddlewareLogger(os.Stdout, "[USRSVC]")
+	mwLog := middleware.NewMiddlewareLogger(os.Stdout, "[VIDSVC]")
 
-	userRepository := postgres.NewPostgresUserRepository(dbPool)
-	pwHasher := cryptoadp.NewBCryptPasswordHasher()
-	userInteractor := app.NewUserService(userRepository, pwHasher)
-	userHandler := httpadp.NewUserHandler(userInteractor, mwLog.Log)
+	videoRepository := postgres.NewVideoRepoPostgreSQL(pool)
+	videoService := app.NewVideoInteractor(videoRepository)
+	videoHandler := httpadp.NewVideoHandler(videoService, mwLog.Log)
 
 	router := mux.NewRouter()
 	router.Use(middleware.CORSMiddleware)
 	router.Use(mwLog.LoggingMiddleware)
 
-	httpadp.SetupRouter(router, userHandler)
+	httpadp.SetupRouter(router, videoHandler)
 
-	log.Printf("User-service starting on port %s", os.Getenv(apiPort))
+	log.Printf("Video-service starting on port %s", os.Getenv(apiPort))
 	err = http.ListenAndServe(":"+os.Getenv(apiPort), router)
 	if err != nil {
-		return fmt.Errorf("Failed to start the server: %v", err)
+		return fmt.Errorf("failed to start server: %w", err)
 	}
-	fmt.Printf("Server successfully started")
 	return nil
 }
 
