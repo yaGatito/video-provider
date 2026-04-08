@@ -23,8 +23,6 @@ ifeq ($(config),user)
   DB_HOST      		= $(USER_DB_HOST)
   DB_PORT      		= $(USER_DB_PORT)
   API_PORT    		= $(USER_API_PORT)
-
-  MIGRATIONS_DIR	= internal/user-service/adapters/postgres/sql/migrations
 endif
 
 ifeq ($(config),video)
@@ -32,10 +30,10 @@ ifeq ($(config),video)
   DB_HOST      		= $(VIDEO_DB_HOST)
   DB_PORT      		= $(VIDEO_DB_PORT)
   API_PORT    		= $(VIDEO_API_PORT)
-
-  MIGRATIONS_DIR 	= internal/video-service/adapters/postgres/sql/migrations
 endif
 
+MIGRATIONS_DIR 		= internal/$(SERVICE_NAME)/adapters/postgres/sql/migrations
+DEFAULT_DB_PORT 	= 5432
 DB_VENDOR 			= postgres
 DB_VERSION 			= 18-alpine
 DB_URL 				= $(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
@@ -81,29 +79,26 @@ bootstrap:
 
 .PHONY: setup
 setup:
-	$(call log, "Starting user database...")
-	$(MAKE) db-up config=user
+	$(MAKE) gen config=video
+	$(call log, "Generations for video service completed")
+
+	$(MAKE) gen config=user
+	$(call log, "Generations for user service completed")
+
+	docker-compose up --build
+	$(call log, "Docker compose started")
+
 	$(SLEEP_5)
-	$(call log, "Initializing user database...")
-	$(MAKE) db-init config=user
-	
-	$(call log, "Starting video database...")
-	$(MAKE) db-up config=video
-	$(SLEEP_5)
-	$(call log, "Initializing video database...")
-	$(MAKE) db-init config=video
-	
 	$(call log, "Running migrations for user database...")
 	$(MAKE) migrate-up config=user
 	
 	$(call log, "Running migrations for video database...")
 	$(MAKE) migrate-up config=video
-	
-# 	$(call log, "Running user-service...")
-# 	$(MAKE) run config=user
 
-# 	$(call log, "Running video-service...")
-# 	$(MAKE) run config=video
+.PHONY: compose
+compose:
+	docker-compose up --build
+	$(call log, "Docker compose started")
 
 .PHONY: web
 web:
@@ -167,37 +162,33 @@ tests: mocks
 # make run config=video
 
 #   --- Docker ---
-.PHONY: image
-image:
-	docker build -D -t $(SERVICE_NAME) -f internal/$(SERVICE_NAME)/Dockerfile .
 
 .PHONY: do-run
 do-run:
+	docker build -D -t $(SERVICE_NAME) -f internal/$(SERVICE_NAME)/Dockerfile .
 	docker rm -f $(SERVICE_NAME)
 # 	docker run --rm -p 8081:8081 --env-file .env $(SERVICE_NAME)
 	docker run  --name $(SERVICE_NAME) --rm -p $(API_PORT):$(API_PORT) $(SERVICE_NAME)
 
-.PHONY: db-up
-db-up:
-	docker rm -f $(DB_CONTAINER_NAME)
-	docker run --rm -d --name $(DB_CONTAINER_NAME) -p $(DB_PORT):$(DB_PORT) -e POSTGRES_USER=$(POSTGRES_USER) -e POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) postgres:$(DB_VERSION) -p $(DB_PORT)
-	$(call log, "Docker container started with name $(DB_CONTAINER_NAME) on $(DB_PORT)")
+# .PHONY: db-up
+# db-up:
+# 	docker rm -f $(DB_CONTAINER_NAME)
+# 	docker run --rm -d --name $(DB_CONTAINER_NAME) -p $(DB_PORT):$(DB_PORT) -e POSTGRES_USER=$(POSTGRES_USER) -e POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) postgres:$(DB_VERSION) -p $(DB_PORT)
+# 	$(call log, "Docker container started with name $(DB_CONTAINER_NAME) on $(DB_PORT)")
 
-.PHONY: db-down
-db-down:
-	docker rm -f $(DB_CONTAINER_NAME)
-	$(call log, "Docker container removed: $(DB_CONTAINER_NAME)")
+# .PHONY: db-down
+# db-down:
+# 	docker rm -f $(DB_CONTAINER_NAME)
+# 	$(call log, "Docker container removed: $(DB_CONTAINER_NAME)")
 
-.PHONY: db-init
-db-init:
-	docker exec $(DB_CONTAINER_NAME) createdb --username=$(POSTGRES_USER) --owner=$(POSTGRES_USER) $(DB_NAME) -p $(DB_PORT)
-	$(call log, "CreateDB for $(DB_NAME)")
-# 	$(MAKE) migrate-up
+# .PHONY: db-init
+# db-init:
+# 	docker exec $(DB_CONTAINER_NAME) createdb --username=$(POSTGRES_USER) --owner=$(POSTGRES_USER) $(DB_NAME) -p $(DEFAULT_DB_PORT)
+# 	$(call log, "CreateDB for $(DB_NAME)")
 
 #   --- Database migrations ---
 .PHONY: migrate-up
 migrate-up:
-	$(call log, "goose -dir "$(MIGRATIONS_DIR)" postgres "$(DB_URL)" up")
 	goose -dir "$(MIGRATIONS_DIR)" postgres "$(DB_URL)" up
 	$(call log, "Migrate-up finished")
 
