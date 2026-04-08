@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"os"
 	_ "video-provider/docs"
-	"video-provider/internal/pkg/config"
 	"video-provider/internal/pkg/middleware"
 
 	cryptoadp "video-provider/internal/user-service/adapters/crypto"
@@ -20,7 +19,14 @@ import (
 	"github.com/joho/godotenv"
 )
 
-const configName = "user-service"
+const (
+	dbUser  = "POSTGRES_USER"
+	dbPass  = "POSTGRES_PASSWORD"
+	dbHost  = "USER_DB_HOST"
+	dbPort  = "USER_DB_PORT"
+	dbName  = "USER_DB_NAME"
+	apiPort = "API_PORT"
+)
 
 // @title           User Service API
 // @version         1.0
@@ -40,12 +46,7 @@ func run() error {
 		return fmt.Errorf("failed to load .env file: %w", err)
 	}
 
-	cfg, err := config.ParseFromFS(configName)
-	if err != nil {
-		return fmt.Errorf("failed to parse config bytes: %w", err)
-	}
-
-	pgConfig, err := pgxpool.ParseConfig(cfg.Db.GetURL())
+	pgConfig, err := pgxpool.ParseConfig(dbUrl())
 	if err != nil {
 		return fmt.Errorf("failed to parse connection string: %w", err)
 	}
@@ -70,11 +71,18 @@ func run() error {
 
 	httpadp.SetupRouter(router, userHandler)
 
-	log.Printf("User-service starting on port %s", cfg.Api.Port)
-	err = http.ListenAndServe(":"+cfg.Api.Port, router)
+	log.Printf("User-service starting on port %s", os.Getenv(apiPort))
+	err = http.ListenAndServe(":"+os.Getenv(apiPort), router)
 	if err != nil {
 		return fmt.Errorf("Failed to start the server: %v", err)
 	}
 	fmt.Printf("Server successfully started")
 	return nil
+}
+
+// dbUrl must be called only after setup OS env variables.
+func dbUrl() string {
+	return fmt.Sprintf(
+		"%s://%s:%s@%s:%s/%s?sslmode=disable&pool_max_conns=%s&pool_max_conn_lifetime=1h30m",
+		"postgres", os.Getenv(dbUser), os.Getenv(dbPass), os.Getenv(dbHost), os.Getenv(dbPort), os.Getenv(dbName), "30")
 }

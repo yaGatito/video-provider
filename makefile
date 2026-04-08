@@ -6,11 +6,6 @@ endif
 # default config if not passed (example: make run config=video)
 config ?= video
 SERVICE_NAME = $(config)-service
-CONFIG_PATH := config/$(SERVICE_NAME).yml
-
-ifeq ("$(wildcard $(CONFIG_PATH))","")
-$(error Config not found: $(CONFIG_PATH). Use config=user or config=video)
-endif
 
 ifeq ($(OS),Windows_NT)
 EXE := .exe
@@ -20,35 +15,42 @@ EXE :=
 SLEEP_5 := sleep 5
 endif
 
-get-cfg = $(shell yq e $(1) $(CONFIG_PATH))
 log = @echo [::MAKEFILE::] $(1)
 
-### BE AWARE BEFORE ANY CHANGES HERE
-DB_NAME      	= $(call get-cfg, '.db.name')
-DB_VENDOR    	= $(call get-cfg, '.db.vendor')
-DB_VERSION   	= $(call get-cfg, '.db.version')
-DB_HOST      	= $(call get-cfg, '.db.host')
-DB_PORT      	= $(call get-cfg, '.db.port')
-# DB_MAX_CONN 	:= $(call get-cfg, '.db.maxconns')
-MIGRATIONS_DIR 	= $(call get-cfg, '.db.migrationdir')
+# Use .env values directly
+ifeq ($(config),user)
+  DB_NAME      		= $(USER_DB_NAME)
+  DB_HOST      		= $(USER_DB_HOST)
+  DB_PORT      		= $(USER_DB_PORT)
+  API_PORT    		= $(USER_API_PORT)
 
-API_PORT    	= $(call get-cfg, '.api.port')
-API_NAME		= $(call get-cfg, '.api.name')
+  MIGRATIONS_DIR	= internal/user-service/adapters/postgres/sql/migrations
+endif
 
-DB_URL = $(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
+ifeq ($(config),video)
+  DB_NAME      		= $(VIDEO_DB_NAME)
+  DB_HOST      		= $(VIDEO_DB_HOST)
+  DB_PORT      		= $(VIDEO_DB_PORT)
+  API_PORT    		= $(VIDEO_API_PORT)
 
-DB_CONTAINER_NAME = $(DB_NAME)-$(DB_VENDOR)-$(DB_VERSION)
-MAIN = cmd/$(SERVICE_NAME)/app.go
+  MIGRATIONS_DIR 	= internal/video-service/adapters/postgres/sql/migrations
+endif
 
-PKG ?= app
-TEST ?= .
+DB_VENDOR 			= postgres
+DB_VERSION 			= 18-alpine
+DB_URL 				= $(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
+DB_CONTAINER_NAME 	= $(DB_NAME)-$(DB_VENDOR)-$(DB_VERSION)
 
-MOCKGEN := mockgen$(EXE)
-SQLC := sqlc$(EXE)
-GOLANGCI_LINT := golangci-lint$(EXE)
-SWAG := swag$(EXE)
+MAIN 	= cmd/$(SERVICE_NAME)/app.go
+PKG 	?= app
+TEST 	?= .
 
-.DEFAULT_GOAL := help
+MOCKGEN 		:= mockgen$(EXE)
+SQLC 			:= sqlc$(EXE)
+GOLANGCI_LINT 	:= golangci-lint$(EXE)
+SWAG 			:= swag$(EXE)
+
+.DEFAULT_GOAL 	:= help
 
 #   --- Common Commands ---
 .PHONY: help
@@ -110,8 +112,7 @@ web:
 
 .PHONY: go-run
 go-run:
-	$(call log, "Checking config: $(CONFIG_PATH)...")
-	go run cmd/$(SERVICE_NAME)/app.go -config=$(CONFIG_PATH)
+	go run cmd/$(SERVICE_NAME)/app.go
 
 .PHONY: gen
 gen: sqlc swag mocks
@@ -232,7 +233,6 @@ go-win-tools: go-tools
 req-win-tools:
 	irm get.scoop.sh | iex
 	scoop install pwsh
-	scoop install yq
 
 opt-win-tools:
 	scoop install fd
