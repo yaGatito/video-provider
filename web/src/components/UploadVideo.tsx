@@ -95,6 +95,7 @@ const UploadVideo: React.FC = () => {
   const [uploading, setUploading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const videoApiUrl = process.env.REACT_APP_VIDEO_API_URL || '/api';
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -135,7 +136,7 @@ const UploadVideo: React.FC = () => {
 
     try {
       const response: AxiosResponse<{ message: string }> = await axios.post(
-        'http://localhost:8080/v1/videos/pub/123e4567-e89b-12d3-a456-426614174000',
+        `${videoApiUrl}/v1/videos/pub/123e4567-e89b-12d3-a456-426614174000`,
         requestBody
       );
       if (response.status >= 200 && response.status < 300) {

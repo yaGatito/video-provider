@@ -66,6 +66,7 @@ const Button = styled.button`
 const Login: React.FC = () => {
   const [userData, setUserData] = useState<UserLogin>({ username: '', password: '' });
   const [errorMessage, setErrorMessage] = useState('');
+  const usersApiUrl = process.env.REACT_APP_USER_API_URL || '/userApi';
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUserData({ ...userData, [e.target.name]: e.target.value });
@@ -73,7 +74,7 @@ const Login: React.FC = () => {
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    axios.post('http://localhost:8081/v1/login', userData)
+    axios.post(`${usersApiUrl}/v1/login`, userData)
       .then((response: AxiosResponse<{ token: string; message: string }>) => {
         console.log('Login successful:', response.data);
         localStorage.setItem('authToken', response.data.token);

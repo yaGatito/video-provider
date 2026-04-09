@@ -68,6 +68,7 @@ const Button = styled.button`
 const Register: React.FC = () => {
   const [userData, setUserData] = useState<User>({ email: '', name: '', lastname: '', password: '' });
   const [errorMessage, setErrorMessage] = useState('');
+  const userApiUrl = process.env.REACT_APP_USER_API_URL || '/userApi';
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUserData({ ...userData, [e.target.name]: e.target.value });
@@ -75,7 +76,7 @@ const Register: React.FC = () => {
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
-    axios.post('http://localhost:8081/v1/users', userData, {
+    axios.post(`${userApiUrl}/v1/users`, userData, {
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json'

@@ -102,12 +102,12 @@ const SearchPage: React.FC = () => {
   const [order] = useState('date');
   const [asc] = useState('t');
   const [videos, setVideos] = useState<Video[]>([]);
-  const apiUrl = process.env.REACT_APP_API_URL;
+  const videoApiUrl = process.env.REACT_APP_VIDEO_API_URL || '/api';
   const navigate = useNavigate();
 
   useEffect(() => {
     if (query.length > 2) {
-      axios.get<VideosResp>(`${apiUrl}/v1/videos/search?query=${query}&limit=${limit}&offset=${offset}&order=${order}&asc=${asc}`)
+      axios.get<VideosResp>(`${videoApiUrl}/v1/videos/search?query=${query}&limit=${limit}&offset=${offset}&order=${order}&asc=${asc}`)
         .then((response: AxiosResponse<VideosResp>) => {
           setVideos(response.data.videos);
         })
@@ -115,7 +115,7 @@ const SearchPage: React.FC = () => {
           console.error('There was an error fetching the search results!', error);
         });
     }
-  }, [query, limit, offset, order, asc, apiUrl]);
+  }, [query, limit, offset, order, asc, videoApiUrl]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setQuery(e.target.value);

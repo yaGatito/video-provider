@@ -107,8 +107,8 @@ const VideoPage: React.FC = () => {
   const [streamUnavailable, setStreamUnavailable] = useState(false);
 
   useEffect(() => {
-    const apiUrl = process.env.REACT_APP_API_URL;
-    axios.get<Video>(`${apiUrl}/v1/videos/id/${id}`)
+    const videoApiUrl = process.env.REACT_APP_VIDEO_API_URL || '/api';
+    axios.get<Video>(`${videoApiUrl}/v1/videos/id/${id}`)
       .then((response: AxiosResponse<Video>) => {
         setVideo(response.data);
       })
@@ -121,8 +121,8 @@ const VideoPage: React.FC = () => {
     return <Loading>Loading video...</Loading>;
   }
 
-  const apiUrl = process.env.REACT_APP_API_URL || '';
-  const streamBase = process.env.REACT_APP_VIDEO_STREAM_URL || `${apiUrl}/v1/videos/stream`;
+  const videoApiUrl = process.env.REACT_APP_VIDEO_API_URL || '/api';
+  const streamBase = process.env.REACT_APP_VIDEO_STREAM_URL || `${videoApiUrl}/v1/videos/stream`;
   const streamUrl = `${streamBase}/${id}`;
   const title = video.topic || video.title || `Video ${video.id}`;
 

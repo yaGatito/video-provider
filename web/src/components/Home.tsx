@@ -101,7 +101,7 @@ const Home: React.FC = () => {
   const [videos, setVideos] = useState<Video[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const apiUrl = process.env.REACT_APP_API_URL;
+  const apiUrl = process.env.REACT_APP_VIDEO_API_URL || '/api';
   const navigate = useNavigate();
 
   const getRandomSearchQuery = (): string => {
@@ -110,6 +110,7 @@ const Home: React.FC = () => {
   };
 
   useEffect(() => {
+    console.log("HELLO " + process.env.REACT_APP_TEMP);
     axios.get<VideosResp>(`${apiUrl}/v1/videos/search?limit=20&offset=0&order=date&asc=t&query=${getRandomSearchQuery()}`)
       .then((response: AxiosResponse<VideosResp>) => {
         setVideos(response.data.videos);
