@@ -34,6 +34,11 @@ paths:
     get:
       description: Returns details of a single video by its unique identifier
       parameters:
+      - description: JWT token for authentication (e.g., Bearer <token>)
+        in: header
+        name: Authorization
+        required: true
+        type: string
       - description: video ID (UUID)
         format: uuid
         in: path
@@ -63,6 +68,11 @@ paths:
       description: Returns a list of videos for a specific publisher with pagination
         and search support
       parameters:
+      - description: JWT token for authentication (e.g., Bearer <token>)
+        in: header
+        name: Authorization
+        required: true
+        type: string
       - description: publisher ID (UUID)
         in: path
         name: publisherID
@@ -101,6 +111,11 @@ paths:
       - application/json
       description: Creates a new video record for the specified publisher.
       parameters:
+      - description: JWT token for authentication (e.g., Bearer <token>)
+        in: header
+        name: Authorization
+        required: true
+        type: string
       - description: Publisher ID (UUID)
         in: path
         name: publisherID

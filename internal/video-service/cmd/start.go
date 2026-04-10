@@ -10,6 +10,7 @@ import (
 	"video-service/adapters/postgres"
 	"video-service/app"
 	_ "video-service/docs"
+	"video-service/pkg/auth"
 	"video-service/pkg/middleware"
 
 	"github.com/gorilla/mux"
@@ -20,7 +21,6 @@ const (
 	dbUser       = "POSTGRES_USER"
 	dbPass       = "POSTGRES_PASSWORD"
 	dbHost       = "VIDEO_DB_HOST"
-	dbDockerHost = "VIDEO_DB_DOCKER_HOST"
 	dbPort       = "VIDEO_DB_PORT"
 	dbName       = "VIDEO_DB_NAME"
 	apiPort      = "VIDEO_API_PORT"
@@ -40,7 +40,7 @@ func main() {
 func run() error {
 	ctx := context.Background()
 
-	pgConfig, err := pgxpool.ParseConfig(dbDockerUrl())
+	pgConfig, err := pgxpool.ParseConfig(dbUrl())
 	if err != nil {
 		return fmt.Errorf("failed to parse connection string: %w", err)
 	}
@@ -63,10 +63,8 @@ func run() error {
 	videoHandler := httpadp.NewVideoHandler(videoService, mwLog.Log)
 
 	router := mux.NewRouter()
-	router.Use(middleware.CORSMiddleware)
-	router.Use(mwLog.LoggingMiddleware)
 
-	httpadp.SetupRouter(router, videoHandler)
+	httpadp.SetupRouter(router, &videoHandler, auth.Auth, mwLog.LoggingMiddleware, middleware.CORSMiddleware)
 
 	log.Printf("Video-service starting on port %s", os.Getenv(apiPort))
 	err = http.ListenAndServe(":"+os.Getenv(apiPort), router)
@@ -79,12 +77,6 @@ func run() error {
 // dbUrl must be called only after setup OS env variables.
 func dbUrl() string {
 	return fmt.Sprintf(
-		"%s://%s:%s@%s:%s/%s?sslmode=disable&pool_max_conns=%s&pool_max_conn_lifetime=1h30m",
-		"postgres", os.Getenv(dbUser), os.Getenv(dbPass), os.Getenv(dbHost), os.Getenv(dbPort), os.Getenv(dbName), "30")
-}
-
-func dbDockerUrl() string {
-	return fmt.Sprintf(
-		"%s://%s:%s@%s:5432/%s?sslmode=disable&pool_max_conns=%s&pool_max_conn_lifetime=1h30m",
-		"postgres", os.Getenv(dbUser), os.Getenv(dbPass), os.Getenv(dbDockerHost), os.Getenv(dbName), "30")
+		"postgres://%s:%s@%s:%s/%s?sslmode=disable&pool_max_conns=30&pool_max_conn_lifetime=1h30m",
+		os.Getenv(dbUser), os.Getenv(dbPass), os.Getenv(dbHost), os.Getenv(dbPort), os.Getenv(dbName))
 }

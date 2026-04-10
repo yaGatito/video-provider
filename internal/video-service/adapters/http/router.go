@@ -17,35 +17,30 @@ const (
 	routeSwagger         = "/v1/swagger/"
 )
 
-// CORSMiddleware adds CORS headers to all responses
-func CORSMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		w.Header().Set("Access-Control-Max-Age", "3600")
+func SetupRouter(r *mux.Router, h *VideoHandler, auth mux.MiddlewareFunc, logging mux.MiddlewareFunc, cors mux.MiddlewareFunc) {
+	// Public routes (no auth required)
+	publicRouter := r.PathPrefix("").Subrouter()
+	publicRouter.Use(cors)
+	publicRouter.Use(logging)
 
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func SetupRouter(r *mux.Router, h VideoHandler) {
-	r.HandleFunc(routeVideo, h.GetByID).
+	// Global public search
+	publicRouter.HandleFunc(routeVideoSearch, h.SearchGlobal).
 		Methods(http.MethodGet, http.MethodOptions)
 
-	r.HandleFunc(routePublisherVideos, h.Create).
+	// Swagger route (public)
+	publicRouter.PathPrefix(routeSwagger).HandlerFunc(httpSwagger.WrapHandler)
+
+	// Protected routes (requires auth)
+	protectedRouter := r.PathPrefix("").Subrouter()
+	protectedRouter.Use(cors)
+	protectedRouter.Use(auth)
+	protectedRouter.Use(logging)
+
+	// Video endpoints (protected)
+	protectedRouter.HandleFunc(routeVideo, h.GetByID).
+		Methods(http.MethodGet, http.MethodOptions)
+	protectedRouter.HandleFunc(routePublisherVideos, h.Create).
 		Methods(http.MethodPost, http.MethodOptions)
-
-	r.HandleFunc(routePublisherVideos, h.GetByPublisher).
+	protectedRouter.HandleFunc(routePublisherVideos, h.GetByPublisher).
 		Methods(http.MethodGet, http.MethodOptions)
-
-	r.HandleFunc(routeVideoSearch, h.SearchGlobal).
-		Methods(http.MethodGet, http.MethodOptions)
-
-	r.PathPrefix(routeSwagger).HandlerFunc(httpSwagger.WrapHandler)
 }

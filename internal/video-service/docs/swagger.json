@@ -22,6 +22,13 @@
                 "parameters": [
                     {
                         "type": "string",
+                        "description": "JWT token for authentication (e.g., Bearer \u003ctoken\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "format": "uuid",
                         "description": "video ID (UUID)",
                         "name": "videoID",
@@ -62,6 +69,13 @@
                 ],
                 "summary": "Get videos by publisher",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "JWT token for authentication (e.g., Bearer \u003ctoken\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "publisher ID (UUID)",
@@ -119,6 +133,13 @@
                 ],
                 "summary": "Creates new video.",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "JWT token for authentication (e.g., Bearer \u003ctoken\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "Publisher ID (UUID)",

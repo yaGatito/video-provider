@@ -13,11 +13,12 @@ services:
       - video-db
     environment:
       VIDEO_DB_NAME: "${VIDEO_DB_NAME}"
-      VIDEO_DB_PORT: "${VIDEO_DB_PORT}"
+      VIDEO_DB_HOST: "video-db"
+      VIDEO_DB_PORT: "5432"
       VIDEO_API_PORT: "${VIDEO_API_PORT}"
       POSTGRES_USER: "${POSTGRES_USER}"
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
-      VIDEO_DB_DOCKER_HOST: video-db
+      JWT_SECRET: "${JWT_SECRET}"
     networks:
       - app-network
 
@@ -48,11 +49,12 @@ services:
       - user-db
     environment:
       USER_DB_NAME: "${USER_DB_NAME}"
-      USER_DB_PORT: "${USER_DB_PORT}"
+      USER_DB_HOST: "user-db"
+      USER_DB_PORT: "5432"
       USER_API_PORT: "${USER_API_PORT}"
       POSTGRES_USER: "${POSTGRES_USER}"
       POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
-      USER_DB_DOCKER_HOST: user-db
+      JWT_SECRET: "${JWT_SECRET}"
     networks:
       - app-network
 

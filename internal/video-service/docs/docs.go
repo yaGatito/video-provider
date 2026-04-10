@@ -28,6 +28,13 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "description": "JWT token for authentication (e.g., Bearer \u003ctoken\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "format": "uuid",
                         "description": "video ID (UUID)",
                         "name": "videoID",
@@ -68,6 +75,13 @@ const docTemplate = `{
                 ],
                 "summary": "Get videos by publisher",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "JWT token for authentication (e.g., Bearer \u003ctoken\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "publisher ID (UUID)",
@@ -125,6 +139,13 @@ const docTemplate = `{
                 ],
                 "summary": "Creates new video.",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "JWT token for authentication (e.g., Bearer \u003ctoken\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "Publisher ID (UUID)",

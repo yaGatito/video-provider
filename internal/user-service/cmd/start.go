@@ -8,6 +8,7 @@ import (
 	"os"
 	_ "user-service/docs"
 
+	"user-service/pkg/auth"
 	"user-service/pkg/middleware"
 
 	cryptoadp "user-service/adapters/crypto"
@@ -20,13 +21,12 @@ import (
 )
 
 const (
-	dbUser       = "POSTGRES_USER"
-	dbPass       = "POSTGRES_PASSWORD"
-	dbHost       = "USER_DB_HOST"
-	dbDockerHost = "USER_DB_DOCKER_HOST"
-	dbPort       = "USER_DB_PORT"
-	dbName       = "USER_DB_NAME"
-	apiPort      = "USER_API_PORT"
+	dbUser  = "POSTGRES_USER"
+	dbPass  = "POSTGRES_PASSWORD"
+	dbHost  = "USER_DB_HOST"
+	dbPort  = "USER_DB_PORT"
+	dbName  = "USER_DB_NAME"
+	apiPort = "USER_API_PORT"
 )
 
 // @title			User Service API
@@ -43,7 +43,7 @@ func main() {
 func run() error {
 	ctx := context.Background()
 
-	pgConfig, err := pgxpool.ParseConfig(dbDockerUrl())
+	pgConfig, err := pgxpool.ParseConfig(dbUrl())
 	if err != nil {
 		return fmt.Errorf("failed to parse connection string: %w", err)
 	}
@@ -64,14 +64,12 @@ func run() error {
 
 	userRepository := postgres.NewPostgresUserRepository(dbPool)
 	pwHasher := cryptoadp.NewBCryptPasswordHasher()
-	userInteractor := app.NewUserService(userRepository, pwHasher)
+	userInteractor := app.NewUserService(userRepository, pwHasher, auth.GetJWTSecret)
 	userHandler := httpadp.NewUserHandler(userInteractor, mwLog.Log)
 
 	router := mux.NewRouter()
-	router.Use(middleware.CORSMiddleware)
-	router.Use(mwLog.LoggingMiddleware)
 
-	httpadp.SetupRouter(router, userHandler)
+	httpadp.SetupRouter(router, userHandler, auth.Auth, middleware.CORSMiddleware, mwLog.LoggingMiddleware)
 
 	log.Printf("User-service starting on port %s", os.Getenv(apiPort))
 	err = http.ListenAndServe(":"+os.Getenv(apiPort), router)
@@ -85,12 +83,6 @@ func run() error {
 // dbUrl must be called only after setup OS env variables.
 func dbUrl() string {
 	return fmt.Sprintf(
-		"%s://%s:%s@%s:%s/%s?sslmode=disable&pool_max_conns=%s&pool_max_conn_lifetime=1h30m",
-		"postgres", os.Getenv(dbUser), os.Getenv(dbPass), os.Getenv(dbHost), os.Getenv(dbPort), os.Getenv(dbName), "30")
-}
-
-func dbDockerUrl() string {
-	return fmt.Sprintf(
-		"%s://%s:%s@%s:5432/%s?sslmode=disable&pool_max_conns=%s&pool_max_conn_lifetime=1h30m",
-		"postgres", os.Getenv(dbUser), os.Getenv(dbPass), os.Getenv(dbDockerHost), os.Getenv(dbName), "30")
+		"postgres://%s:%s@%s:%s/%s?sslmode=disable&pool_max_conns=30&pool_max_conn_lifetime=1h30m",
+		os.Getenv(dbUser), os.Getenv(dbPass), os.Getenv(dbHost), os.Getenv(dbPort), os.Getenv(dbName))
 }

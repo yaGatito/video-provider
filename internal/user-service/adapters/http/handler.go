@@ -35,7 +35,7 @@ func NewUserHandler(userInteractor app.UserInteractor, log *log.Logger) *UserHan
 //	@Failure		400		{object}	serviceErrorResponse
 //	@Failure		401		{object}	serviceErrorResponse
 //	@Failure		500		{object}	serviceErrorResponse
-//	@Router			/v1/users/login [post]
+//	@Router			/v1/login [post]
 func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var loginRequestData loginUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&loginRequestData); err != nil {
@@ -121,13 +121,14 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 //	numeric identifier depending on the deployment.
 //
 //	@Produce		json
+//	@Param 			Authorization header string true "JWT token for authentication (e.g., Bearer <token>)"
 //	@Param			id	path		string	true	"User ID (example: 123e4567-e89b-12d3-a456-426614174000)"
 //	@Success		200	{object}	interface{}
 //	@Failure		400	{object}	serviceErrorResponse
 //	@Failure		500	{object}	serviceErrorResponse
-//	@Router			/v1/users/{id} [get]
+//	@Router			/v1/users/{userID} [get]
 func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
-	userID, err := uuid.Parse(mux.Vars(r)["id"])
+	userID, err := uuid.Parse(mux.Vars(r)[pathVarUserID])
 	if err != nil {
 		h.writeErrorResponse(w, shared.NewError(http.StatusBadRequest, "invalid user id format", err))
 		return
@@ -144,7 +145,7 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.writeResponse(w, user, http.StatusOK)
+	h.writeResponse(w, toUserDto(user), http.StatusOK)
 }
 
 func (h *UserHandler) writeResponse(w http.ResponseWriter, v any, code int) {
@@ -162,7 +163,7 @@ func (h *UserHandler) writeErrorResponse(w http.ResponseWriter, vErr error) {
 
 	switch vErr := vErr.(type) {
 	case shared.Error:
-		h.log.Printf("Error: %s\n", vErr.Err.Error())
+		h.log.Printf("Error: %v\n", vErr)
 
 		w.WriteHeader(int(vErr.Code))
 		err := json.NewEncoder(w).Encode(serviceErrorResponse{

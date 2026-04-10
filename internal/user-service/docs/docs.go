@@ -61,7 +61,7 @@ const docTemplate = `{
                 }
             }
         },
-        "/v1/users/login": {
+        "/v1/login": {
             "post": {
                 "description": "Authenticate a user and return a JWT token",
                 "consumes": [
@@ -124,6 +124,13 @@ const docTemplate = `{
                 ],
                 "summary": "Get user by ID",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "JWT token for authentication (e.g., Bearer \u003ctoken\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "User ID (example: 123e4567-e89b-12d3-a456-426614174000)",

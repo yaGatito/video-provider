@@ -26,12 +26,14 @@ const (
 	IsAscUrlParam  = "order"
 )
 
+// VideoHandler handles HTTP requests related to video operations.
 type VideoHandler struct {
 	videoInteractor app.VideoService
 	log             *log.Logger
 	validate        *validator.Validate
 }
 
+// NewVideoHandler creates a new VideoHandler.
 func NewVideoHandler(
 	userInteractor app.VideoService,
 	log *log.Logger,
@@ -46,8 +48,9 @@ func NewVideoHandler(
 //	@Tags			videos
 //	@Accept			json
 //	@Produce		json
-//	@Param			publisherID	path		string					true	"Publisher ID (UUID)"
-//	@Param			video		body		createVideoRequestBody	true	"Video creation request body"
+//	@Param 			Authorization 	header 		string 					true "JWT token for authentication (e.g., Bearer <token>)"
+//	@Param			publisherID		path		string					true	"Publisher ID (UUID)"
+//	@Param			video			body		createVideoRequestBody	true	"Video creation request body"
 //	@Success		201			{object}	nil
 //	@Failure		400			{object}	string	"Invalid input"
 //	@Failure		500			{object}	string	"Internal error"
@@ -87,6 +90,7 @@ func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
 //	@Description	Returns details of a single video by its unique identifier
 //	@Tags			videos
 //	@Produce		json
+//	@Param 			Authorization 		header 	string 	true "JWT token for authentication (e.g., Bearer <token>)"
 //	@Param			videoID	path		string	true	"video ID (UUID)"	Format(uuid)
 //	@Success		200		{object}	videoResponseBody
 //	@Failure		400		{object}	string	"Invalid video ID format"
@@ -114,6 +118,7 @@ func (h *VideoHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 //	@Description	Returns a list of videos for a specific publisher with pagination and search support
 //	@Tags			videos
 //	@Produce		json
+//	@Param 			Authorization 		header 	string 	true "JWT token for authentication (e.g., Bearer <token>)"
 //	@Param			publisherID	path	string	true	"publisher ID (UUID)"
 //	@Param			limit		query	int		false	"Limit (example: 10)"
 //	@Param			offset		query	int		false	"Offset (example: 0)"
@@ -246,6 +251,7 @@ func (h *VideoHandler) SearchGlobal(w http.ResponseWriter, r *http.Request) {
 	h.writeResponse(w, videosResponseBody{Videos: slicex.Map(videos, dtoVideo)}, http.StatusOK)
 }
 
+// parseUrlValues parses URL query parameters.
 func (h *VideoHandler) parseUrlValues(query string) (url.Values, error) {
 	if len(query) > policy.UrlMaxLen {
 		return nil, shared.NewError(http.StatusBadRequest, "too large url", nil)
@@ -259,6 +265,7 @@ func (h *VideoHandler) parseUrlValues(query string) (url.Values, error) {
 	return urlValues, nil
 }
 
+// parseIntsUrlParams parses integer parameters from the URL query.
 func (h *VideoHandler) parseIntsUrlParams(
 	values url.Values,
 	params ...string,
@@ -278,6 +285,7 @@ func (h *VideoHandler) parseIntsUrlParams(
 	return res, nil
 }
 
+// parseStringsUrlParams parses string parameters from the URL query.
 func (h *VideoHandler) parseStringsUrlParams(
 	values url.Values,
 	params ...string,
@@ -296,6 +304,7 @@ func (h *VideoHandler) parseStringsUrlParams(
 	return res, nil
 }
 
+// pathVarHandler extracts a path variable and parses it as a UUID.
 func (h *VideoHandler) pathVarHandler(
 	r *http.Request,
 	varName string,
@@ -314,6 +323,7 @@ func (h *VideoHandler) pathVarHandler(
 	return res, nil
 }
 
+// extractUrlVarString extracts and unescapes a string parameter from the URL query.
 func (h *VideoHandler) extractUrlVarString(
 	values url.Values,
 	paramName string,
@@ -332,6 +342,7 @@ func (h *VideoHandler) extractUrlVarString(
 	return value, nil
 }
 
+// writeResponse writes a JSON response with the specified HTTP status code.
 func (h *VideoHandler) writeResponse(w http.ResponseWriter, v any, code int) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
@@ -342,6 +353,7 @@ func (h *VideoHandler) writeResponse(w http.ResponseWriter, v any, code int) {
 	}
 }
 
+// writeErrorResponse writes an error response in JSON format.
 func (h *VideoHandler) writeErrorResponse(w http.ResponseWriter, vErr error) {
 	w.Header().Set("Content-Type", "application/json")
 

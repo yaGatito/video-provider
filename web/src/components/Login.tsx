@@ -3,7 +3,7 @@ import axios, { AxiosResponse } from 'axios';
 import styled from 'styled-components';
 
 interface UserLogin {
-  username: string;
+  email: string;
   password: string;
 }
 
@@ -64,7 +64,7 @@ const Button = styled.button`
 `;
 
 const Login: React.FC = () => {
-  const [userData, setUserData] = useState<UserLogin>({ username: '', password: '' });
+  const [userData, setUserData] = useState<UserLogin>({ email: '', password: '' });
   const [errorMessage, setErrorMessage] = useState('');
   const usersApiUrl = process.env.REACT_APP_USER_API_URL || '/userApi';
 
@@ -92,10 +92,10 @@ const Login: React.FC = () => {
       {errorMessage && <ErrorMessage>{errorMessage}</ErrorMessage>}
       <Form onSubmit={handleLogin}>
         <Input
-          type="text"
-          name="username"
+          type="email"
+          name="email"
           placeholder="Username"
-          value={userData.username}
+          value={userData.email}
           onChange={handleChange}
           required
         />

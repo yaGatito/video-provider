@@ -39,7 +39,7 @@ DB_VERSION 			= 18-alpine
 DB_URL 				= $(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
 DB_CONTAINER_NAME 	= $(config)-db-$(DB_VENDOR)-$(DB_VERSION)
 
-MAIN 	= internal/$(SERVICE_NAME)/cmd/app.go
+MAIN 	= internal/$(SERVICE_NAME)/cmd/start.go
 PKG 	?= app
 TEST 	?= .
 
@@ -122,7 +122,7 @@ lint:
 swag: 
 	$(call log, "Swagger generate: $(MAIN)")
 	$(call log, "Swagger output: docs")
-	${SWAG} init -g cmd/app.go -o internal/$(SERVICE_NAME)/docs  --dir internal/$(SERVICE_NAME)
+	${SWAG} init -g cmd/start.go -o internal/$(SERVICE_NAME)/docs  --dir internal/$(SERVICE_NAME)
 
 .PHONY: sqlc
 sqlc:
