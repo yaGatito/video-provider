@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"pkg/shared"
 	"testing"
 	"time"
 	"user-service/domain"
-	"user-service/pkg/shared"
 	mock_ports "user-service/ports/mock"
 
 	"github.com/golang-jwt/jwt/v4"

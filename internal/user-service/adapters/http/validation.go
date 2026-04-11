@@ -2,8 +2,8 @@ package httpadp
 
 import (
 	"fmt"
+	"pkg/shared"
 	"regexp"
-	"user-service/pkg/shared"
 	"user-service/policy"
 
 	"github.com/go-playground/validator/v10"

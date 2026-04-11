@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"pkg/shared"
 	"user-service/app"
 	"user-service/domain"
-	"user-service/pkg/shared"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"

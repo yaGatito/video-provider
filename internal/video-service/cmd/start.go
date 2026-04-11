@@ -6,12 +6,13 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"pkg/auth"
 	httpadp "video-service/adapters/http"
 	"video-service/adapters/postgres"
 	"video-service/app"
 	_ "video-service/docs"
-	"video-service/pkg/auth"
-	"video-service/pkg/middleware"
+
+	"pkg/middleware"
 
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"

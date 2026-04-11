@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
+	"pkg/shared"
 	postgres "user-service/adapters/postgres/db"
 	"user-service/domain"
-	"user-service/pkg/shared"
 	"user-service/ports"
 
 	"github.com/google/uuid"

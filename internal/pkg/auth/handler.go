@@ -15,8 +15,7 @@ const contextUserID contextKeyUserID = "USER_ID"
 
 const jwtSecretEnvVar = "JWT_SECRET"
 
-type Authorizer struct {
-}
+type Authorizer struct{}
 
 func (a Authorizer) GetJWTSecret() []byte {
 	return []byte(os.Getenv(jwtSecretEnvVar))
@@ -32,12 +31,10 @@ func (a Authorizer) Auth(next http.Handler) http.Handler {
 		}
 
 		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			// Ensure the signing method is HS256
 			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 			}
 
-			// Use the secret from your UserService
 			return a.GetJWTSecret(), nil
 		})
 		if err != nil {
@@ -45,13 +42,11 @@ func (a Authorizer) Auth(next http.Handler) http.Handler {
 			return
 		}
 
-		// Check if the token is valid
 		if !token.Valid {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
 
-		// Extract the user ID from the claims
 		claims, ok := token.Claims.(jwt.MapClaims)
 		if !ok {
 			w.WriteHeader(http.StatusUnauthorized)
@@ -64,7 +59,6 @@ func (a Authorizer) Auth(next http.Handler) http.Handler {
 			return
 		}
 
-		// Handle preflight requests
 		if r.Method == http.MethodOptions {
 			w.WriteHeader(http.StatusNoContent)
 			return

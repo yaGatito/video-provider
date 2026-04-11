@@ -6,10 +6,10 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"pkg/shared"
 	"strconv"
 	"video-service/app"
 	"video-service/domain"
-	"video-service/pkg/shared"
 	"video-service/policy"
 
 	"github.com/go-playground/validator/v10"

@@ -3,9 +3,9 @@ package app
 import (
 	"context"
 	"log"
+	"pkg/shared"
 	"time"
 	"user-service/domain"
-	"user-service/pkg/shared"
 	"user-service/ports"
 
 	"github.com/golang-jwt/jwt/v4"

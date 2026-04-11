@@ -8,8 +8,8 @@ import (
 	"os"
 	_ "user-service/docs"
 
-	"user-service/pkg/auth"
-	"user-service/pkg/middleware"
+	"pkg/auth"
+	"pkg/middleware"
 
 	cryptoadp "user-service/adapters/crypto"
 	httpadp "user-service/adapters/http"
@@ -64,7 +64,8 @@ func run() error {
 
 	userRepository := postgres.NewPostgresUserRepository(dbPool)
 	pwHasher := cryptoadp.NewBCryptPasswordHasher()
-	userInteractor := app.NewUserService(userRepository, pwHasher, auth.GetJWTSecret)
+	authorizer := auth.Authorizer{}
+	userInteractor := app.NewUserService(userRepository, pwHasher, authorizer.GetJWTSecret)
 	userHandler := httpadp.NewUserHandler(userInteractor, mwLog.Log)
 
 	router := mux.NewRouter()
@@ -72,7 +73,7 @@ func run() error {
 	httpadp.SetupRouter(
 		router,
 		userHandler,
-		auth.Auth,
+		authorizer.Auth,
 		middleware.CORSMiddleware,
 		mwLog.LoggingMiddleware,
 	)
