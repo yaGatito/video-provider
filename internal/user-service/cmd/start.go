@@ -30,8 +30,8 @@ const (
 )
 
 // @title			User Service API
-// @version		1.0
-// @description	Service for managing users.
+// @version			1.0
+// @description		Service for managing users.
 // @host			localhost:8081
 // @BasePath		/
 func main() {
@@ -69,7 +69,13 @@ func run() error {
 
 	router := mux.NewRouter()
 
-	httpadp.SetupRouter(router, userHandler, auth.Auth, middleware.CORSMiddleware, mwLog.LoggingMiddleware)
+	httpadp.SetupRouter(
+		router,
+		userHandler,
+		auth.Auth,
+		middleware.CORSMiddleware,
+		mwLog.LoggingMiddleware,
+	)
 
 	log.Printf("User-service starting on port %s", os.Getenv(apiPort))
 	err = http.ListenAndServe(":"+os.Getenv(apiPort), router)
@@ -84,5 +90,12 @@ func run() error {
 func dbUrl() string {
 	return fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=disable&pool_max_conns=30&pool_max_conn_lifetime=1h30m",
-		os.Getenv(dbUser), os.Getenv(dbPass), os.Getenv(dbHost), os.Getenv(dbPort), os.Getenv(dbName))
+		os.Getenv(
+			dbUser,
+		),
+		os.Getenv(dbPass),
+		os.Getenv(dbHost),
+		os.Getenv(dbPort),
+		os.Getenv(dbName),
+	)
 }

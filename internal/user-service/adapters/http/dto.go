@@ -7,14 +7,14 @@ import (
 )
 
 type createUserRequest struct {
-	Email    string `json:"email" validate:"required,email,lenLimit"`
-	Name     string `json:"name" validate:"required,text64"`
+	Email    string `json:"email"    validate:"required,email,lenLimit"`
+	Name     string `json:"name"     validate:"required,text64"`
 	LastName string `json:"lastname" validate:"required,text64"`
 	Password string `json:"password" validate:"required"`
 }
 
 type loginUserRequest struct {
-	Email    string `json:"email" validate:"required,email,lenLimit"`
+	Email    string `json:"email"    validate:"required,email,lenLimit"`
 	Password string `json:"password" validate:"required"`
 }
 

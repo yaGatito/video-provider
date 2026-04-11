@@ -23,7 +23,7 @@ type serviceErrorResponse struct {
 
 // createVideoRequestBody represents the data required to create the video
 type createVideoRequestBody struct {
-	Topic       string `json:"topic" validate:"required,minTopic,maxTopic"`
+	Topic       string `json:"topic"       validate:"required,minTopic,maxTopic"`
 	Description string `json:"description" validate:"required,maxDescription"`
 }
 

@@ -1,0 +1,120 @@
+version: "2"
+run:
+  tests: true
+
+linters:
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - bodyclose
+    - rowserrcheck
+    - gocyclo
+    - gocritic
+    - revive
+    - misspell
+    - lll
+    - whitespace
+    - unparam
+    - gosec
+    - nilnesserr
+    - sqlclosecheck
+    - loggercheck
+    - testpackage
+    - unconvert
+    - gochecknoinits
+    - gochecknoglobals
+    - gomoddirectives
+    - revive
+    - testableexamples
+    - nakedret
+    - asciicheck
+
+  disable:
+    - revive  # already enabled via 'revive' in enable list
+
+  settings:
+    revive:
+      rules:
+        - name: line-length-limit
+          arguments:
+            - 120
+    gosec:
+      # Enable all security checks
+      severity: high
+    lll:
+      line-length: 120
+    whitespace:
+      # Enable whitespace rules
+      check-branches: true
+      check-functions: true
+      check-ifs: true
+      check-returns: true
+      check-switches: true
+      check-for: true
+      check-whiles: true
+    gochecknoinits:
+      # Allow some init functions if needed
+      allow: false
+    gochecknoglobals:
+      # Allow some global variables if needed
+      allow: false
+    gomoddirectives:
+      # Allow 'replace' and 'exclude' directives if needed
+      allow-replace: true
+      allow-exclude: true
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+    - golines
+
+exclusions:
+  generated: lax
+  paths:
+    - third_party$
+    - vendor$
+    - examples$
+    - test$
+    - _test$
+    - integration$
+    - e2e$
+    - mock$
+    - generated$
+    - internal$
+    - docs$
+    - .git$
+    - .idea$
+    - .vscode$
+    - bin$
+    - out$
+    - build$
+    - tmp$
+    - logs$
+    - coverage$
+    - .cache$
+    - .tmp$
+    - .DS_Store$
+    - .gitignore$
+    - .golangci.yml$
+
+  # Exclude specific linters from specific files
+  # linters:
+  #   - name: gochecknoinits
+  #     paths:
+  #       - "internal/test/*"
+  #       - "cmd/test/*"
+  #   - name: gochecknoglobals
+  #     paths:
+  #       - "internal/test/*"
+  #       - "cmd/test/*"
+
+  # # Exclude specific formatters
+  # formatters:
+  #   - name: golines
+  #     paths:
+  #       - "internal/test/*"
+  #       - "cmd/test/*"

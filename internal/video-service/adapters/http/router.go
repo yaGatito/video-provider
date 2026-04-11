@@ -17,7 +17,13 @@ const (
 	routeSwagger         = "/v1/swagger/"
 )
 
-func SetupRouter(r *mux.Router, h *VideoHandler, auth mux.MiddlewareFunc, logging mux.MiddlewareFunc, cors mux.MiddlewareFunc) {
+func SetupRouter(
+	r *mux.Router,
+	h *VideoHandler,
+	auth mux.MiddlewareFunc,
+	logging mux.MiddlewareFunc,
+	cors mux.MiddlewareFunc,
+) {
 	// Public routes (no auth required)
 	publicRouter := r.PathPrefix("").Subrouter()
 	publicRouter.Use(cors)

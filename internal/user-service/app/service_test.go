@@ -56,10 +56,15 @@ func TestUserService_Create(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockRepo := mock_ports.NewMockUserRepository(ctrl)
 			mockHasher := mock_ports.NewMockPasswordHasher(ctrl)
-			userService := NewUserService(mockRepo, mockHasher)
+			userService := NewUserService(mockRepo, mockHasher, func() []byte {
+				return []byte("test")
+			})
 
 			mockHasher.EXPECT().Hash(tc.password).Return([]byte(tc.password), nil).Times(1)
-			mockRepo.EXPECT().Create(gomock.Any(), tc.user, []byte(tc.password)).Return(tc.id, tc.err).Times(1)
+			mockRepo.EXPECT().
+				Create(gomock.Any(), tc.user, []byte(tc.password)).
+				Return(tc.id, tc.err).
+				Times(1)
 
 			id, err := userService.Create(context.Background(), tc.user, tc.password)
 			if tc.err != nil && err == nil {
@@ -110,7 +115,9 @@ func TestUserService_Get(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockRepo := mock_ports.NewMockUserRepository(ctrl)
 			mockHasher := mock_ports.NewMockPasswordHasher(ctrl)
-			userService := NewUserService(mockRepo, mockHasher)
+			userService := NewUserService(mockRepo, mockHasher, func() []byte {
+				return []byte("test")
+			})
 
 			mockRepo.EXPECT().FindByID(gomock.Any(), tc.id).Return(tc.user, tc.err).Times(1)
 
@@ -197,14 +204,18 @@ func TestUserService_Login(t *testing.T) {
 			expectedUserID: uuid.Nil,
 		},
 		{
-			testName:       "Wrong password",
-			inputEmail:     "test@example.com",
-			inputPas:       []byte("wrongpassword"),
-			repoCalls:      1,
-			repoErr:        nil,
-			hashCalls:      1,
-			hashErr:        errors.New("password mismatch"),
-			resErr:         shared.NewError(shared.ErrUnauthorized, "failed to compare password", nil),
+			testName:   "Wrong password",
+			inputEmail: "test@example.com",
+			inputPas:   []byte("wrongpassword"),
+			repoCalls:  1,
+			repoErr:    nil,
+			hashCalls:  1,
+			hashErr:    errors.New("password mismatch"),
+			resErr: shared.NewError(
+				shared.ErrUnauthorized,
+				"failed to compare password",
+				nil,
+			),
 			resToken:       "",
 			expectedUserID: uuid.Nil,
 		},
@@ -306,7 +317,9 @@ func TestUserService_Update(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockRepo := mock_ports.NewMockUserRepository(ctrl)
 			mockHasher := mock_ports.NewMockPasswordHasher(ctrl)
-			userService := NewUserService(mockRepo, mockHasher)
+			userService := NewUserService(mockRepo, mockHasher, func() []byte {
+				return []byte("test")
+			})
 
 			// Setup expectations based on test case
 			if tc.err == nil {

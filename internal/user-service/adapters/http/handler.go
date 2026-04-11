@@ -39,7 +39,10 @@ func NewUserHandler(userInteractor app.UserInteractor, log *log.Logger) *UserHan
 func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var loginRequestData loginUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&loginRequestData); err != nil {
-		h.writeErrorResponse(w, shared.NewError(http.StatusBadRequest, "failed to decode login request body", err))
+		h.writeErrorResponse(
+			w,
+			shared.NewError(http.StatusBadRequest, "failed to decode login request body", err),
+		)
 		return
 	}
 
@@ -57,7 +60,11 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	loginRequestData.normalize()
 
-	token, err := h.userInteractor.Login(r.Context(), loginRequestData.Email, []byte(loginRequestData.Password))
+	token, err := h.userInteractor.Login(
+		r.Context(),
+		loginRequestData.Email,
+		[]byte(loginRequestData.Password),
+	)
 	if err != nil {
 		h.writeErrorResponse(w, err)
 		return
@@ -84,7 +91,14 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var createUserRequestData createUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&createUserRequestData); err != nil {
-		h.writeErrorResponse(w, shared.NewError(http.StatusBadRequest, "failed to decode create user request body", err))
+		h.writeErrorResponse(
+			w,
+			shared.NewError(
+				http.StatusBadRequest,
+				"failed to decode create user request body",
+				err,
+			),
+		)
 		return
 	}
 
@@ -102,7 +116,11 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	createUserRequestData.normalize()
 
-	userId, err := h.userInteractor.Create(r.Context(), toDomainUser(createUserRequestData), createUserRequestData.Password)
+	userId, err := h.userInteractor.Create(
+		r.Context(),
+		toDomainUser(createUserRequestData),
+		createUserRequestData.Password,
+	)
 	if err != nil {
 		h.writeErrorResponse(w, err)
 		return
@@ -130,12 +148,18 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	userID, err := uuid.Parse(mux.Vars(r)[pathVarUserID])
 	if err != nil {
-		h.writeErrorResponse(w, shared.NewError(http.StatusBadRequest, "invalid user id format", err))
+		h.writeErrorResponse(
+			w,
+			shared.NewError(http.StatusBadRequest, "invalid user id format", err),
+		)
 		return
 	}
 
 	if userID == uuid.Nil {
-		h.writeErrorResponse(w, shared.NewError(http.StatusBadRequest, "user ID cannot be empty", nil))
+		h.writeErrorResponse(
+			w,
+			shared.NewError(http.StatusBadRequest, "user ID cannot be empty", nil),
+		)
 		return
 	}
 

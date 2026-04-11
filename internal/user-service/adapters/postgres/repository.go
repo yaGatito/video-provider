@@ -27,7 +27,11 @@ func NewPostgresUserRepository(dbConn postgres.DBTX) *PostgresUserRepository {
 	}
 }
 
-func (r *PostgresUserRepository) Create(ctx context.Context, user domain.User, password []byte) (uuid.UUID, error) {
+func (r *PostgresUserRepository) Create(
+	ctx context.Context,
+	user domain.User,
+	password []byte,
+) (uuid.UUID, error) {
 	params := postgres.CreateUserParams{
 		Name:      user.Name,
 		Lastname:  user.LastName,
@@ -49,7 +53,11 @@ func (r *PostgresUserRepository) FindByID(ctx context.Context, id uuid.UUID) (do
 	row, err := r.q.FindUserById(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return domain.User{}, shared.NewError(shared.ErrNotFound, "user not found with ID "+id.String(), err)
+			return domain.User{}, shared.NewError(
+				shared.ErrNotFound,
+				"user not found with ID "+id.String(),
+				err,
+			)
 		} else {
 			return domain.User{}, shared.NewError(shared.ErrInternal, "failed to retrieve user with ID "+id.String(), err)
 		}
@@ -66,11 +74,18 @@ func (r *PostgresUserRepository) FindByID(ctx context.Context, id uuid.UUID) (do
 	}, nil
 }
 
-func (r *PostgresUserRepository) FindByEmail(ctx context.Context, email string) (domain.User, error) {
+func (r *PostgresUserRepository) FindByEmail(
+	ctx context.Context,
+	email string,
+) (domain.User, error) {
 	row, err := r.q.FindUserByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return domain.User{}, shared.NewError(shared.ErrNotFound, "user not found with email "+email, err)
+			return domain.User{}, shared.NewError(
+				shared.ErrNotFound,
+				"user not found with email "+email,
+				err,
+			)
 		} else {
 			return domain.User{}, shared.NewError(shared.ErrInternal, "failed to retrieve user with email "+email, err)
 		}
@@ -102,11 +117,18 @@ func (r *PostgresUserRepository) Update(ctx context.Context, id uuid.UUID, user 
 	return nil
 }
 
-func (r *PostgresUserRepository) GetPasswordHash(ctx context.Context, email string) (uuid.UUID, []byte, error) {
+func (r *PostgresUserRepository) GetPasswordHash(
+	ctx context.Context,
+	email string,
+) (uuid.UUID, []byte, error) {
 	row, err := r.q.GetPassword(ctx, email)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return uuid.UUID{}, nil, shared.NewError(shared.ErrNotFound, "not found password and email combination for email: "+email, err)
+			return uuid.UUID{}, nil, shared.NewError(
+				shared.ErrNotFound,
+				"not found password and email combination for email: "+email,
+				err,
+			)
 		} else {
 			return uuid.UUID{}, nil, shared.NewError(shared.ErrInternal, "failed to retrieve password", err)
 		}

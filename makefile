@@ -114,8 +114,8 @@ gen: sqlc swag mocks
 
 .PHONY: lint
 lint:
+	cd ./internal/$(SERVICE_NAME) && $(GOLANGCI_LINT) run -c ../../.golangci.yml
 	$(GOLANGCI_LINT) fmt
-	$(GOLANGCI_LINT) run
 	$(call log, "Formatted")
 
 .PHONY: swag

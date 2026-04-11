@@ -26,11 +26,19 @@ type UserService struct {
 	getJWTSecret func() []byte
 }
 
-func NewUserService(repo ports.UserRepository, hasher ports.PasswordHasher, getSecret func() []byte) *UserService {
+func NewUserService(
+	repo ports.UserRepository,
+	hasher ports.PasswordHasher,
+	getSecret func() []byte,
+) *UserService {
 	return &UserService{repo: repo, hasher: hasher, getJWTSecret: getSecret}
 }
 
-func (us *UserService) Create(ctx context.Context, user domain.User, password string) (uuid.UUID, error) {
+func (us *UserService) Create(
+	ctx context.Context,
+	user domain.User,
+	password string,
+) (uuid.UUID, error) {
 	hash, err := us.hasher.Hash(password)
 	if err != nil {
 		return uuid.UUID{}, shared.NewError(shared.ErrInternal, "failed to hash password", err)

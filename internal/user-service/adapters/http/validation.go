@@ -9,7 +9,9 @@ import (
 	"github.com/go-playground/validator/v10"
 )
 
-var textRe = regexp.MustCompile(fmt.Sprintf(`^[A-Za-z]{%d,%d}$`, policy.MinInputTextLen, policy.MaxInputTextLen))
+var textRe = regexp.MustCompile(
+	fmt.Sprintf(`^[A-Za-z]{%d,%d}$`, policy.MinInputTextLen, policy.MaxInputTextLen),
+)
 
 func newUserValidate() *validator.Validate {
 	validate := validator.New(validator.WithRequiredStructEnabled())
@@ -32,22 +34,46 @@ var passReqSpecGroup = regexp.MustCompile(`.*[!@#$%^&*()_=+-]+.*`)
 
 func validatePassword(password []byte) error {
 	if len(password) < policy.MinPasswordLen || len(password) > policy.MaxInputTextLen {
-		return shared.NewError(shared.ErrInvalidInput, fmt.Sprintf("password must be between %d and %d characters long", policy.MinPasswordLen, policy.MaxInputTextLen), nil)
+		return shared.NewError(
+			shared.ErrInvalidInput,
+			fmt.Sprintf(
+				"password must be between %d and %d characters long",
+				policy.MinPasswordLen,
+				policy.MaxInputTextLen,
+			),
+			nil,
+		)
 	}
 	if !passRe.Match(password) {
 		return shared.NewError(shared.ErrInvalidInput, "password contains invalid characters", nil)
 	}
 	if !passReqDigGroup.Match(password) {
-		return shared.NewError(shared.ErrInvalidInput, "password must contain at least one digit", nil)
+		return shared.NewError(
+			shared.ErrInvalidInput,
+			"password must contain at least one digit",
+			nil,
+		)
 	}
 	if !passReqLowGroup.Match(password) {
-		return shared.NewError(shared.ErrInvalidInput, "password must contain at least one lowercase letter", nil)
+		return shared.NewError(
+			shared.ErrInvalidInput,
+			"password must contain at least one lowercase letter",
+			nil,
+		)
 	}
 	if !passReqCapGroup.Match(password) {
-		return shared.NewError(shared.ErrInvalidInput, "password must contain at least one uppercase letter", nil)
+		return shared.NewError(
+			shared.ErrInvalidInput,
+			"password must contain at least one uppercase letter",
+			nil,
+		)
 	}
 	if !passReqSpecGroup.Match(password) {
-		return shared.NewError(shared.ErrInvalidInput, "password must contain at least one special character", nil)
+		return shared.NewError(
+			shared.ErrInvalidInput,
+			"password must contain at least one special character",
+			nil,
+		)
 	}
 	return nil
 }

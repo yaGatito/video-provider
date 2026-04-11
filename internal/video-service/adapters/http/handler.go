@@ -37,8 +37,8 @@ type VideoHandler struct {
 func NewVideoHandler(
 	userInteractor app.VideoService,
 	log *log.Logger,
-) VideoHandler {
-	return VideoHandler{videoInteractor: userInteractor, log: log, validate: newVideoValidator()}
+) *VideoHandler {
+	return &VideoHandler{videoInteractor: userInteractor, log: log, validate: newVideoValidator()}
 }
 
 // Create godoc

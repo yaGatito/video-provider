@@ -68,9 +68,15 @@ func TestCreateVideo(t *testing.T) {
 			s := mock_app.NewMockVideoService(ctrl)
 			h := NewVideoHandler(s, log.New(io.Discard, "", 0))
 			r := mux.NewRouter()
-			SetupRouter(r, h)
+			mockMiddleware := func(next http.Handler) http.Handler {
+				return next
+			}
+			SetupRouter(r, h, mockMiddleware, mockMiddleware, mockMiddleware)
 
-			s.EXPECT().Create(gomock.Any(), gomock.Any()).Return(testVideo, nil).MaxTimes(c.expCallCnt)
+			s.EXPECT().
+				Create(gomock.Any(), gomock.Any()).
+				Return(testVideo, nil).
+				MaxTimes(c.expCallCnt)
 
 			req := httptest.NewRequest(
 				http.MethodPost,
@@ -106,7 +112,10 @@ func TestGetVideoById(t *testing.T) {
 	s := mock_app.NewMockVideoService(ctrl)
 	h := NewVideoHandler(s, log.New(io.Discard, "", 0))
 	r := mux.NewRouter()
-	SetupRouter(r, h)
+	mockMiddleware := func(next http.Handler) http.Handler {
+		return next
+	}
+	SetupRouter(r, h, mockMiddleware, mockMiddleware, mockMiddleware)
 
 	vidID := uuid.Must(uuid.NewRandom())
 
@@ -224,7 +233,10 @@ func TestGetByPublisherVideos(t *testing.T) {
 			s := mock_app.NewMockVideoService(ctrl)
 			h := NewVideoHandler(s, log.New(io.Discard, "", 0))
 			r := mux.NewRouter()
-			SetupRouter(r, h)
+			mockMiddleware := func(next http.Handler) http.Handler {
+				return next
+			}
+			SetupRouter(r, h, mockMiddleware, mockMiddleware, mockMiddleware)
 
 			s.EXPECT().GetByPublisher(
 				gomock.Any(),
@@ -314,7 +326,10 @@ func TestSearchPublisherVideos(t *testing.T) {
 			s := mock_app.NewMockVideoService(ctrl)
 			h := NewVideoHandler(s, log.New(io.Discard, "", 0))
 			r := mux.NewRouter()
-			SetupRouter(r, h)
+			mockMiddleware := func(next http.Handler) http.Handler {
+				return next
+			}
+			SetupRouter(r, h, mockMiddleware, mockMiddleware, mockMiddleware)
 
 			s.EXPECT().SearchPublisher(
 				gomock.Any(),
