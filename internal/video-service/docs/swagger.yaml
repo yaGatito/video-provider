@@ -10,7 +10,7 @@ definitions:
     - description
     - topic
     type: object
-  httpadp.videoResponseBody:
+  httpadp.VideoResponseBody:
     properties:
       createdAt:
         type: string
@@ -51,7 +51,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/httpadp.videoResponseBody'
+            $ref: '#/definitions/httpadp.VideoResponseBody'
         "400":
           description: Invalid video ID format
           schema:
@@ -101,7 +101,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/httpadp.videoResponseBody'
+              $ref: '#/definitions/httpadp.VideoResponseBody'
             type: array
       summary: Get videos by publisher
       tags:
@@ -175,7 +175,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/httpadp.videoResponseBody'
+              $ref: '#/definitions/httpadp.VideoResponseBody'
             type: array
       summary: Global search
       tags:

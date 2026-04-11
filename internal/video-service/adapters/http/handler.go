@@ -37,8 +37,9 @@ type VideoHandler struct {
 func NewVideoHandler(
 	userInteractor app.VideoService,
 	log *log.Logger,
+	validate *validator.Validate,
 ) *VideoHandler {
-	return &VideoHandler{videoInteractor: userInteractor, log: log, validate: newVideoValidator()}
+	return &VideoHandler{videoInteractor: userInteractor, log: log, validate: validate}
 }
 
 // Create godoc
@@ -56,7 +57,7 @@ func NewVideoHandler(
 //	@Failure		500			{object}	string	"Internal error"
 //	@Router			/v1/videos/pub/{publisherID} [post]
 func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
-	publisherID, err := h.pathVarHandler(r, pathVarPublisherID)
+	publisherID, err := h.pathVarHandler(r, PathVarPublisherID)
 	if err != nil {
 		h.writeErrorResponse(w, err)
 		return
@@ -80,8 +81,12 @@ func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
 		Topic:       createVideoRequestData.Topic,
 		Description: createVideoRequestData.Description,
 	})
+	if err != nil {
+		h.writeErrorResponse(w, err)
+		return
+	}
 
-	h.writeResponse(w, dtoVideo(video), http.StatusCreated)
+	h.writeResponse(w, DtoVideo(video), http.StatusCreated)
 }
 
 // GetByID godoc
@@ -92,12 +97,12 @@ func (h *VideoHandler) Create(w http.ResponseWriter, r *http.Request) {
 //	@Produce		json
 //	@Param 			Authorization 		header 	string 	true "JWT token for authentication (e.g., Bearer <token>)"
 //	@Param			videoID	path		string	true	"video ID (UUID)"	Format(uuid)
-//	@Success		200		{object}	videoResponseBody
+//	@Success		200		{object}	VideoResponseBody
 //	@Failure		400		{object}	string	"Invalid video ID format"
 //	@Failure		500		{object}	string	"Internal server error"
 //	@Router			/v1/videos/id/{videoID} [get]
 func (h *VideoHandler) GetByID(w http.ResponseWriter, r *http.Request) {
-	videoID, err := h.pathVarHandler(r, pathVarVideoID)
+	videoID, err := h.pathVarHandler(r, PathVarVideoID)
 	if err != nil {
 		h.writeErrorResponse(w, err)
 		return
@@ -108,8 +113,13 @@ func (h *VideoHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	video, err := h.videoInteractor.GetByID(r.Context(), domain.UUID(videoID))
-	h.writeResponse(w, dtoVideo(video), http.StatusOK)
+	video, err := h.videoInteractor.GetByID(r.Context(), videoID)
+	if err != nil {
+		h.writeErrorResponse(w, err)
+		return
+	}
+
+	h.writeResponse(w, DtoVideo(video), http.StatusOK)
 }
 
 // GetByPublisher godoc
@@ -123,12 +133,12 @@ func (h *VideoHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 //	@Param			limit		query	int		false	"Limit (example: 10)"
 //	@Param			offset		query	int		false	"Offset (example: 0)"
 //	@Param			sort		query	string	false	"Sort (example: `date`)"
-//	@Param			order		query	string	false	"Order (asc or desc, example: `t` for ascending, `f` for descending)"
-//	@Success		200			{array}	videoResponseBody
+//	@Param			order		query	string	false	"Order (`t` for ascending, `f` for descending)"
+//	@Success		200			{array}	VideoResponseBody
 //	@Router			/v1/videos/pub/{publisherID} [get]
 func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 	// Required path variable
-	publisherID, err := h.pathVarHandler(r, pathVarPublisherID)
+	publisherID, err := h.pathVarHandler(r, PathVarPublisherID)
 	if err != nil {
 		h.writeErrorResponse(w, err)
 		return
@@ -183,7 +193,7 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		search, err = validateSearchQuery(search)
+		search, err = ValidateSearchQuery(search)
 		if err != nil {
 			h.writeErrorResponse(w, err)
 			return
@@ -195,7 +205,7 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	h.writeResponse(w, videosResponseBody{Videos: slicex.Map(videos, dtoVideo)}, http.StatusOK)
+	h.writeResponse(w, VideosResponseBody{Videos: slicex.Map(videos, DtoVideo)}, http.StatusOK)
 }
 
 // SearchGlobal godoc
@@ -208,8 +218,8 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 //	@Param			limit	query	int		false	"Limit (example: 10)"
 //	@Param			offset	query	int		false	"Offset (example: 0)"
 //	@Param			sort	query	string	false	"Sort (example: `date`)"
-//	@Param			order	query	string	false	"Order (asc or desc, example: `t` for ascending, `f` for descending)"
-//	@Success		200		{array}	videoResponseBody
+//	@Param			order	query	string	false	"Order (`t` for ascending, `f` for descending)"
+//	@Success		200		{array}	VideoResponseBody
 //	@Router			/v1/videos/search/ [get]
 func (h *VideoHandler) SearchGlobal(w http.ResponseWriter, r *http.Request) {
 	// Url int parameters
@@ -248,7 +258,7 @@ func (h *VideoHandler) SearchGlobal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.writeResponse(w, videosResponseBody{Videos: slicex.Map(videos, dtoVideo)}, http.StatusOK)
+	h.writeResponse(w, VideosResponseBody{Videos: slicex.Map(videos, DtoVideo)}, http.StatusOK)
 }
 
 // parseUrlValues parses URL query parameters.
@@ -328,7 +338,6 @@ func (h *VideoHandler) extractUrlVarString(
 	values url.Values,
 	paramName string,
 ) (string, error) {
-
 	value := values.Get(paramName)
 	if len(value) == 0 {
 		return "", shared.ErrEmptyValue

@@ -9,15 +9,20 @@ import (
 	"github.com/golang-jwt/jwt/v4"
 )
 
+type contextKeyUserID string
+
+const contextUserID contextKeyUserID = "USER_ID"
+
 const jwtSecretEnvVar = "JWT_SECRET"
 
-const contextUserID = "user_id"
+type Authorizer struct {
+}
 
-var GetJWTSecret = func() []byte {
+func (a Authorizer) GetJWTSecret() []byte {
 	return []byte(os.Getenv(jwtSecretEnvVar))
 }
 
-func Auth(next http.Handler) http.Handler {
+func (a Authorizer) Auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		bearer := r.Header.Get("Authorization")
 		tokenString := bearer[len("Bearer "):]
@@ -33,7 +38,7 @@ func Auth(next http.Handler) http.Handler {
 			}
 
 			// Use the secret from your UserService
-			return GetJWTSecret(), nil
+			return a.GetJWTSecret(), nil
 		})
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)

@@ -60,14 +60,19 @@ func run() error {
 
 	videoRepository := postgres.NewVideoRepoPostgreSQL(pool)
 	videoService := app.NewVideoInteractor(videoRepository)
-	videoHandler := httpadp.NewVideoHandler(videoService, mwLog.Log)
+
+	val, err := httpadp.NewVideoValidator()
+	if err != nil {
+		log.Default().Printf("failed to create validator: %s\n", err.Error())
+	}
+	videoHandler := httpadp.NewVideoHandler(videoService, mwLog.Log, val)
 
 	router := mux.NewRouter()
 
 	httpadp.SetupRouter(
 		router,
 		videoHandler,
-		auth.Auth,
+		auth.Authorizer{}.Auth,
 		mwLog.LoggingMiddleware,
 		middleware.CORSMiddleware,
 	)

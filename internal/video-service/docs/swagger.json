@@ -40,7 +40,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/httpadp.videoResponseBody"
+                            "$ref": "#/definitions/httpadp.VideoResponseBody"
                         }
                     },
                     "400": {
@@ -114,7 +114,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/httpadp.videoResponseBody"
+                                "$ref": "#/definitions/httpadp.VideoResponseBody"
                             }
                         }
                     }
@@ -225,7 +225,7 @@
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/httpadp.videoResponseBody"
+                                "$ref": "#/definitions/httpadp.VideoResponseBody"
                             }
                         }
                     }
@@ -249,7 +249,7 @@
                 }
             }
         },
-        "httpadp.videoResponseBody": {
+        "httpadp.VideoResponseBody": {
             "type": "object",
             "properties": {
                 "createdAt": {

@@ -8,12 +8,12 @@ import (
 )
 
 const (
-	pathVarVideoID     = "videoID"
-	pathVarPublisherID = "publisherID"
+	PathVarVideoID     = "videoID"
+	PathVarPublisherID = "publisherID"
 
-	routePublisherVideos = "/v1/videos/pub/{" + pathVarPublisherID + "}"
-	routeVideoSearch     = "/v1/videos/search"
-	routeVideo           = "/v1/videos/id/{" + pathVarVideoID + "}"
+	RoutePublisherVideos = "/v1/videos/pub/{" + PathVarPublisherID + "}"
+	RouteVideoSearch     = "/v1/videos/search"
+	RouteVideo           = "/v1/videos/id/{" + PathVarVideoID + "}"
 	routeSwagger         = "/v1/swagger/"
 )
 
@@ -30,7 +30,7 @@ func SetupRouter(
 	publicRouter.Use(logging)
 
 	// Global public search
-	publicRouter.HandleFunc(routeVideoSearch, h.SearchGlobal).
+	publicRouter.HandleFunc(RouteVideoSearch, h.SearchGlobal).
 		Methods(http.MethodGet, http.MethodOptions)
 
 	// Swagger route (public)
@@ -43,10 +43,10 @@ func SetupRouter(
 	protectedRouter.Use(logging)
 
 	// Video endpoints (protected)
-	protectedRouter.HandleFunc(routeVideo, h.GetByID).
+	protectedRouter.HandleFunc(RouteVideo, h.GetByID).
 		Methods(http.MethodGet, http.MethodOptions)
-	protectedRouter.HandleFunc(routePublisherVideos, h.Create).
+	protectedRouter.HandleFunc(RoutePublisherVideos, h.Create).
 		Methods(http.MethodPost, http.MethodOptions)
-	protectedRouter.HandleFunc(routePublisherVideos, h.GetByPublisher).
+	protectedRouter.HandleFunc(RoutePublisherVideos, h.GetByPublisher).
 		Methods(http.MethodGet, http.MethodOptions)
 }

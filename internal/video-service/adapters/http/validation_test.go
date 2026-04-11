@@ -16,7 +16,7 @@ func TestValidateSearchQuery(t *testing.T) {
 		query          string
 	}{
 		{"ok", false, "search", "search"},
-		{"ok beggining spaces", false, "search", "      search"},
+		{"ok beginning spaces", false, "search", "      search"},
 		{"ok ending spaces", false, "search", "search      "},
 		{"ok surrounding spaces", false, "search", "      search      "},
 		{"too short search query 1 len", true, "s", ""},
@@ -28,7 +28,7 @@ func TestValidateSearchQuery(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		res, err := validateSearchQuery(c.query)
+		res, err := ValidateSearchQuery(c.query)
 		if c.wantErr {
 			require.Error(t, err)
 		} else {
@@ -60,7 +60,7 @@ func TestIncorrectSearchQuery(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		_, err := validateSearchQuery(c.query)
+		_, err := ValidateSearchQuery(c.query)
 		require.Error(t, err)
 	}
 }
@@ -79,7 +79,7 @@ func TestValidateLimit(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := validateLimit(tt.input)
+			result, err := ValidateLimit(tt.input)
 
 			if tt.wantErr {
 				require.Error(t, err)
@@ -104,7 +104,7 @@ func TestValidateOffset(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := validateOffset(tt.input)
+			result, err := ValidateOffset(tt.input)
 
 			if tt.wantErr {
 				require.Error(t, err)
@@ -127,7 +127,7 @@ func TestValidateOrderBy(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		result, err := validateOrderBy(tt.input)
+		result, err := ValidateOrderBy(tt.input)
 
 		if tt.wantErr {
 			require.Error(t, err)
@@ -152,7 +152,7 @@ func TestValidateAsc(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := validateIsAsc(tt.input)
+			result, err := ValidateIsAsc(tt.input)
 
 			if tt.wantErr {
 				require.Error(t, err)

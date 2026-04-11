@@ -46,7 +46,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/httpadp.videoResponseBody"
+                            "$ref": "#/definitions/httpadp.VideoResponseBody"
                         }
                     },
                     "400": {
@@ -120,7 +120,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/httpadp.videoResponseBody"
+                                "$ref": "#/definitions/httpadp.VideoResponseBody"
                             }
                         }
                     }
@@ -231,7 +231,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/httpadp.videoResponseBody"
+                                "$ref": "#/definitions/httpadp.VideoResponseBody"
                             }
                         }
                     }
@@ -255,7 +255,7 @@ const docTemplate = `{
                 }
             }
         },
-        "httpadp.videoResponseBody": {
+        "httpadp.VideoResponseBody": {
             "type": "object",
             "properties": {
                 "createdAt": {
