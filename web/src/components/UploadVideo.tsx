@@ -97,6 +97,21 @@ const UploadVideo: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState('');
   const videoApiUrl = process.env.REACT_APP_VIDEO_API_URL || '/api';
 
+  const decodeToken = (token: string): { user_id?: string; id?: string; sub?: string } | null => {
+    try {
+      const tokenPayload = token.split('.')[1];
+      if (!tokenPayload) {
+        return null;
+      }
+      const normalized = tokenPayload.replace(/-/g, '+').replace(/_/g, '/');
+      const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
+      const decodedJson = atob(padded);
+      return JSON.parse(decodedJson);
+    } catch {
+      return null;
+    }
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setVideoData({ ...videoData, [name]: value });
@@ -135,10 +150,28 @@ const UploadVideo: React.FC = () => {
     };
 
     try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setErrorMessage('Authentication token not found. Please log in.');
+        return;
+      }
+
+      const claims = decodeToken(token);
+      const userId = claims?.user_id || claims?.id || claims?.sub;
+      if (!userId) {
+        setErrorMessage('Unable to extract user ID from authentication token.');
+        return;
+      }
       const response: AxiosResponse<{ message: string }> = await axios.post(
-        `${videoApiUrl}/v1/videos/pub/123e4567-e89b-12d3-a456-426614174000`,
-        requestBody
+        `${videoApiUrl}/v1/videos/pub/${userId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+            requestBody: requestBody
+          }
       );
+
       if (response.status >= 200 && response.status < 300) {
         setSuccessMessage(`Video "${videoData.title}" uploaded successfully!`);
       }

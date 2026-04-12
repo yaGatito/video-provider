@@ -73,6 +73,7 @@ const Header: React.FC = () => {
             <li><MenuLink to="/">Home</MenuLink></li>
             <li><MenuLink to="/search">Search</MenuLink></li>
             <li><MenuLink to="/upload">Upload</MenuLink></li>
+            <li><MenuLink to="/profile">Profile</MenuLink></li>
             <li><MenuLink to="/login">Login</MenuLink></li>
             <li><MenuLink to="/register">Register</MenuLink></li>
           </Menu>
