@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	mock_app "user-service/app/mock"
+	mock_app "video-provider/user-service/app/mock"
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"

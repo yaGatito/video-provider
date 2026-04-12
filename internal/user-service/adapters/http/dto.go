@@ -3,7 +3,7 @@ package httpadp
 import (
 	"strings"
 	"time"
-	"user-service/domain"
+	"video-provider/user-service/domain"
 )
 
 type createUserRequest struct {

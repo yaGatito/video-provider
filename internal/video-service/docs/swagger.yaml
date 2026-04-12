@@ -1,15 +1,5 @@
 basePath: /
 definitions:
-  httpadp.createVideoRequestBody:
-    properties:
-      description:
-        type: string
-      topic:
-        type: string
-    required:
-    - description
-    - topic
-    type: object
   httpadp.VideoResponseBody:
     properties:
       createdAt:
@@ -22,6 +12,16 @@ definitions:
         type: string
       topic:
         type: string
+    type: object
+  httpadp.createVideoRequestBody:
+    properties:
+      description:
+        type: string
+      topic:
+        type: string
+    required:
+    - description
+    - topic
     type: object
 host: localhost:8080
 info:
@@ -90,7 +90,7 @@ paths:
         in: query
         name: sort
         type: string
-      - description: 'Order (asc or desc, example: `t` for ascending, `f` for descending)'
+      - description: Order (`t` for ascending, `f` for descending)
         in: query
         name: order
         type: string
@@ -164,7 +164,7 @@ paths:
         in: query
         name: sort
         type: string
-      - description: 'Order (asc or desc, example: `t` for ascending, `f` for descending)'
+      - description: Order (`t` for ascending, `f` for descending)
         in: query
         name: order
         type: string

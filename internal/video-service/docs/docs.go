@@ -109,7 +109,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Order (asc or desc, example: ` + "`" + `t` + "`" + ` for ascending, ` + "`" + `f` + "`" + ` for descending)",
+                        "description": "Order (` + "`" + `t` + "`" + ` for ascending, ` + "`" + `f` + "`" + ` for descending)",
                         "name": "order",
                         "in": "query"
                     }
@@ -220,7 +220,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Order (asc or desc, example: ` + "`" + `t` + "`" + ` for ascending, ` + "`" + `f` + "`" + ` for descending)",
+                        "description": "Order (` + "`" + `t` + "`" + ` for ascending, ` + "`" + `f` + "`" + ` for descending)",
                         "name": "order",
                         "in": "query"
                     }
@@ -240,21 +240,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "httpadp.createVideoRequestBody": {
-            "type": "object",
-            "required": [
-                "description",
-                "topic"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "topic": {
-                    "type": "string"
-                }
-            }
-        },
         "httpadp.VideoResponseBody": {
             "type": "object",
             "properties": {
@@ -268,6 +253,21 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "publisherID": {
+                    "type": "string"
+                },
+                "topic": {
+                    "type": "string"
+                }
+            }
+        },
+        "httpadp.createVideoRequestBody": {
+            "type": "object",
+            "required": [
+                "description",
+                "topic"
+            ],
+            "properties": {
+                "description": {
                     "type": "string"
                 },
                 "topic": {

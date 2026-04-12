@@ -127,7 +127,7 @@ swag:
 .PHONY: sqlc
 sqlc:
 	$(call log, "SQLC generate by file: internal/$(SERVICE_NAME)/adapters/postgres/sqlc.yml")
-	$(SQLC) generate -f "internal/$(SERVICE_NAME)/adapters/postgres/sqlc.yml"
+	$(SQLC) generate -f "video-provider/$(SERVICE_NAME)/adapters/postgres/sqlc.yml"
 
 .PHONY: mocks
 mocks:

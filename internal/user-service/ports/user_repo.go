@@ -2,7 +2,7 @@ package ports
 
 import (
 	"context"
-	"user-service/domain"
+	"video-provider/user-service/domain"
 
 	"github.com/google/uuid"
 )

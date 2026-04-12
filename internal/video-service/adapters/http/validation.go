@@ -2,10 +2,10 @@ package httpadp
 
 import (
 	"fmt"
-	"pkg/shared"
 	"strings"
-	"video-service/domain"
-	"video-service/policy"
+	"video-provider/common/shared"
+	"video-provider/video-service/domain"
+	"video-provider/video-service/policy"
 
 	"github.com/go-playground/validator/v10"
 )

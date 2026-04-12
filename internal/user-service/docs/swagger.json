@@ -9,52 +9,6 @@
     "host": "localhost:8081",
     "basePath": "/",
     "paths": {
-        "/v1/users": {
-            "post": {
-                "description": "Creates a new user and return the created user's ID. Example ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Users"
-                ],
-                "summary": "Creates a new user",
-                "parameters": [
-                    {
-                        "description": "CreateUser user payload",
-                        "name": "user",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/httpadp.createUserRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "created user id (example: 123e4567-e89b-12d3-a456-426614174000)",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/v1/login": {
             "post": {
                 "description": "Authenticate a user and return a JWT token",
@@ -107,7 +61,53 @@
                 }
             }
         },
-        "/v1/users/{id}": {
+        "/v1/users": {
+            "post": {
+                "description": "Creates a new user and return the created user's ID. Example ID",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "Users"
+                ],
+                "summary": "Creates a new user",
+                "parameters": [
+                    {
+                        "description": "CreateUser user payload",
+                        "name": "user",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/httpadp.createUserRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "created user id (example: 123e4567-e89b-12d3-a456-426614174000)",
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/httpadp.serviceErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/v1/users/{userID}": {
             "get": {
                 "description": "Retrieve user details by ID. The ID can be provided as a",
                 "produces": [

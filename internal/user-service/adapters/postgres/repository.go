@@ -4,10 +4,10 @@ import (
 	"context"
 	"errors"
 
-	"pkg/shared"
-	postgres "user-service/adapters/postgres/db"
-	"user-service/domain"
-	"user-service/ports"
+	"video-provider/common/shared"
+	postgres "video-provider/user-service/adapters/postgres/db"
+	"video-provider/user-service/domain"
+	"video-provider/user-service/ports"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"

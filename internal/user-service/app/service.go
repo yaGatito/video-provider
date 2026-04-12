@@ -3,10 +3,10 @@ package app
 import (
 	"context"
 	"log"
-	"pkg/shared"
 	"time"
-	"user-service/domain"
-	"user-service/ports"
+	"video-provider/common/shared"
+	"video-provider/user-service/domain"
+	"video-provider/user-service/ports"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"

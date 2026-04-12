@@ -7,7 +7,7 @@ package mock_app
 import (
 	context "context"
 	reflect "reflect"
-	domain "video-service/domain"
+	domain "video-provider/video-service/domain"
 
 	gomock "github.com/golang/mock/gomock"
 )

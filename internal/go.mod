@@ -1,4 +1,4 @@
-module user-service
+module video-provider
 
 go 1.25.0
 
@@ -12,6 +12,7 @@ require (
 	github.com/stretchr/testify v1.11.1
 	github.com/swaggo/http-swagger v1.3.4
 	github.com/swaggo/swag v1.16.6
+	github.com/yaGatito/slicex v0.0.1
 	golang.org/x/crypto v0.49.0
 )
 

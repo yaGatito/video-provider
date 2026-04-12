@@ -6,15 +6,15 @@ import (
 	"log"
 	"net/http"
 	"os"
-	_ "user-service/docs"
+	_ "video-provider/user-service/docs"
 
-	"pkg/auth"
-	"pkg/middleware"
+	"video-provider/common/auth"
+	"video-provider/common/middleware"
 
-	cryptoadp "user-service/adapters/crypto"
-	httpadp "user-service/adapters/http"
-	"user-service/adapters/postgres"
-	"user-service/app"
+	cryptoadp "video-provider/user-service/adapters/crypto"
+	httpadp "video-provider/user-service/adapters/http"
+	"video-provider/user-service/adapters/postgres"
+	"video-provider/user-service/app"
 
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"

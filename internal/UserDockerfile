@@ -1,0 +1,18 @@
+FROM golang:1.25-alpine AS builder
+
+WORKDIR /app/interal
+
+COPY go.mod go.sum ./
+RUN go mod download
+
+WORKDIR /app
+COPY . ./internal
+
+WORKDIR /app/internal
+RUN go build -o /bin/user-service ./user-service/cmd
+
+FROM debian:bookworm-slim
+WORKDIR /app
+COPY --from=builder /bin/user-service ./user-service
+
+CMD ["./user-service"]

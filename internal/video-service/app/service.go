@@ -2,8 +2,8 @@ package app
 
 import (
 	"context"
-	"video-service/domain"
-	"video-service/ports"
+	"video-provider/video-service/domain"
+	"video-provider/video-service/ports"
 )
 
 type VideoService interface {

@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
-	"pkg/shared"
-	"user-service/app"
-	"user-service/domain"
+	"video-provider/common/shared"
+	"video-provider/user-service/app"
+	"video-provider/user-service/domain"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
