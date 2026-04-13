@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	mock_app "video-provider/internal/user-service/app/mock"
+	mock_app "video-provider/user-service/app/mock"
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -38,9 +38,15 @@ func TestValidCreateUserRequest(t *testing.T) {
 			s := mock_app.NewMockUserInteractor(ctrl)
 			h := NewUserHandler(s, log.New(io.Discard, "", 0))
 			r := mux.NewRouter()
-			SetupRouter(r, h)
+			mockMiddleware := func(next http.Handler) http.Handler {
+				return next
+			}
+			SetupRouter(r, h, mockMiddleware, mockMiddleware, mockMiddleware)
 
-			s.EXPECT().Create(gomock.Any(), gomock.Any(), gomock.Any()).Return(expUserID, nil).MaxTimes(1)
+			s.EXPECT().
+				Create(gomock.Any(), gomock.Any(), gomock.Any()).
+				Return(expUserID, nil).
+				MaxTimes(1)
 
 			rec := httptest.NewRecorder()
 
@@ -124,7 +130,10 @@ func TestInvalidCreateUserRequest(t *testing.T) {
 			s := mock_app.NewMockUserInteractor(ctrl)
 			h := NewUserHandler(s, log.New(io.Discard, "", 0))
 			r := mux.NewRouter()
-			SetupRouter(r, h)
+			mockMiddleware := func(next http.Handler) http.Handler {
+				return next
+			}
+			SetupRouter(r, h, mockMiddleware, mockMiddleware, mockMiddleware)
 
 			s.EXPECT().Create(gomock.Any(), gomock.Any(), gomock.Any()).MaxTimes(0)
 

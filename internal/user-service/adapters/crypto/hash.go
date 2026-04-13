@@ -1,7 +1,7 @@
 package cryptoadp
 
 import (
-	"video-provider/internal/user-service/ports"
+	"video-provider/user-service/ports"
 
 	"golang.org/x/crypto/bcrypt"
 )

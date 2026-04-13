@@ -2,10 +2,10 @@ package httpadp
 
 import (
 	"time"
-	"video-provider/internal/video-service/domain"
+	"video-provider/video-service/domain"
 )
 
-type videoResponseBody struct {
+type VideoResponseBody struct {
 	ID          string `json:"id"`
 	PublisherID string `json:"publisherID"`
 	Topic       string `json:"topic"`
@@ -13,8 +13,8 @@ type videoResponseBody struct {
 	CreatedAt   string `json:"createdAt"`
 }
 
-type videosResponseBody struct {
-	Videos []videoResponseBody `json:"videos"`
+type VideosResponseBody struct {
+	Videos []VideoResponseBody `json:"videos"`
 }
 
 type serviceErrorResponse struct {
@@ -23,12 +23,13 @@ type serviceErrorResponse struct {
 
 // createVideoRequestBody represents the data required to create the video
 type createVideoRequestBody struct {
-	Topic       string `json:"topic" validate:"required,minTopic,maxTopic"`
+	Topic       string `json:"topic"       validate:"required,minTopic,maxTopic"`
 	Description string `json:"description" validate:"required,maxDescription"`
 }
 
-func dtoVideo(v domain.Video) videoResponseBody {
-	return videoResponseBody{
+// TODO: make it private
+func DtoVideo(v domain.Video) VideoResponseBody {
+	return VideoResponseBody{
 		ID:          v.ID.String(),
 		PublisherID: v.PublisherID.String(),
 		Topic:       v.Topic,

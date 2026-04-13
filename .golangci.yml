@@ -1,0 +1,83 @@
+version: "2"
+
+run:
+  tests: true
+  relative-path-mode: gomod
+
+linters:
+  default: none
+  enable:
+    - errcheck
+    - govet
+    - ineffassign
+    - staticcheck
+    - unused
+    - bodyclose
+    - rowserrcheck
+    - gocyclo
+    - gocritic
+    - revive
+    - misspell
+    - lll
+    - whitespace
+    - unparam
+    - gosec
+    - nilnesserr
+    - sqlclosecheck
+    - loggercheck
+    - testpackage
+    - unconvert
+    - gochecknoinits
+    - gochecknoglobals
+    - gomoddirectives
+    - testableexamples
+    - nakedret
+    - asciicheck
+
+  settings:
+    lll:
+      line-length: 120
+
+    gosec:
+      severity: high
+
+    whitespace:
+      check-branches: true
+      check-functions: true
+      check-ifs: true
+      check-returns: true
+      check-switches: true
+      check-for: true
+      check-whiles: true
+
+    gomoddirectives:
+      allow-replace: true
+      allow-exclude: true
+
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+      - internal/video-service/docs/.* 
+      - internal/user-service/docs/.*
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+    - golines
+
+  exclusions:
+    generated: lax
+    paths:
+      - third_party$
+      - builtin$
+      - examples$
+      - internal/video-service/docs/.*
+      - internal/user-service/docs/.*
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0

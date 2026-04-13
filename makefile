@@ -6,11 +6,6 @@ endif
 # default config if not passed (example: make run config=video)
 config ?= video
 SERVICE_NAME = $(config)-service
-CONFIG_PATH := config/$(SERVICE_NAME).yml
-
-ifeq ("$(wildcard $(CONFIG_PATH))","")
-$(error Config not found: $(CONFIG_PATH). Use config=user or config=video)
-endif
 
 ifeq ($(OS),Windows_NT)
 EXE := .exe
@@ -20,35 +15,40 @@ EXE :=
 SLEEP_5 := sleep 5
 endif
 
-get-cfg = $(shell yq e $(1) $(CONFIG_PATH))
 log = @echo [::MAKEFILE::] $(1)
 
-### BE AWARE BEFORE ANY CHANGES HERE
-DB_NAME      	= $(call get-cfg, '.db.name')
-DB_VENDOR    	= $(call get-cfg, '.db.vendor')
-DB_VERSION   	= $(call get-cfg, '.db.version')
-DB_HOST      	= $(call get-cfg, '.db.host')
-DB_PORT      	= $(call get-cfg, '.db.port')
-# DB_MAX_CONN 	:= $(call get-cfg, '.db.maxconns')
-MIGRATIONS_DIR 	= $(call get-cfg, '.db.migrationdir')
+# Use .env values directly
+ifeq ($(config),user)
+  DB_NAME      		= $(USER_DB_NAME)
+  DB_HOST      		= $(USER_DB_HOST)
+  DB_PORT      		= $(USER_DB_PORT)
+  API_PORT    		= $(USER_API_PORT)
+endif
 
-API_PORT    	= $(call get-cfg, '.api.port')
-API_NAME		= $(call get-cfg, '.api.name')
+ifeq ($(config),video)
+  DB_NAME      		= $(VIDEO_DB_NAME)
+  DB_HOST      		= $(VIDEO_DB_HOST)
+  DB_PORT      		= $(VIDEO_DB_PORT)
+  API_PORT    		= $(VIDEO_API_PORT)
+endif
 
-DB_URL = $(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
+MIGRATIONS_DIR 		= internal/$(SERVICE_NAME)/adapters/postgres/sql/migrations
+DEFAULT_DB_PORT 	= 5432
+DB_VENDOR 			= postgres
+DB_VERSION 			= 18-alpine
+DB_URL 				= $(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
+DB_CONTAINER_NAME 	= $(config)-db-$(DB_VENDOR)-$(DB_VERSION)
 
-DB_CONTAINER_NAME = $(DB_NAME)-$(DB_VENDOR)-$(DB_VERSION)
-MAIN = cmd/$(SERVICE_NAME)/app.go
+MAIN 	= internal/$(SERVICE_NAME)/cmd/start.go
+PKG 	?= app
+TEST 	?= .
 
-PKG ?= app
-TEST ?= .
+MOCKGEN 		:= mockgen$(EXE)
+SQLC 			:= sqlc$(EXE)
+GOLANGCI_LINT 	:= golangci-lint$(EXE)
+SWAG 			:= swag$(EXE)
 
-MOCKGEN := mockgen$(EXE)
-SQLC := sqlc$(EXE)
-GOLANGCI_LINT := golangci-lint$(EXE)
-SWAG := swag$(EXE)
-
-.DEFAULT_GOAL := help
+.DEFAULT_GOAL 	:= help
 
 #   --- Common Commands ---
 .PHONY: help
@@ -79,29 +79,26 @@ bootstrap:
 
 .PHONY: setup
 setup:
-	$(call log, "Starting user database...")
-	$(MAKE) db-up config=user
+	$(MAKE) gen config=video
+	$(call log, "Generations for video service completed")
+
+	$(MAKE) gen config=user
+	$(call log, "Generations for user service completed")
+
+	docker-compose up --build
+	$(call log, "Docker compose started")
+
 	$(SLEEP_5)
-	$(call log, "Initializing user database...")
-	$(MAKE) db-init config=user
-	
-	$(call log, "Starting video database...")
-	$(MAKE) db-up config=video
-	$(SLEEP_5)
-	$(call log, "Initializing video database...")
-	$(MAKE) db-init config=video
-	
 	$(call log, "Running migrations for user database...")
 	$(MAKE) migrate-up config=user
 	
 	$(call log, "Running migrations for video database...")
 	$(MAKE) migrate-up config=video
-	
-# 	$(call log, "Running user-service...")
-# 	$(MAKE) run config=user
 
-# 	$(call log, "Running video-service...")
-# 	$(MAKE) run config=video
+.PHONY: compose
+compose:
+	docker-compose up --build
+	$(call log, "Docker compose started")
 
 .PHONY: web
 web:
@@ -110,35 +107,33 @@ web:
 
 .PHONY: go-run
 go-run:
-	$(call log, "Checking config: $(CONFIG_PATH)...")
-	go run cmd/$(SERVICE_NAME)/app.go -config=$(CONFIG_PATH)
+	go run $(MAIN)
 
 .PHONY: gen
 gen: sqlc swag mocks
 
 .PHONY: lint
 lint:
+	cd ./internal/$(SERVICE_NAME) && $(GOLANGCI_LINT) run -c ../../.golangci.yml
 	$(GOLANGCI_LINT) fmt
-	$(GOLANGCI_LINT) run
 	$(call log, "Formatted")
 
 .PHONY: swag
 swag: 
 	$(call log, "Swagger generate: $(MAIN)")
 	$(call log, "Swagger output: docs")
-	${SWAG} init -g $(MAIN) -o docs
+	${SWAG} init -g cmd/start.go -o internal/$(SERVICE_NAME)/docs  --dir internal/$(SERVICE_NAME)
 
 .PHONY: sqlc
 sqlc:
 	$(call log, "SQLC generate by file: internal/$(SERVICE_NAME)/adapters/postgres/sqlc.yml")
-	$(SQLC) generate -f "internal/$(SERVICE_NAME)/adapters/postgres/sqlc.yml"
+	$(SQLC) generate -f "video-provider/$(SERVICE_NAME)/adapters/postgres/sqlc.yml"
 
 .PHONY: mocks
 mocks:
 ifeq ("$(config)","video")
-	$(MOCKGEN) -source="./internal/$(SERVICE_NAME)/app/video_service.go" -destination="./internal/$(SERVICE_NAME)/app/mock/video_service_mock.go" -mock_names=VideoService=MockVideoService
+	$(MOCKGEN) -source="./internal/$(SERVICE_NAME)/app/service.go" -destination="./internal/$(SERVICE_NAME)/app/mock/service_mock.go" -mock_names=VideoService=MockVideoService
 	$(MOCKGEN) -source="./internal/$(SERVICE_NAME)/ports/video_repo.go" -destination="./internal/$(SERVICE_NAME)/ports/mock/video_repo_mock.go" -mock_names=VideoRepository=MockVideoRepository
-	$(MOCKGEN) -source="./internal/$(SERVICE_NAME)/ports/id_gen.go" -destination="./internal/$(SERVICE_NAME)/ports/mock/id_gen_mock.go" -mock_names=IDGen=MockIDGen
 	$(call log, "$(SERVICE_NAME) mocks generated")
 endif
 
@@ -167,37 +162,33 @@ tests: mocks
 # make run config=video
 
 #   --- Docker ---
-.PHONY: image
-image:
-	docker build -D -t $(SERVICE_NAME) -f internal/$(SERVICE_NAME)/Dockerfile .
 
 .PHONY: do-run
 do-run:
+	docker build -D -t $(SERVICE_NAME) -f internal/$(SERVICE_NAME)/Dockerfile .
 	docker rm -f $(SERVICE_NAME)
 # 	docker run --rm -p 8081:8081 --env-file .env $(SERVICE_NAME)
 	docker run  --name $(SERVICE_NAME) --rm -p $(API_PORT):$(API_PORT) $(SERVICE_NAME)
 
-.PHONY: db-up
-db-up:
-	docker rm -f $(DB_CONTAINER_NAME)
-	docker run --rm -d --name $(DB_CONTAINER_NAME) -p $(DB_PORT):$(DB_PORT) -e POSTGRES_USER=$(POSTGRES_USER) -e POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) postgres:$(DB_VERSION) -p $(DB_PORT)
-	$(call log, "Docker container started with name $(DB_CONTAINER_NAME) on $(DB_PORT)")
+# .PHONY: db-up
+# db-up:
+# 	docker rm -f $(DB_CONTAINER_NAME)
+# 	docker run --rm -d --name $(DB_CONTAINER_NAME) -p $(DB_PORT):$(DB_PORT) -e POSTGRES_USER=$(POSTGRES_USER) -e POSTGRES_PASSWORD=$(POSTGRES_PASSWORD) postgres:$(DB_VERSION) -p $(DB_PORT)
+# 	$(call log, "Docker container started with name $(DB_CONTAINER_NAME) on $(DB_PORT)")
 
-.PHONY: db-down
-db-down:
-	docker rm -f $(DB_CONTAINER_NAME)
-	$(call log, "Docker container removed: $(DB_CONTAINER_NAME)")
+# .PHONY: db-down
+# db-down:
+# 	docker rm -f $(DB_CONTAINER_NAME)
+# 	$(call log, "Docker container removed: $(DB_CONTAINER_NAME)")
 
-.PHONY: db-init
-db-init:
-	docker exec $(DB_CONTAINER_NAME) createdb --username=$(POSTGRES_USER) --owner=$(POSTGRES_USER) $(DB_NAME) -p $(DB_PORT)
-	$(call log, "CreateDB for $(DB_NAME)")
-# 	$(MAKE) migrate-up
+# .PHONY: db-init
+# db-init:
+# 	docker exec $(DB_CONTAINER_NAME) createdb --username=$(POSTGRES_USER) --owner=$(POSTGRES_USER) $(DB_NAME) -p $(DEFAULT_DB_PORT)
+# 	$(call log, "CreateDB for $(DB_NAME)")
 
 #   --- Database migrations ---
 .PHONY: migrate-up
 migrate-up:
-	$(call log, "goose -dir "$(MIGRATIONS_DIR)" postgres "$(DB_URL)" up")
 	goose -dir "$(MIGRATIONS_DIR)" postgres "$(DB_URL)" up
 	$(call log, "Migrate-up finished")
 
@@ -232,7 +223,6 @@ go-win-tools: go-tools
 req-win-tools:
 	irm get.scoop.sh | iex
 	scoop install pwsh
-	scoop install yq
 
 opt-win-tools:
 	scoop install fd

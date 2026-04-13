@@ -3,10 +3,12 @@ package app
 import (
 	"context"
 	"log"
-	"video-provider/internal/pkg/shared"
-	"video-provider/internal/user-service/domain"
-	"video-provider/internal/user-service/ports"
+	"time"
+	"video-provider/common/shared"
+	"video-provider/user-service/domain"
+	"video-provider/user-service/ports"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 )
 
@@ -18,16 +20,25 @@ type UserInteractor interface {
 }
 
 type UserService struct {
-	repo   ports.UserRepository
-	hasher ports.PasswordHasher
-	log    log.Logger
+	repo         ports.UserRepository
+	hasher       ports.PasswordHasher
+	log          log.Logger
+	getJWTSecret func() []byte
 }
 
-func NewUserService(repo ports.UserRepository, hasher ports.PasswordHasher) *UserService {
-	return &UserService{repo: repo, hasher: hasher}
+func NewUserService(
+	repo ports.UserRepository,
+	hasher ports.PasswordHasher,
+	getSecret func() []byte,
+) *UserService {
+	return &UserService{repo: repo, hasher: hasher, getJWTSecret: getSecret}
 }
 
-func (us *UserService) Create(ctx context.Context, user domain.User, password string) (uuid.UUID, error) {
+func (us *UserService) Create(
+	ctx context.Context,
+	user domain.User,
+	password string,
+) (uuid.UUID, error) {
 	hash, err := us.hasher.Hash(password)
 	if err != nil {
 		return uuid.UUID{}, shared.NewError(shared.ErrInternal, "failed to hash password", err)
@@ -77,7 +88,7 @@ func (us *UserService) Login(ctx context.Context, email string, password []byte)
 		return "", shared.NewError(shared.ErrInvalidInput, "password is required", nil)
 	}
 
-	_, hash, err := us.repo.GetPasswordHash(ctx, email)
+	userID, hash, err := us.repo.GetPasswordHash(ctx, email)
 	if err != nil {
 		return "", err
 	}
@@ -87,7 +98,18 @@ func (us *UserService) Login(ctx context.Context, email string, password []byte)
 		return "", shared.NewError(shared.ErrUnauthorized, "failed to compare password", nil)
 	}
 
-	// TODO: Generate and return a JWT token or session ID here
+	claims := jwt.MapClaims{
+		"user_id": userID,
+		"exp":     time.Now().Add(24 * time.Hour).Unix(),
+	}
 
-	return "success", nil
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+
+	signedToken, err := token.SignedString(us.getJWTSecret())
+
+	if err != nil {
+		return "", err
+	}
+
+	return signedToken, nil
 }

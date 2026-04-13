@@ -14,38 +14,36 @@ const (
 	RoutePublisherVideos = "/v1/videos/pub/{" + PathVarPublisherID + "}"
 	RouteVideoSearch     = "/v1/videos/search"
 	RouteVideo           = "/v1/videos/id/{" + PathVarVideoID + "}"
-	RouteSwagger         = "/v1/swagger/"
+	routeSwagger         = "/v1/swagger/"
 )
 
-// CORSMiddleware adds CORS headers to all responses
-func CORSMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
-		w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS, PATCH")
-		w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
-		w.Header().Set("Access-Control-Max-Age", "3600")
+func SetupRouter(
+	r *mux.Router,
+	h *VideoHandler,
+	auth mux.MiddlewareFunc,
+	logging mux.MiddlewareFunc,
+	cors mux.MiddlewareFunc,
+) {
+	// Public routes (no auth required)
+	publicRouter := r.PathPrefix("").Subrouter()
+	publicRouter.Use(cors)
+	publicRouter.Use(logging)
 
-		if r.Method == http.MethodOptions {
-			w.WriteHeader(http.StatusOK)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func SetupRouter(r *mux.Router, h VideoHandler) {
-	r.HandleFunc(RouteVideo, h.GetByID).
+	publicRouter.HandleFunc(RouteVideoSearch, h.SearchGlobal).
+		Methods(http.MethodGet, http.MethodOptions)
+	publicRouter.HandleFunc(RouteVideo, h.GetByID).
+		Methods(http.MethodGet, http.MethodOptions)
+	publicRouter.HandleFunc(RoutePublisherVideos, h.GetByPublisher).
 		Methods(http.MethodGet, http.MethodOptions)
 
-	r.HandleFunc(RoutePublisherVideos, h.Create).
+	publicRouter.PathPrefix(routeSwagger).HandlerFunc(httpSwagger.WrapHandler)
+
+	// Protected routes (requires auth)
+	protectedRouter := r.PathPrefix("").Subrouter()
+	protectedRouter.Use(cors)
+	protectedRouter.Use(auth)
+	protectedRouter.Use(logging)
+
+	protectedRouter.HandleFunc(RoutePublisherVideos, h.Create).
 		Methods(http.MethodPost, http.MethodOptions)
-
-	r.HandleFunc(RoutePublisherVideos, h.GetByPublisher).
-		Methods(http.MethodGet, http.MethodOptions)
-
-	r.HandleFunc(RouteVideoSearch, h.SearchGlobal).
-		Methods(http.MethodGet, http.MethodOptions)
-
-	r.PathPrefix(RouteSwagger).HandlerFunc(httpSwagger.WrapHandler)
 }

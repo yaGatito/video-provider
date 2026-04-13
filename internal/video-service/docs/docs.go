@@ -15,143 +15,6 @@ const docTemplate = `{
     "host": "{{.Host}}",
     "basePath": "{{.BasePath}}",
     "paths": {
-        "/v1/users": {
-            "post": {
-                "description": "Creates a new user and return the created user's ID. Example ID",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Users"
-                ],
-                "summary": "Creates a new user",
-                "parameters": [
-                    {
-                        "description": "CreateUser user payload",
-                        "name": "user",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/httpadp.createUserRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "201": {
-                        "description": "created user id (example: 123e4567-e89b-12d3-a456-426614174000)",
-                        "schema": {
-                            "type": "string"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/users/login": {
-            "post": {
-                "description": "Authenticate a user and return a JWT token",
-                "consumes": [
-                    "application/json"
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Users"
-                ],
-                "summary": "User login",
-                "parameters": [
-                    {
-                        "description": "Login user payload",
-                        "name": "user",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/httpadp.loginUserRequest"
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {
-                            "$ref": "#/definitions/httpadp.authResponse"
-                        }
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/v1/users/{id}": {
-            "get": {
-                "description": "Retrieve user details by ID. The ID can be provided as a",
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "Users"
-                ],
-                "summary": "Get user by ID",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "description": "User ID (example: 123e4567-e89b-12d3-a456-426614174000)",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "OK",
-                        "schema": {}
-                    },
-                    "400": {
-                        "description": "Bad Request",
-                        "schema": {
-                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/internal_user-service_adapters_http.serviceErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
         "/v1/videos/id/{videoID}": {
             "get": {
                 "description": "Returns details of a single video by its unique identifier",
@@ -165,6 +28,13 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "description": "JWT token for authentication (e.g., Bearer \u003ctoken\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "format": "uuid",
                         "description": "video ID (UUID)",
                         "name": "videoID",
@@ -176,7 +46,7 @@ const docTemplate = `{
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "$ref": "#/definitions/httpadp.videoResponseBody"
+                            "$ref": "#/definitions/httpadp.VideoResponseBody"
                         }
                     },
                     "400": {
@@ -207,6 +77,13 @@ const docTemplate = `{
                 "parameters": [
                     {
                         "type": "string",
+                        "description": "JWT token for authentication (e.g., Bearer \u003ctoken\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
                         "description": "publisher ID (UUID)",
                         "name": "publisherID",
                         "in": "path",
@@ -232,7 +109,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Order (asc or desc, example: ` + "`" + `t` + "`" + ` for ascending, ` + "`" + `f` + "`" + ` for descending)",
+                        "description": "Order (` + "`" + `t` + "`" + ` for ascending, ` + "`" + `f` + "`" + ` for descending)",
                         "name": "order",
                         "in": "query"
                     }
@@ -243,7 +120,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/httpadp.videoResponseBody"
+                                "$ref": "#/definitions/httpadp.VideoResponseBody"
                             }
                         }
                     }
@@ -262,6 +139,13 @@ const docTemplate = `{
                 ],
                 "summary": "Creates new video.",
                 "parameters": [
+                    {
+                        "type": "string",
+                        "description": "JWT token for authentication (e.g., Bearer \u003ctoken\u003e)",
+                        "name": "Authorization",
+                        "in": "header",
+                        "required": true
+                    },
                     {
                         "type": "string",
                         "description": "Publisher ID (UUID)",
@@ -336,7 +220,7 @@ const docTemplate = `{
                     },
                     {
                         "type": "string",
-                        "description": "Order (asc or desc, example: ` + "`" + `t` + "`" + ` for ascending, ` + "`" + `f` + "`" + ` for descending)",
+                        "description": "Order (` + "`" + `t` + "`" + ` for ascending, ` + "`" + `f` + "`" + ` for descending)",
                         "name": "order",
                         "in": "query"
                     }
@@ -347,7 +231,7 @@ const docTemplate = `{
                         "schema": {
                             "type": "array",
                             "items": {
-                                "$ref": "#/definitions/httpadp.videoResponseBody"
+                                "$ref": "#/definitions/httpadp.VideoResponseBody"
                             }
                         }
                     }
@@ -356,68 +240,7 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "httpadp.authResponse": {
-            "type": "object",
-            "properties": {
-                "token": {
-                    "type": "string"
-                }
-            }
-        },
-        "httpadp.createUserRequest": {
-            "type": "object",
-            "required": [
-                "email",
-                "lastname",
-                "name",
-                "password"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "lastname": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "httpadp.createVideoRequestBody": {
-            "type": "object",
-            "required": [
-                "description",
-                "topic"
-            ],
-            "properties": {
-                "description": {
-                    "type": "string"
-                },
-                "topic": {
-                    "type": "string"
-                }
-            }
-        },
-        "httpadp.loginUserRequest": {
-            "type": "object",
-            "required": [
-                "email",
-                "password"
-            ],
-            "properties": {
-                "email": {
-                    "type": "string"
-                },
-                "password": {
-                    "type": "string"
-                }
-            }
-        },
-        "httpadp.videoResponseBody": {
+        "httpadp.VideoResponseBody": {
             "type": "object",
             "properties": {
                 "createdAt": {
@@ -437,10 +260,17 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_user-service_adapters_http.serviceErrorResponse": {
+        "httpadp.createVideoRequestBody": {
             "type": "object",
+            "required": [
+                "description",
+                "topic"
+            ],
             "properties": {
-                "msg": {
+                "description": {
+                    "type": "string"
+                },
+                "topic": {
                     "type": "string"
                 }
             }
@@ -451,11 +281,11 @@ const docTemplate = `{
 // SwaggerInfo holds exported Swagger Info so clients can modify it
 var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
-	Host:             "localhost:8081",
+	Host:             "localhost:8080",
 	BasePath:         "/",
 	Schemes:          []string{},
-	Title:            "User Service API",
-	Description:      "Service for managing users.",
+	Title:            "Video Service API",
+	Description:      "Service for managing video content.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

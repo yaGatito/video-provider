@@ -3,27 +3,36 @@ package httpadp
 import (
 	"fmt"
 	"strings"
-	"video-provider/internal/pkg/shared"
-	"video-provider/internal/video-service/domain"
-	"video-provider/internal/video-service/policy"
+	"video-provider/common/shared"
+	"video-provider/video-service/domain"
+	"video-provider/video-service/policy"
 
 	"github.com/go-playground/validator/v10"
 )
 
-func newVideoValidator() *validator.Validate {
+func NewVideoValidator() (*validator.Validate, error) {
 	validate := validator.New(validator.WithRequiredStructEnabled())
 
-	validate.RegisterValidation("maxTopic", func(fl validator.FieldLevel) bool {
+	err := validate.RegisterValidation("maxTopic", func(fl validator.FieldLevel) bool {
 		return len(fl.Field().String()) <= policy.TopicMaxLen
 	})
-	validate.RegisterValidation("minTopic", func(fl validator.FieldLevel) bool {
+	if err != nil {
+		return nil, err
+	}
+	err = validate.RegisterValidation("minTopic", func(fl validator.FieldLevel) bool {
 		return len(fl.Field().String()) >= policy.TopicMinLen
 	})
-	validate.RegisterValidation("maxDescription", func(fl validator.FieldLevel) bool {
+	if err != nil {
+		return nil, err
+	}
+	err = validate.RegisterValidation("maxDescription", func(fl validator.FieldLevel) bool {
 		return len(fl.Field().String()) <= policy.DescriptionMaxLen
 	})
+	if err != nil {
+		return nil, err
+	}
 
-	return validate
+	return validate, nil
 }
 
 func newVideoPageParams(
@@ -32,20 +41,19 @@ func newVideoPageParams(
 	limit int32,
 	asc string,
 ) (domain.VideoPageParams, error) {
-
-	offset, err := validateOffset(offset)
+	offset, err := ValidateOffset(offset)
 	if err != nil {
 		return domain.VideoPageParams{}, err
 	}
-	limit, err = validateLimit(limit)
+	limit, err = ValidateLimit(limit)
 	if err != nil {
 		return domain.VideoPageParams{}, err
 	}
-	orderBy, err := validateOrderBy(orderByStr)
+	orderBy, err := ValidateOrderBy(orderByStr)
 	if err != nil {
 		return domain.VideoPageParams{}, err
 	}
-	asc, err = validateIsAsc(asc)
+	asc, err = ValidateIsAsc(asc)
 	if err != nil {
 		return domain.VideoPageParams{}, err
 	}
@@ -58,7 +66,7 @@ func newVideoPageParams(
 	}, nil
 }
 
-func validateSearchQuery(query string) (string, error) {
+func ValidateSearchQuery(query string) (string, error) {
 	query = strings.TrimSpace(query)
 
 	if len(query) < policy.SearchMinLen {
@@ -79,7 +87,7 @@ func validateSearchQuery(query string) (string, error) {
 	return query, nil
 }
 
-func validateLimit(limit int32) (int32, error) {
+func ValidateLimit(limit int32) (int32, error) {
 	if limit < policy.ThresholdVideosLimit {
 		return 0, shared.NewError(
 			shared.ErrInvalidInput,
@@ -97,7 +105,7 @@ func validateLimit(limit int32) (int32, error) {
 	return limit, nil
 }
 
-func validateOffset(offset int32) (int32, error) {
+func ValidateOffset(offset int32) (int32, error) {
 	if offset < 0 {
 		return 0, shared.NewError(
 			shared.ErrInvalidInput,
@@ -108,7 +116,7 @@ func validateOffset(offset int32) (int32, error) {
 	return offset, nil
 }
 
-func validateOrderBy(orderBy string) (string, error) {
+func ValidateOrderBy(orderBy string) (string, error) {
 	switch orderBy {
 	case domain.OrderByDate:
 		return orderBy, nil
@@ -121,7 +129,7 @@ func validateOrderBy(orderBy string) (string, error) {
 	}
 }
 
-func validateIsAsc(asc string) (string, error) {
+func ValidateIsAsc(asc string) (string, error) {
 	switch asc {
 	case domain.AscOrder:
 		return domain.AscOrder, nil

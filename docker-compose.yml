@@ -1,0 +1,96 @@
+version: '3.8'
+
+services:
+  # --- Video Service ---
+  video-service:
+    container_name: video-service-alpine
+    build:
+      context: ./internal/
+      dockerfile: ./VideoDockerfile
+    ports:
+      - "${VIDEO_API_PORT}:${VIDEO_API_PORT}"
+    depends_on:
+      - video-db
+    environment:
+      VIDEO_DB_NAME: "${VIDEO_DB_NAME}"
+      VIDEO_DB_HOST: "video-db"
+      VIDEO_DB_PORT: "5432"
+      VIDEO_API_PORT: "${VIDEO_API_PORT}"
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      JWT_SECRET: "${JWT_SECRET}"
+    networks:
+      - app-network
+
+  # --- Video DB (PostgreSQL) ---
+  video-db:
+    image: postgres:18-alpine
+    container_name: video-db-postgres-18-alpine
+    ports:
+      - "${VIDEO_DB_PORT}:5432"
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DB: "${VIDEO_DB_NAME}"
+    volumes:
+      - video-db-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  # --- User Service ---
+  user-service:
+    container_name: user-service-alpine
+    build:
+      context: ./internal/
+      dockerfile: ./UserDockerfile
+    ports:
+      - "${USER_API_PORT}:${USER_API_PORT}"
+    depends_on:
+      - user-db
+    environment:
+      USER_DB_NAME: "${USER_DB_NAME}"
+      USER_DB_HOST: "user-db"
+      USER_DB_PORT: "5432"
+      USER_API_PORT: "${USER_API_PORT}"
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      JWT_SECRET: "${JWT_SECRET}"
+    networks:
+      - app-network
+
+  # --- User DB (PostgreSQL) ---
+  user-db:
+    image: postgres:18-alpine
+    container_name: user-db-postgres-18-alpine
+    ports:
+      - "${USER_DB_PORT}:5432"
+    environment:
+      POSTGRES_USER: "${POSTGRES_USER}"
+      POSTGRES_PASSWORD: "${POSTGRES_PASSWORD}"
+      POSTGRES_DB: "${USER_DB_NAME}"
+    volumes:
+      - user-db-data:/var/lib/postgresql/data
+    networks:
+      - app-network
+
+  # --- Web (React) Service ---
+  web:
+    container_name: web-nginx
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      args:
+        REACT_APP_VIDEO_API_URL: "${REACT_APP_VIDEO_API_URL}"
+        REACT_APP_USER_API_URL: "${REACT_APP_USER_API_URL}"
+    ports:
+      - "3000:80"
+    networks:
+      - app-network
+
+volumes:
+  user-db-data:
+  video-db-data:
+
+networks:
+  app-network:
+    driver: bridge

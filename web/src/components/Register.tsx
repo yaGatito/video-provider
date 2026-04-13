@@ -1,6 +1,13 @@
 import React, { useState } from 'react';
 import axios, { AxiosResponse } from 'axios';
-import styled from 'styled-components';
+import Button from './common/Button';
+import {
+  CenteredPage,
+  PageHeading,
+  FormShell,
+  TextInput,
+  Message,
+} from './common/PageSection';
 
 interface User {
   email: string;
@@ -9,65 +16,10 @@ interface User {
   password: string;
 }
 
-const Page = styled.div`
-  display: grid;
-  justify-items: center;
-  gap: ${({ theme }) => theme.spacing.md};
-`;
-
-const Title = styled.h1`
-  font-family: ${({ theme }) => theme.fonts.heading};
-`;
-
-const ErrorMessage = styled.p`
-  width: min(100%, 480px);
-  background: ${({ theme }) => theme.colors.errorBg};
-  color: ${({ theme }) => theme.colors.errorText};
-  border-radius: ${({ theme }) => theme.radius.sm};
-  padding: ${({ theme }) => theme.spacing.md};
-`;
-
-const Form = styled.form`
-  width: min(100%, 480px);
-  background: ${({ theme }) => theme.colors.surface};
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.radius.md};
-  box-shadow: ${({ theme }) => theme.shadows.sm};
-  padding: ${({ theme }) => theme.spacing.xl};
-  display: grid;
-  gap: ${({ theme }) => theme.spacing.md};
-`;
-
-const Input = styled.input`
-  width: 100%;
-  border: 1px solid ${({ theme }) => theme.colors.border};
-  border-radius: ${({ theme }) => theme.radius.sm};
-  padding: 0.75rem 0.9rem;
-
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colors.brand};
-    box-shadow: 0 0 0 3px rgba(15, 76, 129, 0.15);
-  }
-`;
-
-const Button = styled.button`
-  border: none;
-  border-radius: ${({ theme }) => theme.radius.sm};
-  padding: 0.8rem 1rem;
-  color: white;
-  font-weight: 700;
-  background: ${({ theme }) => theme.colors.brand};
-  cursor: pointer;
-
-  &:hover {
-    background: ${({ theme }) => theme.colors.brandHover};
-  }
-`;
-
 const Register: React.FC = () => {
   const [userData, setUserData] = useState<User>({ email: '', name: '', lastname: '', password: '' });
   const [errorMessage, setErrorMessage] = useState('');
+  const userApiUrl = process.env.REACT_APP_USER_API_URL || '/userApi';
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUserData({ ...userData, [e.target.name]: e.target.value });
@@ -75,7 +27,7 @@ const Register: React.FC = () => {
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
-    axios.post('http://localhost:8081/v1/users', userData, {
+    axios.post(`${userApiUrl}/v1/users`, userData, {
       headers: {
         'Content-Type': 'application/json',
         Accept: 'application/json'
@@ -92,11 +44,11 @@ const Register: React.FC = () => {
   };
 
   return (
-    <Page>
-      <Title>Register</Title>
-      {errorMessage && <ErrorMessage>{errorMessage}</ErrorMessage>}
-      <Form onSubmit={handleRegister}>
-        <Input
+    <CenteredPage>
+      <PageHeading>Register</PageHeading>
+      {errorMessage && <Message $tone="error">{errorMessage}</Message>}
+      <FormShell onSubmit={handleRegister}>
+        <TextInput
           type="text"
           name="name"
           placeholder="First Name"
@@ -104,7 +56,7 @@ const Register: React.FC = () => {
           onChange={handleChange}
           required
         />
-        <Input
+        <TextInput
           type="text"
           name="lastname"
           placeholder="Last Name"
@@ -112,7 +64,7 @@ const Register: React.FC = () => {
           onChange={handleChange}
           required
         />
-        <Input
+        <TextInput
           type="email"
           name="email"
           placeholder="Email"
@@ -120,7 +72,7 @@ const Register: React.FC = () => {
           onChange={handleChange}
           required
         />
-        <Input
+        <TextInput
           type="password"
           name="password"
           placeholder="Password (min 8 characters)"
@@ -129,8 +81,8 @@ const Register: React.FC = () => {
           required
         />
         <Button type="submit">Register</Button>
-      </Form>
-    </Page>
+      </FormShell>
+    </CenteredPage>
   );
 };
 

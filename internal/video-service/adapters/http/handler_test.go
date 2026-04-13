@@ -1,4 +1,4 @@
-package httpadp
+package httpadp_test
 
 import (
 	"encoding/json"
@@ -9,9 +9,10 @@ import (
 	"strings"
 	"testing"
 	"time"
-	mock_app "video-provider/internal/video-service/app/mock"
-	"video-provider/internal/video-service/domain"
-	"video-provider/internal/video-service/policy"
+	httpadp "video-provider/video-service/adapters/http"
+	mock_app "video-provider/video-service/app/mock"
+	"video-provider/video-service/domain"
+	"video-provider/video-service/policy"
 
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
@@ -29,7 +30,7 @@ func TestCreateVideo(t *testing.T) {
 		CreatedAt:   time.Now(),
 		Status:      domain.StatusPublished,
 	}
-	expVideoRes := videoResponseBody{
+	expVideoRes := httpadp.VideoResponseBody{
 		ID:          testVideo.ID.String(),
 		PublisherID: testVideo.PublisherID.String(),
 		Topic:       testVideo.Topic,
@@ -66,17 +67,24 @@ func TestCreateVideo(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			s := mock_app.NewMockVideoService(ctrl)
-			h := NewVideoHandler(s, log.New(io.Discard, "", 0))
+			val, _ := httpadp.NewVideoValidator()
+			h := httpadp.NewVideoHandler(s, log.New(io.Discard, "", 0), val)
 			r := mux.NewRouter()
-			SetupRouter(r, h)
+			mockMiddleware := func(next http.Handler) http.Handler {
+				return next
+			}
+			httpadp.SetupRouter(r, h, mockMiddleware, mockMiddleware, mockMiddleware)
 
-			s.EXPECT().Create(gomock.Any(), gomock.Any()).Return(testVideo, nil).MaxTimes(c.expCallCnt)
+			s.EXPECT().
+				Create(gomock.Any(), gomock.Any()).
+				Return(testVideo, nil).
+				MaxTimes(c.expCallCnt)
 
 			req := httptest.NewRequest(
 				http.MethodPost,
 				strings.Replace(
-					RoutePublisherVideos,
-					"{"+PathVarPublisherID+"}",
+					httpadp.RoutePublisherVideos,
+					"{"+httpadp.PathVarPublisherID+"}",
 					c.pubID,
 					1,
 				),
@@ -90,13 +98,12 @@ func TestCreateVideo(t *testing.T) {
 
 			switch c.expCallCnt {
 			case 1:
-				var actualRes videoResponseBody
+				var actualRes httpadp.VideoResponseBody
 				err := json.Unmarshal(rec.Body.Bytes(), &actualRes)
 				require.NoError(t, err)
 
 				require.Equal(t, expVideoRes, actualRes)
 			}
-
 		})
 	}
 }
@@ -104,9 +111,13 @@ func TestCreateVideo(t *testing.T) {
 func TestGetVideoById(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	s := mock_app.NewMockVideoService(ctrl)
-	h := NewVideoHandler(s, log.New(io.Discard, "", 0))
+	val, _ := httpadp.NewVideoValidator()
+	h := httpadp.NewVideoHandler(s, log.New(io.Discard, "", 0), val)
 	r := mux.NewRouter()
-	SetupRouter(r, h)
+	mockMiddleware := func(next http.Handler) http.Handler {
+		return next
+	}
+	httpadp.SetupRouter(r, h, mockMiddleware, mockMiddleware, mockMiddleware)
 
 	vidID := uuid.Must(uuid.NewRandom())
 
@@ -136,8 +147,8 @@ func TestGetVideoById(t *testing.T) {
 			req := httptest.NewRequest(
 				http.MethodGet,
 				strings.Replace(
-					RouteVideo,
-					"{"+PathVarVideoID+"}",
+					httpadp.RouteVideo,
+					"{"+httpadp.PathVarVideoID+"}",
 					c.reqVidID,
 					1,
 				),
@@ -146,11 +157,11 @@ func TestGetVideoById(t *testing.T) {
 			rec := httptest.NewRecorder()
 			r.ServeHTTP(rec, req)
 
-			switch c.expCallCnt {
-			case 1:
+			if c.expCallCnt == 1 {
 				var actualRes domain.Video
-				json.Unmarshal(rec.Body.Bytes(), &actualRes)
+				err := json.Unmarshal(rec.Body.Bytes(), &actualRes)
 				require.Equal(t, video, actualRes)
+				require.NoError(t, err)
 			}
 
 			require.Equal(t, c.expStatusCode, rec.Code)
@@ -169,8 +180,8 @@ func TestGetByPublisherVideos(t *testing.T) {
 		Description: expDec,
 	}}
 
-	expectedResponseBody := videosResponseBody{
-		Videos: slicex.Map(expectedRes, dtoVideo),
+	expectedResponseBody := httpadp.VideosResponseBody{
+		Videos: slicex.Map(expectedRes, httpadp.DtoVideo),
 	}
 
 	cases := []struct {
@@ -222,9 +233,13 @@ func TestGetByPublisherVideos(t *testing.T) {
 		t.Run(c.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			s := mock_app.NewMockVideoService(ctrl)
-			h := NewVideoHandler(s, log.New(io.Discard, "", 0))
+			val, _ := httpadp.NewVideoValidator()
+			h := httpadp.NewVideoHandler(s, log.New(io.Discard, "", 0), val)
 			r := mux.NewRouter()
-			SetupRouter(r, h)
+			mockMiddleware := func(next http.Handler) http.Handler {
+				return next
+			}
+			httpadp.SetupRouter(r, h, mockMiddleware, mockMiddleware, mockMiddleware)
 
 			s.EXPECT().GetByPublisher(
 				gomock.Any(),
@@ -235,8 +250,8 @@ func TestGetByPublisherVideos(t *testing.T) {
 			).MaxTimes(c.expCallCnt)
 
 			url := strings.Replace(
-				RoutePublisherVideos,
-				"{"+PathVarPublisherID+"}",
+				httpadp.RoutePublisherVideos,
+				"{"+httpadp.PathVarPublisherID+"}",
 				c.pubID,
 				1,
 			) + c.urlParams
@@ -249,7 +264,7 @@ func TestGetByPublisherVideos(t *testing.T) {
 			switch c.expCallCnt {
 			case 1:
 				require.Equal(t, http.StatusOK, rec.Code)
-				var actualRes videosResponseBody
+				var actualRes httpadp.VideosResponseBody
 				json.Unmarshal(rec.Body.Bytes(), &actualRes)
 				require.Equal(t, expectedResponseBody, actualRes)
 			case 0:
@@ -270,8 +285,8 @@ func TestSearchPublisherVideos(t *testing.T) {
 		Description: expDec,
 	}}
 
-	expectedResponseBody := videosResponseBody{
-		Videos: slicex.Map(expectedRes, dtoVideo),
+	expectedResponseBody := httpadp.VideosResponseBody{
+		Videos: slicex.Map(expectedRes, httpadp.DtoVideo),
 	}
 
 	cases := []struct {
@@ -300,7 +315,6 @@ func TestSearchPublisherVideos(t *testing.T) {
 		{"empty id", 0,
 			"", "?offset=0&limit=5&order=date&asc=t&query=search", http.StatusNotFound},
 
-		//TODO: temp fix, till error handling will be implemented
 		{"invalid search", 0,
 			pubIDStr, "?offset=0&limit=5&order=date&asc=t&query=,.<>?/;", http.StatusBadRequest},
 	}
@@ -309,12 +323,15 @@ func TestSearchPublisherVideos(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-
 			ctrl := gomock.NewController(t)
 			s := mock_app.NewMockVideoService(ctrl)
-			h := NewVideoHandler(s, log.New(io.Discard, "", 0))
+			val, _ := httpadp.NewVideoValidator()
+			h := httpadp.NewVideoHandler(s, log.New(io.Discard, "", 0), val)
 			r := mux.NewRouter()
-			SetupRouter(r, h)
+			mockMiddleware := func(next http.Handler) http.Handler {
+				return next
+			}
+			httpadp.SetupRouter(r, h, mockMiddleware, mockMiddleware, mockMiddleware)
 
 			s.EXPECT().SearchPublisher(
 				gomock.Any(),
@@ -323,8 +340,8 @@ func TestSearchPublisherVideos(t *testing.T) {
 				gomock.Any()).Return(expectedRes, nil).MaxTimes(c.expCallCnt)
 
 			url := strings.Replace(
-				RoutePublisherVideos,
-				"{"+PathVarPublisherID+"}",
+				httpadp.RoutePublisherVideos,
+				"{"+httpadp.PathVarPublisherID+"}",
 				c.pubID,
 				1,
 			) + c.urlParams
@@ -335,9 +352,10 @@ func TestSearchPublisherVideos(t *testing.T) {
 
 			require.Equal(t, c.expStatusCode, rec.Code)
 			if c.expCallCnt == 1 {
-				var actualRes videosResponseBody
-				json.Unmarshal(rec.Body.Bytes(), &actualRes)
+				var actualRes httpadp.VideosResponseBody
+				err := json.Unmarshal(rec.Body.Bytes(), &actualRes)
 				require.Equal(t, expectedResponseBody, actualRes)
+				require.NoError(t, err)
 			}
 		})
 	}

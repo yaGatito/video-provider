@@ -1,0 +1,183 @@
+basePath: /
+definitions:
+  httpadp.VideoResponseBody:
+    properties:
+      createdAt:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      publisherID:
+        type: string
+      topic:
+        type: string
+    type: object
+  httpadp.createVideoRequestBody:
+    properties:
+      description:
+        type: string
+      topic:
+        type: string
+    required:
+    - description
+    - topic
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: Service for managing video content.
+  title: Video Service API
+  version: "1.0"
+paths:
+  /v1/videos/id/{videoID}:
+    get:
+      description: Returns details of a single video by its unique identifier
+      parameters:
+      - description: JWT token for authentication (e.g., Bearer <token>)
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: video ID (UUID)
+        format: uuid
+        in: path
+        name: videoID
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/httpadp.VideoResponseBody'
+        "400":
+          description: Invalid video ID format
+          schema:
+            type: string
+        "500":
+          description: Internal server error
+          schema:
+            type: string
+      summary: Get video by ID
+      tags:
+      - videos
+  /v1/videos/pub/{publisherID}:
+    get:
+      description: Returns a list of videos for a specific publisher with pagination
+        and search support
+      parameters:
+      - description: JWT token for authentication (e.g., Bearer <token>)
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: publisher ID (UUID)
+        in: path
+        name: publisherID
+        required: true
+        type: string
+      - description: 'Limit (example: 10)'
+        in: query
+        name: limit
+        type: integer
+      - description: 'Offset (example: 0)'
+        in: query
+        name: offset
+        type: integer
+      - description: 'Sort (example: `date`)'
+        in: query
+        name: sort
+        type: string
+      - description: Order (`t` for ascending, `f` for descending)
+        in: query
+        name: order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/httpadp.VideoResponseBody'
+            type: array
+      summary: Get videos by publisher
+      tags:
+      - videos
+    post:
+      consumes:
+      - application/json
+      description: Creates a new video record for the specified publisher.
+      parameters:
+      - description: JWT token for authentication (e.g., Bearer <token>)
+        in: header
+        name: Authorization
+        required: true
+        type: string
+      - description: Publisher ID (UUID)
+        in: path
+        name: publisherID
+        required: true
+        type: string
+      - description: Video creation request body
+        in: body
+        name: video
+        required: true
+        schema:
+          $ref: '#/definitions/httpadp.createVideoRequestBody'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+        "400":
+          description: Invalid input
+          schema:
+            type: string
+        "500":
+          description: Internal error
+          schema:
+            type: string
+      summary: Creates new video.
+      tags:
+      - videos
+  /v1/videos/search/:
+    get:
+      description: Search videos in the entire database by a keyword
+      parameters:
+      - description: Search query
+        in: query
+        name: query
+        required: true
+        type: string
+      - description: 'Limit (example: 10)'
+        in: query
+        name: limit
+        type: integer
+      - description: 'Offset (example: 0)'
+        in: query
+        name: offset
+        type: integer
+      - description: 'Sort (example: `date`)'
+        in: query
+        name: sort
+        type: string
+      - description: Order (`t` for ascending, `f` for descending)
+        in: query
+        name: order
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/httpadp.VideoResponseBody'
+            type: array
+      summary: Global search
+      tags:
+      - videos
+swagger: "2.0"

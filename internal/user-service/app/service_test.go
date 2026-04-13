@@ -3,15 +3,17 @@ package app
 import (
 	"context"
 	"errors"
+	"fmt"
 	"testing"
 	"time"
-	"video-provider/internal/pkg/shared"
-	"video-provider/internal/user-service/domain"
-	mock_ports "video-provider/internal/user-service/ports/mock"
+	"video-provider/common/shared"
+	"video-provider/user-service/domain"
+	mock_ports "video-provider/user-service/ports/mock"
 
+	"github.com/golang-jwt/jwt/v4"
 	"github.com/golang/mock/gomock"
 	"github.com/google/uuid"
-	"github.com/jackc/pgx/v5"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestUserService_Create(t *testing.T) {
@@ -54,10 +56,15 @@ func TestUserService_Create(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockRepo := mock_ports.NewMockUserRepository(ctrl)
 			mockHasher := mock_ports.NewMockPasswordHasher(ctrl)
-			userService := NewUserService(mockRepo, mockHasher)
+			userService := NewUserService(mockRepo, mockHasher, func() []byte {
+				return []byte("test")
+			})
 
 			mockHasher.EXPECT().Hash(tc.password).Return([]byte(tc.password), nil).Times(1)
-			mockRepo.EXPECT().Create(gomock.Any(), tc.user, []byte(tc.password)).Return(tc.id, tc.err).Times(1)
+			mockRepo.EXPECT().
+				Create(gomock.Any(), tc.user, []byte(tc.password)).
+				Return(tc.id, tc.err).
+				Times(1)
 
 			id, err := userService.Create(context.Background(), tc.user, tc.password)
 			if tc.err != nil && err == nil {
@@ -108,7 +115,9 @@ func TestUserService_Get(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockRepo := mock_ports.NewMockUserRepository(ctrl)
 			mockHasher := mock_ports.NewMockPasswordHasher(ctrl)
-			userService := NewUserService(mockRepo, mockHasher)
+			userService := NewUserService(mockRepo, mockHasher, func() []byte {
+				return []byte("test")
+			})
 
 			mockRepo.EXPECT().FindByID(gomock.Any(), tc.id).Return(tc.user, tc.err).Times(1)
 
@@ -129,83 +138,144 @@ func TestUserService_Get(t *testing.T) {
 }
 
 func TestUserService_Login(t *testing.T) {
-	expectedToken := "success"
+	expectedUserID := uuid.MustParse("d9fa522f-0006-464f-8d68-356ba1d6ad7d")
 	expectedHash := []byte("P@ssword123")
-	expectedNoMatchErr := errors.New("failed to compare password")
+	expectedToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzU1NjQ5NTgsInVzZXJfaWQiOiI4MWNmMzNkNS03ZDIwLTQ1YzMtYjg3Mi1iMGNiYmMwNzI5NjEifQ.4HSvvKyphap68diVSgCUX862SLYgcaa_7Q6PQjQMJ28"
+	jwtSecret := "my-nigga-secret-key"
 
 	testCases := []struct {
-		testName   string
-		inputEmail string
-		inputPas   []byte
-		repoCalls  int
-		repoErr    error
-		hashCalls  int
-		hashErr    error
-		resErr     error
-		resToken   string
+		testName       string
+		inputEmail     string
+		inputPas       []byte
+		repoCalls      int
+		repoErr        error
+		hashCalls      int
+		hashErr        error
+		resErr         error
+		resToken       string
+		expectedUserID uuid.UUID
 	}{
 		{
-			testName:   "Valid login",
-			inputEmail: "test@example.com",
-			inputPas:   expectedHash,
-			repoCalls:  1,
-			hashCalls:  1,
-			resToken:   expectedToken,
+			testName:       "Valid login",
+			inputEmail:     "test@example.com",
+			inputPas:       expectedHash,
+			repoCalls:      1,
+			repoErr:        nil,
+			hashCalls:      1,
+			hashErr:        nil,
+			resErr:         nil,
+			resToken:       expectedToken,
+			expectedUserID: expectedUserID,
 		},
 		{
-			testName: "Empty email",
-			resErr:   shared.NewError(shared.ErrInvalidInput, "email is required", nil),
+			testName:       "Empty email",
+			inputEmail:     "",
+			inputPas:       expectedHash,
+			repoCalls:      0,
+			repoErr:        nil,
+			hashCalls:      0,
+			hashErr:        nil,
+			resErr:         shared.NewError(shared.ErrInvalidInput, "email is required", nil),
+			resToken:       "",
+			expectedUserID: uuid.Nil,
 		},
 		{
-			testName:   "Empty password",
-			inputEmail: "test@example.com",
-			resErr:     shared.NewError(shared.ErrInvalidInput, "password is required", nil),
+			testName:       "Empty password",
+			inputEmail:     "test@example.com",
+			inputPas:       nil,
+			repoCalls:      0,
+			repoErr:        nil,
+			hashCalls:      0,
+			hashErr:        nil,
+			resErr:         shared.NewError(shared.ErrInvalidInput, "password is required", nil),
+			resToken:       "",
+			expectedUserID: uuid.Nil,
 		},
 		{
-			testName:   "Db error (email not found, etc)",
-			inputEmail: "unexpectedEmail@domain.com",
-			inputPas:   []byte("unexpectedPassword"),
-			repoCalls:  1,
-			repoErr:    pgx.ErrNoRows,
+			testName:       "Db error (email not found)",
+			inputEmail:     "unexpected@example.com",
+			inputPas:       expectedHash,
+			repoCalls:      1,
+			repoErr:        errors.New("no such user"),
+			hashCalls:      0,
+			hashErr:        nil,
+			resErr:         errors.New("no such user"),
+			resToken:       "",
+			expectedUserID: uuid.Nil,
 		},
 		{
 			testName:   "Wrong password",
 			inputEmail: "test@example.com",
-			inputPas:   []byte("unexpectedPassword"),
+			inputPas:   []byte("wrongpassword"),
 			repoCalls:  1,
+			repoErr:    nil,
 			hashCalls:  1,
-			hashErr:    expectedNoMatchErr,
-			resErr:     shared.NewError(shared.ErrUnauthorized, "failed to compare password", nil),
+			hashErr:    errors.New("password mismatch"),
+			resErr: shared.NewError(
+				shared.ErrUnauthorized,
+				"failed to compare password",
+				nil,
+			),
+			resToken:       "",
+			expectedUserID: uuid.Nil,
 		},
 	}
-
-	t.Parallel()
 
 	for _, tc := range testCases {
 		t.Run(tc.testName, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockRepo := mock_ports.NewMockUserRepository(ctrl)
 			mockHasher := mock_ports.NewMockPasswordHasher(ctrl)
-			userService := NewUserService(mockRepo, mockHasher)
 
-			mockRepo.EXPECT().GetPasswordHash(gomock.Any(), tc.inputEmail).Return(uuid.Nil, expectedHash, tc.repoErr).Times(tc.repoCalls)
-			mockHasher.EXPECT().CompareHashAndPassword(expectedHash, tc.inputPas).Return(tc.hashErr).Times(tc.hashCalls)
+			mockRepo.EXPECT().GetPasswordHash(gomock.Any(), tc.inputEmail).
+				Return(tc.expectedUserID, expectedHash, tc.repoErr).Times(tc.repoCalls)
+
+			mockHasher.EXPECT().CompareHashAndPassword(expectedHash, tc.inputPas).
+				Return(tc.hashErr).Times(tc.hashCalls)
+
+			userService := &UserService{
+				repo:   mockRepo,
+				hasher: mockHasher,
+				getJWTSecret: func() []byte {
+					return []byte(jwtSecret)
+				}}
 
 			token, err := userService.Login(context.Background(), tc.inputEmail, tc.inputPas)
-			if err == nil {
-				if tc.repoErr == nil && tc.hashErr == nil && tc.resErr == nil && token != tc.resToken {
-					t.Errorf("Expected token '%s', but got '%s'", tc.resToken, token)
-				}
+
+			if tc.resErr != nil {
+				assert.EqualError(t, err, tc.resErr.Error())
+				assert.Empty(t, token)
 			} else {
-				if tc.resErr != nil && err.Error() != tc.resErr.Error() {
-					t.Errorf("Expected result rror '%s', but got '%s'", tc.resErr.Error(), err.Error())
+				assert.NoError(t, err)
+				assert.NotEmpty(t, token)
+
+				// Parse the JWT token
+				parsedToken, err := jwt.Parse(token, func(token *jwt.Token) (interface{}, error) {
+					// Make sure the method is HMAC
+					if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+						return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+					}
+
+					// Return the secret used for signing
+					return []byte(jwtSecret), nil
+				})
+
+				if err != nil {
+					t.Fatalf("Failed to parse token: %v", err)
 				}
-				if tc.hashErr != nil && err.Error() != tc.hashErr.Error() {
-					t.Errorf("Expected hasher error'%s', but got '%s'", tc.hashErr.Error(), err.Error())
+
+				if !parsedToken.Valid {
+					t.Fatal("Token is invalid")
 				}
-				if tc.repoErr != nil && err.Error() != tc.repoErr.Error() {
-					t.Errorf("Expected repo error '%s', but got '%s'", tc.repoErr.Error(), err.Error())
+
+				claims, ok := parsedToken.Claims.(jwt.MapClaims)
+				if !ok {
+					t.Fatal("Failed to extract claims")
 				}
+
+				// Now check the claims
+				assert.Equal(t, float64(time.Now().Add(24*time.Hour).Unix()), claims["exp"])
+				assert.Equal(t, tc.expectedUserID.String(), claims["user_id"])
 			}
 		})
 	}
@@ -247,7 +317,9 @@ func TestUserService_Update(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockRepo := mock_ports.NewMockUserRepository(ctrl)
 			mockHasher := mock_ports.NewMockPasswordHasher(ctrl)
-			userService := NewUserService(mockRepo, mockHasher)
+			userService := NewUserService(mockRepo, mockHasher, func() []byte {
+				return []byte("test")
+			})
 
 			// Setup expectations based on test case
 			if tc.err == nil {

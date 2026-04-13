@@ -3,9 +3,9 @@ package postgres
 import (
 	"context"
 	"time"
-	postgres "video-provider/internal/video-service/adapters/postgres/db"
-	"video-provider/internal/video-service/domain"
-	"video-provider/internal/video-service/ports"
+	postgres "video-provider/video-service/adapters/postgres/db"
+	"video-provider/video-service/domain"
+	"video-provider/video-service/ports"
 
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -34,7 +34,6 @@ func (r *VideoRepoPostgreSQL) CreateVideo(
 	ctx context.Context,
 	video domain.Video,
 ) (domain.Video, error) {
-
 	arg := postgres.CreateVideoParams{
 		Publisherid: video.PublisherID,
 		Topic:       video.Topic,
@@ -51,7 +50,6 @@ func (r *VideoRepoPostgreSQL) GetVideoByID(
 	ctx context.Context,
 	id domain.UUID,
 ) (domain.Video, error) {
-
 	video, err := r.queries.GetVideoByID(ctx, id)
 	if err != nil {
 		return domain.Video{}, err
@@ -65,7 +63,6 @@ func (r *VideoRepoPostgreSQL) GetPublisherVideos(
 	publisherID domain.UUID,
 	params domain.VideoPageParams,
 ) ([]domain.Video, error) {
-
 	args := postgres.GetVideosByPublisherParams{
 		Publisherid: publisherID,
 		Offset:      params.Offset,
@@ -85,7 +82,6 @@ func (r *VideoRepoPostgreSQL) SearchPublisher(
 	query string,
 	params domain.VideoPageParams,
 ) ([]domain.Video, error) {
-
 	args := postgres.SearchPublisherParams{
 		Publisherid: publisherID,
 		Column2:     query,
@@ -106,7 +102,6 @@ func (r *VideoRepoPostgreSQL) SearchGlobal(
 	query string,
 	params domain.VideoPageParams,
 ) ([]domain.Video, error) {
-
 	args := postgres.SearchGlobalParams{
 		Column1: query,
 		Column2: getOrderBy(params.OrderBy, params.Asc),
@@ -123,8 +118,8 @@ func (r *VideoRepoPostgreSQL) SearchGlobal(
 
 func toDomainVideo(video postgres.Video) domain.Video {
 	return domain.Video{
-		ID:          domain.UUID(video.ID),
-		PublisherID: domain.UUID(video.Publisherid),
+		ID:          video.ID,
+		PublisherID: video.Publisherid,
 		Topic:       video.Topic,
 		Description: video.Description.String,
 		CreatedAt:   time.UnixMicro(video.Createdat.Microseconds),
@@ -133,8 +128,7 @@ func toDomainVideo(video postgres.Video) domain.Video {
 }
 
 func getOrderBy(order string, asc string) string {
-	switch order {
-	case domain.OrderByDate:
+	if order == domain.OrderByDate {
 		order = OrderByCreatedAt
 	}
 
