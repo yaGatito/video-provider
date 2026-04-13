@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 import axios, { AxiosResponse } from 'axios';
 import { Link, useParams } from 'react-router-dom';
 import styled from 'styled-components';
+import Button from './common/Button';
+import { PageShell, PageHeading } from './common/PageSection';
 
 interface Video {
   id: string;
@@ -13,10 +15,10 @@ interface Video {
   comments?: number;
   previewImage?: string;
   createdAt?: string;
+  publisherID?: string;
 }
 
-const Page = styled.div`
-  display: grid;
+const Page = styled(PageShell)`
   justify-items: center;
 `;
 
@@ -38,15 +40,22 @@ const Header = styled.header`
 `;
 
 const BackButton = styled(Link)`
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   width: fit-content;
-  background: ${({ theme }) => theme.colors.brand};
-  color: white;
-  border-radius: ${({ theme }) => theme.radius.sm};
   padding: 0.55rem 0.85rem;
+  border-radius: ${({ theme }) => theme.radius.sm};
+  background: ${({ theme }) => theme.colors.surface};
+  color: ${({ theme }) => theme.colors.textPrimary};
+  border: 1px solid ${({ theme }) => theme.colors.border};
   font-weight: 600;
+  text-decoration: none;
+  transition: background ${({ theme }) => theme.transitions.base}, border-color ${({ theme }) => theme.transitions.base};
 
   &:hover {
-    background: ${({ theme }) => theme.colors.brandHover};
+    background: ${({ theme }) => theme.colors.surfaceAlt};
+    border-color: ${({ theme }) => theme.colors.brand};
   }
 `;
 
@@ -91,6 +100,12 @@ const Stat = styled.span`
   font-size: 0.92rem;
 `;
 
+const ActionRow = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: ${({ theme }) => theme.spacing.md};
+`;
+
 const StreamHint = styled.p`
   color: ${({ theme }) => theme.colors.textSecondary};
   font-size: 0.92rem;
@@ -108,7 +123,8 @@ const VideoPage: React.FC = () => {
 
   useEffect(() => {
     const videoApiUrl = process.env.REACT_APP_VIDEO_API_URL || '/api';
-    axios.get<Video>(`${videoApiUrl}/v1/videos/id/${id}`)
+    axios
+      .get<Video>(`${videoApiUrl}/v1/videos/id/${id}`)
       .then((response: AxiosResponse<Video>) => {
         setVideo(response.data);
       })
@@ -125,6 +141,14 @@ const VideoPage: React.FC = () => {
   const streamBase = process.env.REACT_APP_VIDEO_STREAM_URL || `${videoApiUrl}/v1/videos/stream`;
   const streamUrl = `${streamBase}/${id}`;
   const title = video.topic || video.title || `Video ${video.id}`;
+
+  const handleComment = () => {
+    alert('Comment stub: backend integration will be added later.');
+  };
+
+  const handleSubscribe = () => {
+    alert('Subscribe stub: backend integration will be added later.');
+  };
 
   return (
     <Page>
@@ -159,6 +183,10 @@ const VideoPage: React.FC = () => {
             <Stat>{video.comments ?? 0} Comments</Stat>
             {video.createdAt && <Stat>{new Date(video.createdAt).toLocaleDateString()}</Stat>}
           </Stats>
+          <ActionRow>
+            <Button onClick={handleComment}>Comment</Button>
+            {video.publisherID && <Button variant="secondary" onClick={handleSubscribe}>Subscribe</Button>}
+          </ActionRow>
         </Body>
       </Container>
     </Page>
