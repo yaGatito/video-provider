@@ -74,8 +74,8 @@ func run() error {
 		router,
 		userHandler,
 		authorizer.Auth,
-		middleware.CORSMiddleware,
 		mwLog.LoggingMiddleware,
+		middleware.CORSMiddleware,
 	)
 
 	log.Printf("User-service starting on port %s", os.Getenv(apiPort))

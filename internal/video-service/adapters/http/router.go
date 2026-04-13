@@ -29,11 +29,13 @@ func SetupRouter(
 	publicRouter.Use(cors)
 	publicRouter.Use(logging)
 
-	// Global public search
 	publicRouter.HandleFunc(RouteVideoSearch, h.SearchGlobal).
 		Methods(http.MethodGet, http.MethodOptions)
+	publicRouter.HandleFunc(RouteVideo, h.GetByID).
+		Methods(http.MethodGet, http.MethodOptions)
+	publicRouter.HandleFunc(RoutePublisherVideos, h.GetByPublisher).
+		Methods(http.MethodGet, http.MethodOptions)
 
-	// Swagger route (public)
 	publicRouter.PathPrefix(routeSwagger).HandlerFunc(httpSwagger.WrapHandler)
 
 	// Protected routes (requires auth)
@@ -42,11 +44,6 @@ func SetupRouter(
 	protectedRouter.Use(auth)
 	protectedRouter.Use(logging)
 
-	// Video endpoints (protected)
-	protectedRouter.HandleFunc(RouteVideo, h.GetByID).
-		Methods(http.MethodGet, http.MethodOptions)
 	protectedRouter.HandleFunc(RoutePublisherVideos, h.Create).
 		Methods(http.MethodPost, http.MethodOptions)
-	protectedRouter.HandleFunc(RoutePublisherVideos, h.GetByPublisher).
-		Methods(http.MethodGet, http.MethodOptions)
 }

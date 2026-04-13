@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"net/http"
 	"os"
+	"strings"
 
 	"github.com/golang-jwt/jwt/v4"
 )
@@ -13,7 +14,9 @@ type contextKeyUserID string
 
 const contextUserID contextKeyUserID = "USER_ID"
 
-const jwtSecretEnvVar = "JWT_SECRET"
+const jwtSecretEnvVar string = "JWT_SECRET"
+
+const bearerHeaderPrefix string = "Bearer "
 
 type Authorizer struct{}
 
@@ -24,8 +27,12 @@ func (a Authorizer) GetJWTSecret() []byte {
 func (a Authorizer) Auth(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		bearer := r.Header.Get("Authorization")
-		tokenString := bearer[len("Bearer "):]
-		if tokenString == "" {
+		if len(bearer) <= 7 {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
+		}
+		tokenString, ok := strings.CutPrefix(bearer, bearerHeaderPrefix)
+		if tokenString == "" || !ok {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}
