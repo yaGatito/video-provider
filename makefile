@@ -71,7 +71,6 @@ help:
 bootstrap:
 	@go version
 	@docker --version
-	@yq --version
 	@$(MOCKGEN) -version
 	@$(SQLC) version
 	@$(GOLANGCI_LINT) version
@@ -210,20 +209,10 @@ db-status:
 	$(call log, "Migrations: $(MIGRATIONS_DIR)")
 
 # 	--- Tools ---
-.PHONY: go-tools go-win-tools req-win-tools opt-win-tools
+.PHONY: go-tools
 go-tools:
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.2
-	go install github.com/golang/mock/mockgen@v1.6.0
-	go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.26.0
+	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
+	go install github.com/golang/mock/mockgen@latest
+	go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 	go install github.com/swaggo/swag/cmd/swag@latest
 	go install github.com/pressly/goose/v3/cmd/goose@latest
-
-go-win-tools: go-tools
-
-req-win-tools:
-	irm get.scoop.sh | iex
-	scoop install pwsh
-
-opt-win-tools:
-	scoop install fd
-	scoop install ripgrep
