@@ -8,13 +8,13 @@ import (
 )
 
 const (
-	PathVarVideoID     = "videoID"
-	PathVarPublisherID = "publisherID"
+	PathVarVideoID     string = "videoID"
+	PathVarPublisherID string = "publisherID"
 
-	RoutePublisherVideos = "/v1/videos/pub/{" + PathVarPublisherID + "}"
-	RouteVideoSearch     = "/v1/videos/search"
-	RouteVideo           = "/v1/videos/id/{" + PathVarVideoID + "}"
-	routeSwagger         = "/v1/swagger/"
+	RoutePublisherVideos string = "/v1/videos/pub/{" + PathVarPublisherID + "}"
+	routeVideoSearch     string = "/v1/videos/search"
+	RouteVideo           string = "/v1/videos/id/{" + PathVarVideoID + "}"
+	routeSwagger         string = "/v1/swagger/"
 )
 
 func SetupRouter(
@@ -24,12 +24,13 @@ func SetupRouter(
 	logging mux.MiddlewareFunc,
 	cors mux.MiddlewareFunc,
 ) {
+	r.Use(cors)
+	r.Use(logging)
+
 	// Public routes (no auth required)
 	publicRouter := r.PathPrefix("").Subrouter()
-	publicRouter.Use(cors)
-	publicRouter.Use(logging)
 
-	publicRouter.HandleFunc(RouteVideoSearch, h.SearchGlobal).
+	publicRouter.HandleFunc(routeVideoSearch, h.SearchGlobal).
 		Methods(http.MethodGet, http.MethodOptions)
 	publicRouter.HandleFunc(RouteVideo, h.GetByID).
 		Methods(http.MethodGet, http.MethodOptions)
@@ -40,9 +41,7 @@ func SetupRouter(
 
 	// Protected routes (requires auth)
 	protectedRouter := r.PathPrefix("").Subrouter()
-	protectedRouter.Use(cors)
 	protectedRouter.Use(auth)
-	protectedRouter.Use(logging)
 
 	protectedRouter.HandleFunc(RoutePublisherVideos, h.Create).
 		Methods(http.MethodPost, http.MethodOptions)

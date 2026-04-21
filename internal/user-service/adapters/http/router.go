@@ -23,12 +23,13 @@ func SetupRouter(
 	logging mux.MiddlewareFunc,
 	cors mux.MiddlewareFunc,
 ) {
+	r.Use(cors)
+	r.Use(logging)
+
 	// Public routes (no auth required)
 	publicRouter := r.PathPrefix("").Subrouter()
-	publicRouter.Use(cors)
-	publicRouter.Use(logging)
 
-	// Login and create routes (public)
+	// Login and register routes (public)
 	publicRouter.HandleFunc(routeLogin, h.Login).
 		Methods(http.MethodPost, http.MethodOptions)
 	publicRouter.HandleFunc(routeUsers, h.CreateUser).
@@ -39,9 +40,7 @@ func SetupRouter(
 
 	// Protected routes (requires auth)
 	protectedRouter := r.PathPrefix("").Subrouter()
-	protectedRouter.Use(cors)
 	protectedRouter.Use(auth)
-	protectedRouter.Use(logging)
 
 	// User endpoints (protected)
 	protectedRouter.HandleFunc(routeUser, h.GetUser).
