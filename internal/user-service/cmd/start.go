@@ -59,7 +59,7 @@ func run() error {
 
 	userRepository := postgres.NewPostgresUserRepository(dbPool)
 	pwHasher := cryptoadp.NewBCryptPasswordHasher()
-	authorizer := auth.Authorizer{}
+	authorizer := auth.NewAuthorizer([]byte(c.JwtSecret))
 	userInteractor := app.NewUserService(userRepository, pwHasher, authorizer.GetJWTSecret)
 	userHandler := httpadp.NewUserHandler(userInteractor, mwLog.Log)
 
@@ -85,8 +85,8 @@ func run() error {
 func dbURL(c config.Config) string {
 	return fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=%s&pool_max_conns=%d&pool_max_conn_lifetime=%s",
-		c.PgUser,
-		c.PgPass,
+		c.DbUser,
+		c.DbPass,
 		c.DbHost,
 		c.DbPort,
 		c.DbName,

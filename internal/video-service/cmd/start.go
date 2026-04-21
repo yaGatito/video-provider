@@ -69,7 +69,7 @@ func run() error {
 	httpadp.SetupRouter(
 		router,
 		videoHandler,
-		auth.Authorizer{}.Auth,
+		auth.NewAuthorizer([]byte(c.JwtSecret)).Auth,
 		mwLog.LoggingMiddleware,
 		middleware.CORSMiddleware,
 	)
@@ -82,12 +82,11 @@ func run() error {
 	return nil
 }
 
-
 func dbURL(c config.Config) string {
 	return fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=%s&pool_max_conns=%d&pool_max_conn_lifetime=%s",
-		c.PgUser,
-		c.PgPass,
+		c.DbUser,
+		c.DbPass,
 		c.DbHost,
 		c.DbPort,
 		c.DbName,

@@ -10,10 +10,7 @@ import (
 	"github.com/kelseyhightower/envconfig"
 )
 
-const (
-	dbUserEnv = "POSTGRES_USER"
-	dbPassEnv = "POSTGRES_PASSWORD"
-)
+const jwtSec string = "JWT_SECRET"
 
 type Config struct {
 	ApiPort         string `required:"true" split_words:"true"`
@@ -24,8 +21,10 @@ type Config struct {
 	DbName string `required:"true" split_words:"true"`
 	DbPort string `required:"true" split_words:"true"`
 	DbHost string `required:"true" split_words:"true"`
-	PgPass string `ignored:"true"`
-	PgUser string `ignored:"true"`
+	DbPass string `required:"true" split_words:"true"`
+	DbUser string `required:"true" split_words:"true"`
+
+	JwtSecret string `ignored:"true"`
 }
 
 type serviceConfig struct {
@@ -51,15 +50,11 @@ func LoadConfig(svcPrefix string) (Config, error) {
 	err = envconfig.Process(svcPrefix, &c)
 	switch err := err.(type) {
 	case nil:
-		var ok bool
-		c.PgPass, ok = os.LookupEnv(dbPassEnv)
-		if !ok {
-			return Config{}, shared.NewError(shared.ErrInternal, "failed to lookup env:"+dbPassEnv, err)
+		sec, ok := os.LookupEnv(jwtSec)
+		if !ok && len(sec) > 0 {
+			return Config{}, shared.NewError(shared.ErrInternal, fmt.Sprintf("failed to load env %s", jwtSec), err)
 		}
-		c.PgUser, ok = os.LookupEnv(dbUserEnv)
-		if !ok {
-			return Config{}, shared.NewError(shared.ErrInternal, "failed to lookup env:"+dbUserEnv, err)
-		}
+		c.JwtSecret = sec
 		c.ApiMaxDbCons = sc.PoolCons
 		c.ApiMaxDbConLife = sc.PoolConLifetime
 		c.ApiSslModCon = sc.SSLMode

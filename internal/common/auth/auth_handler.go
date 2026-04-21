@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v4"
@@ -14,14 +13,20 @@ type contextKeyUserID string
 
 const contextUserID contextKeyUserID = "USER_ID"
 
-const jwtSecretEnvVar string = "JWT_SECRET"
-
 const bearerHeaderPrefix string = "Bearer "
 
-type Authorizer struct{}
+type Authorizer struct {
+	secret []byte
+}
+
+func NewAuthorizer(sec []byte) Authorizer {
+	return Authorizer{
+		secret: sec,
+	}
+}
 
 func (a Authorizer) GetJWTSecret() []byte {
-	return []byte(os.Getenv(jwtSecretEnvVar))
+	return []byte(a.secret)
 }
 
 func (a Authorizer) Auth(next http.Handler) http.Handler {
