@@ -10,6 +10,7 @@ import (
 	domain "video-provider/video-service/domain"
 
 	gomock "github.com/golang/mock/gomock"
+	uuid "github.com/google/uuid"
 )
 
 // MockVideoService is a mock of VideoService interface.
@@ -51,7 +52,7 @@ func (mr *MockVideoServiceMockRecorder) Create(ctx, video interface{}) *gomock.C
 }
 
 // GetByID mocks base method.
-func (m *MockVideoService) GetByID(ctx context.Context, videoID domain.UUID) (domain.Video, error) {
+func (m *MockVideoService) GetByID(ctx context.Context, videoID uuid.UUID) (domain.Video, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByID", ctx, videoID)
 	ret0, _ := ret[0].(domain.Video)
@@ -66,7 +67,7 @@ func (mr *MockVideoServiceMockRecorder) GetByID(ctx, videoID interface{}) *gomoc
 }
 
 // GetByPublisher mocks base method.
-func (m *MockVideoService) GetByPublisher(ctx context.Context, publisherID domain.UUID, params domain.VideoPageParams) ([]domain.Video, error) {
+func (m *MockVideoService) GetByPublisher(ctx context.Context, publisherID uuid.UUID, params domain.VideoPageParams) ([]domain.Video, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetByPublisher", ctx, publisherID, params)
 	ret0, _ := ret[0].([]domain.Video)
@@ -96,7 +97,7 @@ func (mr *MockVideoServiceMockRecorder) SearchGlobal(ctx, query, params interfac
 }
 
 // SearchPublisher mocks base method.
-func (m *MockVideoService) SearchPublisher(ctx context.Context, publisherID domain.UUID, query string, params domain.VideoPageParams) ([]domain.Video, error) {
+func (m *MockVideoService) SearchPublisher(ctx context.Context, publisherID uuid.UUID, query string, params domain.VideoPageParams) ([]domain.Video, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "SearchPublisher", ctx, publisherID, query, params)
 	ret0, _ := ret[0].([]domain.Video)

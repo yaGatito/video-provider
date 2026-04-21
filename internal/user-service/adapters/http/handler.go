@@ -186,7 +186,7 @@ func (h *UserHandler) writeErrorResponse(w http.ResponseWriter, vErr error) {
 	w.Header().Set("Content-Type", "application/json")
 
 	switch vErr := vErr.(type) {
-	case shared.Error:
+	case *shared.Error:
 		h.log.Printf("Error: %v\n", vErr)
 
 		w.WriteHeader(int(vErr.Code))

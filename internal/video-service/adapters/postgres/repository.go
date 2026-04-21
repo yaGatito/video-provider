@@ -7,6 +7,7 @@ import (
 	"video-provider/video-service/domain"
 	"video-provider/video-service/ports"
 
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/yaGatito/slicex"
@@ -48,7 +49,7 @@ func (r *VideoRepoPostgreSQL) CreateVideo(
 
 func (r *VideoRepoPostgreSQL) GetVideoByID(
 	ctx context.Context,
-	id domain.UUID,
+	id uuid.UUID,
 ) (domain.Video, error) {
 	video, err := r.queries.GetVideoByID(ctx, id)
 	if err != nil {
@@ -60,7 +61,7 @@ func (r *VideoRepoPostgreSQL) GetVideoByID(
 
 func (r *VideoRepoPostgreSQL) GetPublisherVideos(
 	ctx context.Context,
-	publisherID domain.UUID,
+	publisherID uuid.UUID,
 	params domain.VideoPageParams,
 ) ([]domain.Video, error) {
 	args := postgres.GetVideosByPublisherParams{
@@ -78,7 +79,7 @@ func (r *VideoRepoPostgreSQL) GetPublisherVideos(
 
 func (r *VideoRepoPostgreSQL) SearchPublisher(
 	ctx context.Context,
-	publisherID domain.UUID,
+	publisherID uuid.UUID,
 	query string,
 	params domain.VideoPageParams,
 ) ([]domain.Video, error) {

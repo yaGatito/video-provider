@@ -122,10 +122,14 @@ func TestGetVideoById(t *testing.T) {
 	vidID := uuid.Must(uuid.NewRandom())
 
 	video := domain.Video{
+		ID:          vidID,
 		PublisherID: uuid.Must(uuid.NewRandom()),
 		Topic:       "topic",
 		Description: "description",
+		CreatedAt:   time.Now(),
 	}
+
+	expectedResponseBody := httpadp.DtoVideo(video)
 
 	cases := []struct {
 		name          string
@@ -158,9 +162,9 @@ func TestGetVideoById(t *testing.T) {
 			r.ServeHTTP(rec, req)
 
 			if c.expCallCnt == 1 {
-				var actualRes domain.Video
+				var actualRes httpadp.VideoResponseBody
 				err := json.Unmarshal(rec.Body.Bytes(), &actualRes)
-				require.Equal(t, video, actualRes)
+				require.Equal(t, expectedResponseBody, actualRes)
 				require.NoError(t, err)
 			}
 
@@ -175,9 +179,10 @@ func TestGetByPublisherVideos(t *testing.T) {
 	expDec := "description"
 
 	expectedRes := []domain.Video{{
-		PublisherID: uuid.Must(uuid.Parse(pubIDStr)),
+		PublisherID: uuid.Must(uuid.NewRandom()),
 		Topic:       expTop,
 		Description: expDec,
+		CreatedAt:   time.Now(),
 	}}
 
 	expectedResponseBody := httpadp.VideosResponseBody{
@@ -191,40 +196,40 @@ func TestGetByPublisherVideos(t *testing.T) {
 		urlParams  string
 	}{
 		{"ok", 1,
-			pubIDStr, "?offset=0&limit=5&order=date&asc=t"},
+			pubIDStr, "?offset=0&limit=5&sort=date&order=t"},
 
 		{"large URL query", 0,
-			pubIDStr, "?offset=5&limit=5&order=date&asc=" + strings.Repeat("a", policy.UrlMaxLen)},
+			pubIDStr, "?offset=5&limit=5&sort=date&asc=" + strings.Repeat("a", policy.UrlMaxLen)},
 
 		{"invalid offset", 0,
-			pubIDStr, "?offset=H&limit=5&order=date&asc=t"},
+			pubIDStr, "?offset=H&limit=5&sort=date&order=t"},
 
 		{"no offset in URL", 0,
-			pubIDStr, "?limit=5&order=date&asc=t"},
+			pubIDStr, "?limit=5&sort=date&order=t"},
 
 		{"invalid limit", 0,
-			pubIDStr, "?offset=0&limit=H&order=date&asc=t"},
+			pubIDStr, "?offset=0&limit=H&sort=date&order=t"},
 
 		{"no limit in URL", 0,
-			pubIDStr, "?offset=0&order=date&asc=t"},
+			pubIDStr, "?offset=0&sort=date&order=t"},
 
 		{"invalid asc", 0,
-			pubIDStr, "?offset=0&limit=5&order=date&asc=!@#%"},
+			pubIDStr, "?offset=0&limit=5&sort=date&asc=!@#%"},
 
 		{"no asc in URL", 0,
-			pubIDStr, "?offset=0&limit=5&order=date"},
+			pubIDStr, "?offset=0&limit=5&sort=date"},
 
 		{"invalid orderBy", 0,
-			pubIDStr, "?offset=0&limit=5&order=!@#%&asc=t"},
+			pubIDStr, "?offset=0&limit=5&order=!@#%&order=t"},
 
 		{"no orderBy in URL", 0,
-			pubIDStr, "?offset=0&limit=5&asc=t"},
+			pubIDStr, "?offset=0&limit=5&order=t"},
 
 		{"wrong url params", 0,
-			pubIDStr, "?affset=0&leemeet=5&order=date&asc=t&kueree=search"},
+			pubIDStr, "?affset=0&leemeet=5&sort=date&order=t&kueree=search"},
 
 		{"partial wrong url params", 0,
-			pubIDStr, "?affset=0&leemeet=5&order=date&asc=t&search="},
+			pubIDStr, "?affset=0&leemeet=5&sort=date&order=t&search="},
 	}
 
 	t.Parallel()
@@ -298,25 +303,25 @@ func TestSearchPublisherVideos(t *testing.T) {
 	}{
 		// SearchPublisher
 		{"ok search", 1,
-			pubIDStr, "?offset=0&limit=5&order=date&asc=t&query=search", http.StatusOK},
+			pubIDStr, "?offset=0&limit=5&sort=date&order=t&query=search", http.StatusOK},
 
 		{"few words search", 1,
-			pubIDStr, "?offset=0&limit=5&order=date&asc=t&query=search+lorem+ipsum+kitty+dolor", http.StatusOK},
+			pubIDStr, "?offset=0&limit=5&sort=date&order=t&query=search+lorem+ipsum+kitty+dolor", http.StatusOK},
 
 		{"invalid offset search", 0,
-			pubIDStr, "?offset=A&limit=5&order=date&asc=t&query=search", http.StatusBadRequest},
+			pubIDStr, "?offset=A&limit=5&sort=date&order=t&query=search", http.StatusBadRequest},
 
 		{"invalid limit search", 0,
-			pubIDStr, "?offset=0&limit=A&order=date&asc=t&query=search", http.StatusBadRequest},
+			pubIDStr, "?offset=0&limit=A&sort=date&order=t&query=search", http.StatusBadRequest},
 
 		{"ivalid id", 0,
-			"1", "?offset=0&limit=5&order=date&asc=t&query=search", http.StatusBadRequest},
+			"1", "?offset=0&limit=5&sort=date&order=t&query=search", http.StatusBadRequest},
 
 		{"empty id", 0,
-			"", "?offset=0&limit=5&order=date&asc=t&query=search", http.StatusNotFound},
+			"", "?offset=0&limit=5&sort=date&order=t&query=search", http.StatusNotFound},
 
 		{"invalid search", 0,
-			pubIDStr, "?offset=0&limit=5&order=date&asc=t&query=,.<>?/;", http.StatusBadRequest},
+			pubIDStr, "?offset=0&limit=5&sort=date&order=t&query=,.<>?/;", http.StatusBadRequest},
 	}
 
 	t.Parallel()

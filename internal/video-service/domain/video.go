@@ -15,13 +15,11 @@ const (
 	DescOrder   string = "f"
 )
 
-type UUID = uuid.UUID
-
 type Status string
 
 type Video struct {
-	ID          UUID
-	PublisherID UUID
+	ID          uuid.UUID
+	PublisherID uuid.UUID
 	Topic       string
 	Description string
 	CreatedAt   time.Time

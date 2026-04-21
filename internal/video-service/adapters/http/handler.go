@@ -318,15 +318,15 @@ func (h *VideoHandler) parseStringsUrlParams(
 func (h *VideoHandler) pathVarHandler(
 	r *http.Request,
 	varName string,
-) (domain.UUID, error) {
+) (uuid.UUID, error) {
 	val, ok := mux.Vars(r)[varName]
 	if !ok {
-		return domain.UUID{}, shared.NewError(
+		return uuid.Nil, shared.NewError(
 			http.StatusBadRequest, "path var not specified: "+varName, nil)
 	}
 	res, err := uuid.Parse(val)
 	if err != nil {
-		return domain.UUID{}, shared.NewError(
+		return uuid.Nil, shared.NewError(
 			http.StatusBadRequest, "unparsable ID: "+varName, err)
 	}
 
@@ -367,7 +367,7 @@ func (h *VideoHandler) writeErrorResponse(w http.ResponseWriter, vErr error) {
 	w.Header().Set("Content-Type", "application/json")
 
 	switch vErr := vErr.(type) {
-	case shared.Error:
+	case *shared.Error:
 		h.log.Printf("Error: %s\n", vErr.Message)
 		if vErr.Err != nil {
 			h.log.Printf("Details: %s\n", vErr.Err.Error())

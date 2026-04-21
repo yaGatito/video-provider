@@ -3,6 +3,8 @@ package ports
 import (
 	"context"
 	"video-provider/video-service/domain"
+
+	"github.com/google/uuid"
 )
 
 type VideoRepository interface {
@@ -13,17 +15,17 @@ type VideoRepository interface {
 
 	GetVideoByID(
 		ctx context.Context,
-		id domain.UUID,
+		id uuid.UUID,
 	) (domain.Video, error)
 
 	GetPublisherVideos(ctx context.Context,
-		publisherID domain.UUID,
+		publisherID uuid.UUID,
 		params domain.VideoPageParams,
 	) ([]domain.Video, error)
 
 	SearchPublisher(
 		ctx context.Context,
-		publisherID domain.UUID,
+		publisherID uuid.UUID,
 		query string,
 		params domain.VideoPageParams,
 	) ([]domain.Video, error)
