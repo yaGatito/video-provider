@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"video-provider/common/auth"
+	"video-provider/common/config"
 	httpadp "video-provider/video-service/adapters/http"
 	"video-provider/video-service/adapters/postgres"
 	"video-provider/video-service/app"
@@ -16,15 +17,6 @@ import (
 
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
-)
-
-const (
-	dbUser  = "POSTGRES_USER"
-	dbPass  = "POSTGRES_PASSWORD"
-	dbHost  = "VIDEO_DB_HOST"
-	dbPort  = "VIDEO_DB_PORT"
-	dbName  = "VIDEO_DB_NAME"
-	apiPort = "VIDEO_API_PORT"
 )
 
 // @title			Video Service API
@@ -41,12 +33,16 @@ func main() {
 func run() error {
 	ctx := context.Background()
 
-	pgConfig, err := pgxpool.ParseConfig(dbUrl())
+	c, err := config.LoadConfig("video")
 	if err != nil {
-		return fmt.Errorf("failed to parse connection string: %w", err)
+		return fmt.Errorf("failed to load service config: %w", err)
 	}
-	// cfg.MaxConns = 30
-	// cfg.HealthCheckPeriod = time.Minute * 90
+
+	pgConfig, err := pgxpool.ParseConfig(dbURL(c))
+	if err != nil {
+		return fmt.Errorf("failed to load service config: %w", err)
+	}
+
 	pool, err := pgxpool.NewWithConfig(ctx, pgConfig)
 	if err != nil {
 		return fmt.Errorf("failed to create connection pool: %w", err)
@@ -78,24 +74,24 @@ func run() error {
 		middleware.CORSMiddleware,
 	)
 
-	log.Printf("Video-service starting on port %s", os.Getenv(apiPort))
-	err = http.ListenAndServe(":"+os.Getenv(apiPort), router)
+	log.Printf("Video-service starting on port %s", c.ApiPort)
+	err = http.ListenAndServe(":"+c.ApiPort, router)
 	if err != nil {
 		return fmt.Errorf("failed to start server: %w", err)
 	}
 	return nil
 }
 
-// dbUrl must be called only after setup OS env variables.
-func dbUrl() string {
+
+func dbURL(c config.Config) string {
 	return fmt.Sprintf(
-		"postgres://%s:%s@%s:%s/%s?sslmode=disable&pool_max_conns=30&pool_max_conn_lifetime=1h30m",
-		os.Getenv(
-			dbUser,
-		),
-		os.Getenv(dbPass),
-		os.Getenv(dbHost),
-		os.Getenv(dbPort),
-		os.Getenv(dbName),
-	)
+		"postgres://%s:%s@%s:%s/%s?sslmode=%s&pool_max_conns=%d&pool_max_conn_lifetime=%s",
+		c.PgUser,
+		c.PgPass,
+		c.DbHost,
+		c.DbPort,
+		c.DbName,
+		c.ApiSslModCon,
+		c.ApiMaxDbCons,
+		c.ApiMaxDbConLife)
 }

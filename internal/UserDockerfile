@@ -14,5 +14,6 @@ RUN go build -o /bin/user-service ./user-service/cmd
 FROM debian:bookworm-slim
 WORKDIR /app
 COPY --from=builder /bin/user-service ./user-service
+COPY --from=builder /app/internal/config/user_config.json ./config/user_config.json
 
 CMD ["./user-service"]

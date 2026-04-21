@@ -1,6 +1,6 @@
 FROM golang:1.25-alpine AS builder
 
-WORKDIR /app/interal
+WORKDIR /app/internal
 
 COPY go.mod go.sum ./
 RUN go mod download
@@ -14,5 +14,6 @@ RUN go build -o /bin/video-service ./video-service/cmd
 FROM debian:bookworm-slim
 WORKDIR /app
 COPY --from=builder /bin/video-service ./video-service
+COPY --from=builder /app/internal/config/video_config.json ./config/video_config.json
 
 CMD ["./video-service"]

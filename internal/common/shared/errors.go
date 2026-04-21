@@ -20,8 +20,8 @@ type Error struct {
 	Err     error
 }
 
-func NewError(code ErrorCode, message string, err error) Error {
-	return Error{
+func NewError(code ErrorCode, message string, err error) *Error {
+	return &Error{
 		Code:    code,
 		Message: message,
 		Err:     err,
