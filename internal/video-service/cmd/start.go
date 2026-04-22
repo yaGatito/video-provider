@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	"video-provider/common/auth"
 	"video-provider/common/config"
 	httpadp "video-provider/video-service/adapters/http"
@@ -53,7 +52,7 @@ func run() error {
 	}
 	defer pool.Close()
 
-	mwLog := middleware.NewMiddlewareLogger(os.Stdout, "[VIDSVC]")
+	mwLog := middleware.NewMiddlewareLogger(httpadp.DefaultLogger)
 
 	videoRepository := postgres.NewVideoRepoPostgreSQL(pool)
 	videoService := app.NewVideoInteractor(videoRepository)

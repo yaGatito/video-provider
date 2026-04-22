@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"video-provider/common/shared"
 	"video-provider/video-service/app"
@@ -32,6 +33,8 @@ type VideoHandler struct {
 	log             *log.Logger
 	validate        *validator.Validate
 }
+
+var DefaultLogger = log.New(os.Stdout, "[VIDSVC]", log.Ldate|log.Ltime|log.Lmicroseconds|log.LUTC)
 
 // NewVideoHandler creates a new VideoHandler.
 func NewVideoHandler(

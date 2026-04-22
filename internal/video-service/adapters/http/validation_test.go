@@ -1,8 +1,9 @@
-package httpadp
+package httpadp_test
 
 import (
 	"fmt"
 	"testing"
+	httpadp "video-provider/video-service/adapters/http"
 	"video-provider/video-service/policy"
 
 	"github.com/stretchr/testify/require"
@@ -28,7 +29,7 @@ func TestValidateSearchQuery(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		res, err := ValidateSearchQuery(c.query)
+		res, err := httpadp.ValidateSearchQuery(c.query)
 		if c.wantErr {
 			require.Error(t, err)
 		} else {
@@ -60,7 +61,7 @@ func TestIncorrectSearchQuery(t *testing.T) {
 	}
 
 	for _, c := range cases {
-		_, err := ValidateSearchQuery(c.query)
+		_, err := httpadp.ValidateSearchQuery(c.query)
 		require.Error(t, err)
 	}
 }
@@ -79,7 +80,7 @@ func TestValidateLimit(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := ValidateLimit(tt.input)
+			result, err := httpadp.ValidateLimit(tt.input)
 
 			if tt.wantErr {
 				require.Error(t, err)
@@ -104,7 +105,7 @@ func TestValidateOffset(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := ValidateOffset(tt.input)
+			result, err := httpadp.ValidateOffset(tt.input)
 
 			if tt.wantErr {
 				require.Error(t, err)
@@ -127,7 +128,7 @@ func TestValidateOrderBy(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		result, err := ValidateOrderBy(tt.input)
+		result, err := httpadp.ValidateOrderBy(tt.input)
 
 		if tt.wantErr {
 			require.Error(t, err)
@@ -152,7 +153,7 @@ func TestValidateAsc(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := ValidateIsAsc(tt.input)
+			result, err := httpadp.ValidateIsAsc(tt.input)
 
 			if tt.wantErr {
 				require.Error(t, err)

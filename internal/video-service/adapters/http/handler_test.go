@@ -1,6 +1,7 @@
 package httpadp_test
 
 import (
+	"bytes"
 	"encoding/json"
 	"io"
 	"log"
@@ -363,5 +364,168 @@ func TestSearchPublisherVideos(t *testing.T) {
 				require.NoError(t, err)
 			}
 		})
+	}
+}
+
+func BenchmarkCreateVideo(b *testing.B) {
+	pubID := uuid.Must(uuid.NewRandom())
+	testVideo := domain.Video{
+		PublisherID: pubID,
+		Topic:       "TEST",
+		Description: "TESTEE",
+		CreatedAt:   time.Now(),
+		Status:      domain.StatusPublished,
+	}
+	reqBody := `{"topic":"TESTE","description":"TESTEE"}`
+
+	ctrl := gomock.NewController(b)
+	s := mock_app.NewMockVideoService(ctrl)
+	val, _ := httpadp.NewVideoValidator()
+	h := httpadp.NewVideoHandler(s, httpadp.DefaultLogger, val)
+	r := mux.NewRouter()
+	mockMiddleware := func(next http.Handler) http.Handler {
+		return next
+	}
+	httpadp.SetupRouter(r, h, mockMiddleware, mockMiddleware, mockMiddleware)
+
+	s.EXPECT().
+		Create(gomock.Any(), gomock.Any()).
+		Return(testVideo, nil).
+		MinTimes(b.N)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest(
+			http.MethodPost,
+			strings.Replace(
+				httpadp.RoutePublisherVideos,
+				"{"+httpadp.PathVarPublisherID+"}",
+				pubID.String(),
+				1,
+			),
+			bytes.NewBufferString(reqBody),
+		)
+		rec := httptest.NewRecorder()
+
+		r.ServeHTTP(rec, req)
+	}
+}
+
+func BenchmarkGetVideoById(b *testing.B) {
+	ctrl := gomock.NewController(b)
+	s := mock_app.NewMockVideoService(ctrl)
+	val, _ := httpadp.NewVideoValidator()
+	h := httpadp.NewVideoHandler(s, httpadp.DefaultLogger, val)
+	r := mux.NewRouter()
+	mockMiddleware := func(next http.Handler) http.Handler {
+		return next
+	}
+	httpadp.SetupRouter(r, h, mockMiddleware, mockMiddleware, mockMiddleware)
+
+	vidID := uuid.Must(uuid.NewRandom())
+	video := domain.Video{
+		ID:          vidID,
+		PublisherID: uuid.Must(uuid.NewRandom()),
+		Topic:       "topic",
+		Description: "description",
+		CreatedAt:   time.Now(),
+	}
+
+	s.EXPECT().GetByID(gomock.Any(), gomock.Any()).Return(video, nil).MinTimes(b.N)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest(
+			http.MethodGet,
+			strings.Replace(
+				httpadp.RouteVideo,
+				"{"+httpadp.PathVarVideoID+"}",
+				vidID.String(),
+				1,
+			),
+			nil,
+		)
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+	}
+}
+
+func BenchmarkGetByPublisherVideos(b *testing.B) {
+	pubIDStr := "d9fa522f-0016-464f-8d68-356ba1d6ad7d"
+	urlParams := "?offset=0&limit=5&sort=date&order=t"
+
+	ctrl := gomock.NewController(b)
+	s := mock_app.NewMockVideoService(ctrl)
+	val, _ := httpadp.NewVideoValidator()
+	h := httpadp.NewVideoHandler(s, httpadp.DefaultLogger, val)
+	r := mux.NewRouter()
+	mockMiddleware := func(next http.Handler) http.Handler {
+		return next
+	}
+	httpadp.SetupRouter(r, h, mockMiddleware, mockMiddleware, mockMiddleware)
+
+	expectedRes := []domain.Video{{
+		PublisherID: uuid.Must(uuid.NewRandom()),
+		Topic:       "topic",
+		Description: "description",
+		CreatedAt:   time.Now(),
+	}}
+
+	s.EXPECT().GetByPublisher(
+		gomock.Any(),
+		gomock.Eq(uuid.MustParse(pubIDStr)),
+		gomock.Any(),
+	).Return(
+		expectedRes, nil,
+	).MinTimes(b.N)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		url := strings.Replace(
+			httpadp.RoutePublisherVideos,
+			"{"+httpadp.PathVarPublisherID+"}",
+			pubIDStr,
+			1,
+		) + urlParams
+
+		req := httptest.NewRequest(http.MethodGet, url, nil)
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
+	}
+}
+
+func BenchmarkSearchGlobalVideos(b *testing.B) {
+	urlParams := "?offset=0&limit=5&sort=date&order=t&query=search"
+
+	ctrl := gomock.NewController(b)
+	s := mock_app.NewMockVideoService(ctrl)
+	val, _ := httpadp.NewVideoValidator()
+	h := httpadp.NewVideoHandler(s, httpadp.DefaultLogger, val)
+	r := mux.NewRouter()
+	mockMiddleware := func(next http.Handler) http.Handler {
+		return next
+	}
+	httpadp.SetupRouter(r, h, mockMiddleware, mockMiddleware, mockMiddleware)
+
+	expectedRes := []domain.Video{{
+		PublisherID: uuid.Must(uuid.NewRandom()),
+		Topic:       "topic",
+		Description: "description",
+		CreatedAt:   time.Now(),
+	}}
+
+	s.EXPECT().SearchGlobal(
+		gomock.Any(),
+		gomock.Any(),
+		gomock.Any(),
+	).Return(
+		expectedRes, nil,
+	).MinTimes(b.N)
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		req := httptest.NewRequest(http.MethodGet, urlParams, nil)
+		rec := httptest.NewRecorder()
+		r.ServeHTTP(rec, req)
 	}
 }
