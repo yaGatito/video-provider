@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"os"
 	"video-provider/common/shared"
 	"video-provider/user-service/app"
 	"video-provider/user-service/domain"
@@ -18,6 +19,8 @@ type UserHandler struct {
 	validate       *validator.Validate
 	log            *log.Logger
 }
+
+var DefaultLogger = log.New(os.Stdout, "[VIDSVC]", log.Ldate|log.Ltime|log.Lmicroseconds|log.LUTC)
 
 func NewUserHandler(userInteractor app.UserInteractor, log *log.Logger) *UserHandler {
 	return &UserHandler{userInteractor: userInteractor, log: log, validate: newUserValidate()}

@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"net/http"
-	"os"
 	_ "video-provider/user-service/docs"
 
 	"video-provider/common/auth"
@@ -55,7 +54,7 @@ func run() error {
 
 	defer dbPool.Close()
 
-	mwLog := middleware.NewMiddlewareLogger(os.Stdout, "[USRSVC]")
+	mwLog := middleware.NewMiddlewareLogger(httpadp.DefaultLogger)
 
 	userRepository := postgres.NewPostgresUserRepository(dbPool)
 	pwHasher := cryptoadp.NewBCryptPasswordHasher()

@@ -1,7 +1,6 @@
 package middleware
 
 import (
-	"io"
 	"log"
 	"net/http"
 	"time"
@@ -11,9 +10,9 @@ type MiddlewareLogger struct {
 	Log *log.Logger
 }
 
-func NewMiddlewareLogger(out io.Writer, tag string) *MiddlewareLogger {
+func NewMiddlewareLogger(log *log.Logger) *MiddlewareLogger {
 	return &MiddlewareLogger{
-		Log: log.New(out, tag, log.Ldate|log.Ltime|log.Lmicroseconds|log.LUTC),
+		Log: log,
 	}
 }
 
