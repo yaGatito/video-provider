@@ -20,10 +20,10 @@ type UserInteractor interface {
 }
 
 type UserService struct {
-	repo         ports.UserRepository
-	hasher       ports.PasswordHasher
+	Repo         ports.UserRepository
+	Hasher       ports.PasswordHasher
 	log          log.Logger
-	getJWTSecret func() []byte
+	GetJWTSecret func() []byte
 }
 
 func NewUserService(
@@ -31,7 +31,7 @@ func NewUserService(
 	hasher ports.PasswordHasher,
 	getSecret func() []byte,
 ) *UserService {
-	return &UserService{repo: repo, hasher: hasher, getJWTSecret: getSecret}
+	return &UserService{Repo: repo, Hasher: hasher, GetJWTSecret: getSecret}
 }
 
 func (us *UserService) Create(
@@ -39,12 +39,12 @@ func (us *UserService) Create(
 	user domain.User,
 	password string,
 ) (uuid.UUID, error) {
-	hash, err := us.hasher.Hash(password)
+	hash, err := us.Hasher.Hash(password)
 	if err != nil {
 		return uuid.UUID{}, shared.NewError(shared.ErrInternal, "failed to hash password", err)
 	}
 
-	id, err := us.repo.Create(ctx, user, hash)
+	id, err := us.Repo.Create(ctx, user, hash)
 	if err != nil {
 		return uuid.UUID{}, err
 	}
@@ -53,11 +53,11 @@ func (us *UserService) Create(
 }
 
 func (us *UserService) Get(ctx context.Context, id uuid.UUID) (domain.User, error) {
-	return us.repo.FindByID(ctx, id)
+	return us.Repo.FindByID(ctx, id)
 }
 
 func (us *UserService) Update(ctx context.Context, id uuid.UUID, toUpdate domain.User) error {
-	user, err := us.repo.FindByID(ctx, id)
+	user, err := us.Repo.FindByID(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -72,7 +72,7 @@ func (us *UserService) Update(ctx context.Context, id uuid.UUID, toUpdate domain
 		user.LastName = toUpdate.LastName
 	}
 
-	err = us.repo.Update(ctx, id, user)
+	err = us.Repo.Update(ctx, id, user)
 	if err != nil {
 		return err
 	}
@@ -88,12 +88,12 @@ func (us *UserService) Login(ctx context.Context, email string, password []byte)
 		return "", shared.NewError(shared.ErrInvalidInput, "password is required", nil)
 	}
 
-	userID, hash, err := us.repo.GetPasswordHash(ctx, email)
+	userID, hash, err := us.Repo.GetPasswordHash(ctx, email)
 	if err != nil {
 		return "", err
 	}
 
-	err = us.hasher.CompareHashAndPassword(hash, password)
+	err = us.Hasher.CompareHashAndPassword(hash, password)
 	if err != nil {
 		return "", shared.NewError(shared.ErrUnauthorized, "failed to compare password", nil)
 	}
@@ -105,7 +105,7 @@ func (us *UserService) Login(ctx context.Context, email string, password []byte)
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	signedToken, err := token.SignedString(us.getJWTSecret())
+	signedToken, err := token.SignedString(us.GetJWTSecret())
 
 	if err != nil {
 		return "", err

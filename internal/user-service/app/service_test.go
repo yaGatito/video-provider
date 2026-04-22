@@ -1,4 +1,4 @@
-package app
+package app_test
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 	"video-provider/common/shared"
+	"video-provider/user-service/app"
 	"video-provider/user-service/domain"
 	mock_ports "video-provider/user-service/ports/mock"
 
@@ -56,7 +57,7 @@ func TestUserService_Create(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockRepo := mock_ports.NewMockUserRepository(ctrl)
 			mockHasher := mock_ports.NewMockPasswordHasher(ctrl)
-			userService := NewUserService(mockRepo, mockHasher, func() []byte {
+			userService := app.NewUserService(mockRepo, mockHasher, func() []byte {
 				return []byte("test")
 			})
 
@@ -115,7 +116,7 @@ func TestUserService_Get(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockRepo := mock_ports.NewMockUserRepository(ctrl)
 			mockHasher := mock_ports.NewMockPasswordHasher(ctrl)
-			userService := NewUserService(mockRepo, mockHasher, func() []byte {
+			userService := app.NewUserService(mockRepo, mockHasher, func() []byte {
 				return []byte("test")
 			})
 
@@ -233,10 +234,10 @@ func TestUserService_Login(t *testing.T) {
 			mockHasher.EXPECT().CompareHashAndPassword(expectedHash, tc.inputPas).
 				Return(tc.hashErr).Times(tc.hashCalls)
 
-			userService := &UserService{
-				repo:   mockRepo,
-				hasher: mockHasher,
-				getJWTSecret: func() []byte {
+			userService := &app.UserService{
+				Repo:   mockRepo,
+				Hasher: mockHasher,
+				GetJWTSecret: func() []byte {
 					return []byte(jwtSecret)
 				}}
 
@@ -317,7 +318,7 @@ func TestUserService_Update(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockRepo := mock_ports.NewMockUserRepository(ctrl)
 			mockHasher := mock_ports.NewMockPasswordHasher(ctrl)
-			userService := NewUserService(mockRepo, mockHasher, func() []byte {
+			userService := app.NewUserService(mockRepo, mockHasher, func() []byte {
 				return []byte("test")
 			})
 
