@@ -19,17 +19,17 @@ log = @echo [::MAKEFILE::] $(1)
 
 # Use .env values directly
 ifeq ($(config),user)
-  DB_NAME      		= $(USER_DB_NAME)
-  DB_HOST      		= $(USER_DB_HOST)
-  DB_PORT      		= $(USER_DB_PORT)
-  API_PORT    		= $(USER_API_PORT)
+  DB_NAME	= $(USER_DB_NAME)
+  DB_HOST   = $(USER_DB_HOST)
+  DB_PORT   = $(USER_DB_PORT)
+  API_PORT  = $(USER_API_PORT)
 endif
 
 ifeq ($(config),video)
-  DB_NAME      		= $(VIDEO_DB_NAME)
-  DB_HOST      		= $(VIDEO_DB_HOST)
-  DB_PORT      		= $(VIDEO_DB_PORT)
-  API_PORT    		= $(VIDEO_API_PORT)
+  DB_NAME   = $(VIDEO_DB_NAME)
+  DB_HOST   = $(VIDEO_DB_HOST)
+  DB_PORT   = $(VIDEO_DB_PORT)
+  API_PORT  = $(VIDEO_API_PORT)
 endif
 
 MIGRATIONS_DIR 		= internal/$(SERVICE_NAME)/adapters/postgres/sql/migrations
@@ -116,6 +116,7 @@ lint:
 	cd ./internal/$(SERVICE_NAME) && $(GOLANGCI_LINT) run -c ../../.golangci.yml
 	$(GOLANGCI_LINT) fmt
 	$(call log, "Formatted")
+	cd ../../
 
 .PHONY: swag
 swag: 
@@ -126,7 +127,7 @@ swag:
 .PHONY: sqlc
 sqlc:
 	$(call log, "SQLC generate by file: internal/$(SERVICE_NAME)/adapters/postgres/sqlc.yml")
-	$(SQLC) generate -f "video-provider/$(SERVICE_NAME)/adapters/postgres/sqlc.yml"
+	$(SQLC) generate -f "./internal/$(SERVICE_NAME)/adapters/postgres/sqlc.yml"
 
 .PHONY: mocks
 mocks:
@@ -143,22 +144,13 @@ ifeq ("$(config)","user")
 	$(call log, "$(SERVICE_NAME) mocks generated")
 endif
 
-.PHONY: test
-test:
-	$(call go_test,$(PKG),$(TEST))
-
-define go_test
-	go test ./internal/$(1) -run $(2)
-endef
+.PHONY: coverage
+coverage:
+	cd internal/ && go test -coverprofile=coverage.out ./... && go tool cover -func=coverage.out && rm coverage.out && cd ../
 
 .PHONY: tests
 tests: mocks
 	go test ./...
-
-#   ---  Usage scanario --- 
-# make db-up config=video
-# make db-init config=video
-# make run config=video
 
 #   --- Docker ---
 

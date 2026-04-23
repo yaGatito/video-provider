@@ -1,3 +1,4 @@
+// internal/user-service/app/service_test.go
 package app_test
 
 import (
@@ -6,6 +7,7 @@ import (
 	"fmt"
 	"testing"
 	"time"
+	"video-provider/common/auth"
 	"video-provider/common/shared"
 	"video-provider/user-service/app"
 	"video-provider/user-service/domain"
@@ -57,9 +59,8 @@ func TestUserService_Create(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockRepo := mock_ports.NewMockUserRepository(ctrl)
 			mockHasher := mock_ports.NewMockPasswordHasher(ctrl)
-			userService := app.NewUserService(mockRepo, mockHasher, func() []byte {
-				return []byte("test")
-			})
+			authSvc := auth.NewAuth([]byte("test"))
+			userService := app.NewUserService(mockRepo, mockHasher, authSvc)
 
 			mockHasher.EXPECT().Hash(tc.password).Return([]byte(tc.password), nil).Times(1)
 			mockRepo.EXPECT().
@@ -116,9 +117,8 @@ func TestUserService_Get(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockRepo := mock_ports.NewMockUserRepository(ctrl)
 			mockHasher := mock_ports.NewMockPasswordHasher(ctrl)
-			userService := app.NewUserService(mockRepo, mockHasher, func() []byte {
-				return []byte("test")
-			})
+			authSvc := auth.NewAuth([]byte("test"))
+			userService := app.NewUserService(mockRepo, mockHasher, authSvc)
 
 			mockRepo.EXPECT().FindByID(gomock.Any(), tc.id).Return(tc.user, tc.err).Times(1)
 
@@ -142,7 +142,7 @@ func TestUserService_Login(t *testing.T) {
 	expectedUserID := uuid.MustParse("d9fa522f-0006-464f-8d68-356ba1d6ad7d")
 	expectedHash := []byte("P@ssword123")
 	expectedToken := "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzU1NjQ5NTgsInVzZXJfaWQiOiI4MWNmMzNkNS03ZDIwLTQ1YzMtYjg3Mi1iMGNiYmMwNzI5NjEifQ.4HSvvKyphap68diVSgCUX862SLYgcaa_7Q6PQjQMJ28"
-	jwtSecret := "my-nigga-secret-key"
+	jwtSecret := []byte("my-nigga-secret-key")
 
 	testCases := []struct {
 		testName       string
@@ -227,6 +227,7 @@ func TestUserService_Login(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockRepo := mock_ports.NewMockUserRepository(ctrl)
 			mockHasher := mock_ports.NewMockPasswordHasher(ctrl)
+			authSvc := auth.NewAuth(jwtSecret)
 
 			mockRepo.EXPECT().GetPasswordHash(gomock.Any(), tc.inputEmail).
 				Return(tc.expectedUserID, expectedHash, tc.repoErr).Times(tc.repoCalls)
@@ -237,9 +238,8 @@ func TestUserService_Login(t *testing.T) {
 			userService := &app.UserService{
 				Repo:   mockRepo,
 				Hasher: mockHasher,
-				GetJWTSecret: func() []byte {
-					return []byte(jwtSecret)
-				}}
+				Auth:   authSvc,
+			}
 
 			token, err := userService.Login(context.Background(), tc.inputEmail, tc.inputPas)
 
@@ -258,7 +258,7 @@ func TestUserService_Login(t *testing.T) {
 					}
 
 					// Return the secret used for signing
-					return []byte(jwtSecret), nil
+					return jwtSecret, nil
 				})
 
 				if err != nil {
@@ -275,7 +275,7 @@ func TestUserService_Login(t *testing.T) {
 				}
 
 				// Now check the claims
-				assert.Equal(t, float64(time.Now().Add(24*time.Hour).Unix()), claims["exp"])
+				assert.Equal(t, float64(time.Now().Add(1*time.Minute).Unix()), claims["exp"])
 				assert.Equal(t, tc.expectedUserID.String(), claims["user_id"])
 			}
 		})
@@ -318,9 +318,8 @@ func TestUserService_Update(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockRepo := mock_ports.NewMockUserRepository(ctrl)
 			mockHasher := mock_ports.NewMockPasswordHasher(ctrl)
-			userService := app.NewUserService(mockRepo, mockHasher, func() []byte {
-				return []byte("test")
-			})
+			authSvc := auth.NewAuth([]byte("test"))
+			userService := app.NewUserService(mockRepo, mockHasher, authSvc)
 
 			// Setup expectations based on test case
 			if tc.err == nil {

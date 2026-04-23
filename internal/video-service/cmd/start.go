@@ -54,6 +54,7 @@ func run() error {
 
 	mwLog := middleware.NewMiddlewareLogger(httpadp.DefaultLogger)
 
+	authorizer := auth.NewAuthorizer(auth.NewAuth([]byte(c.JwtSecret)))
 	videoRepository := postgres.NewVideoRepoPostgreSQL(pool)
 	videoService := app.NewVideoInteractor(videoRepository)
 
@@ -68,7 +69,7 @@ func run() error {
 	httpadp.SetupRouter(
 		router,
 		videoHandler,
-		auth.NewAuthorizer([]byte(c.JwtSecret)).Auth,
+		authorizer.Auth,
 		mwLog.LoggingMiddleware,
 		middleware.CORSMiddleware,
 	)

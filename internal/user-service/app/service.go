@@ -4,11 +4,11 @@ import (
 	"context"
 	"log"
 	"time"
+	"video-provider/common/auth"
 	"video-provider/common/shared"
 	"video-provider/user-service/domain"
 	"video-provider/user-service/ports"
 
-	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
 )
 
@@ -20,18 +20,18 @@ type UserInteractor interface {
 }
 
 type UserService struct {
-	Repo         ports.UserRepository
-	Hasher       ports.PasswordHasher
-	log          log.Logger
-	GetJWTSecret func() []byte
+	Repo   ports.UserRepository
+	Hasher ports.PasswordHasher
+	log    log.Logger
+	Auth   *auth.Auth
 }
 
 func NewUserService(
 	repo ports.UserRepository,
 	hasher ports.PasswordHasher,
-	getSecret func() []byte,
+	auth *auth.Auth,
 ) *UserService {
-	return &UserService{Repo: repo, Hasher: hasher, GetJWTSecret: getSecret}
+	return &UserService{Repo: repo, Hasher: hasher, Auth: auth}
 }
 
 func (us *UserService) Create(
@@ -98,18 +98,10 @@ func (us *UserService) Login(ctx context.Context, email string, password []byte)
 		return "", shared.NewError(shared.ErrUnauthorized, "failed to compare password", nil)
 	}
 
-	claims := jwt.MapClaims{
-		"user_id": userID,
-		"exp":     time.Now().Add(24 * time.Hour).Unix(),
-	}
-
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-
-	signedToken, err := token.SignedString(us.GetJWTSecret())
-
+	token, err := us.Auth.CreateToken(userID, time.Now().Add(24*time.Hour).Unix())
 	if err != nil {
 		return "", err
 	}
 
-	return signedToken, nil
+	return token, nil
 }

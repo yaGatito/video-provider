@@ -2,11 +2,8 @@ package auth
 
 import (
 	"context"
-	"fmt"
 	"net/http"
 	"strings"
-
-	"github.com/golang-jwt/jwt/v4"
 )
 
 type contextKeyUserID string
@@ -16,17 +13,13 @@ const contextUserID contextKeyUserID = "USER_ID"
 const bearerHeaderPrefix string = "Bearer "
 
 type Authorizer struct {
-	secret []byte
+	auth *Auth
 }
 
-func NewAuthorizer(sec []byte) Authorizer {
+func NewAuthorizer(auth *Auth) Authorizer {
 	return Authorizer{
-		secret: sec,
+		auth: auth,
 	}
-}
-
-func (a Authorizer) GetJWTSecret() []byte {
-	return []byte(a.secret)
 }
 
 func (a Authorizer) Auth(next http.Handler) http.Handler {
@@ -42,31 +35,8 @@ func (a Authorizer) Auth(next http.Handler) http.Handler {
 			return
 		}
 
-		token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-			if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-				return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
-			}
-
-			return a.GetJWTSecret(), nil
-		})
+		userID, err := a.auth.ValidateToken(tokenString)
 		if err != nil {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
-		if !token.Valid {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
-		claims, ok := token.Claims.(jwt.MapClaims)
-		if !ok {
-			w.WriteHeader(http.StatusUnauthorized)
-			return
-		}
-
-		userID, ok := claims["user_id"].(string)
-		if !ok {
 			w.WriteHeader(http.StatusUnauthorized)
 			return
 		}

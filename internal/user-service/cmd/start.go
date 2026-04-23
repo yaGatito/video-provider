@@ -58,8 +58,9 @@ func run() error {
 
 	userRepository := postgres.NewPostgresUserRepository(dbPool)
 	pwHasher := cryptoadp.NewBCryptPasswordHasher()
-	authorizer := auth.NewAuthorizer([]byte(c.JwtSecret))
-	userInteractor := app.NewUserService(userRepository, pwHasher, authorizer.GetJWTSecret)
+	authSvc := auth.NewAuth([]byte(c.JwtSecret))
+	authorizer := auth.NewAuthorizer(authSvc)
+	userInteractor := app.NewUserService(userRepository, pwHasher, authSvc)
 	userHandler := httpadp.NewUserHandler(userInteractor, mwLog.Log)
 
 	router := mux.NewRouter()
