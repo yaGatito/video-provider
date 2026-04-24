@@ -4,6 +4,7 @@ package auth
 import (
 	"fmt"
 	"time"
+	"video-provider/common/config"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"
@@ -12,23 +13,23 @@ import (
 const claimUserIDKey string = "user_id"
 const claimTokenExpKey string = "exp"
 
-type Auth struct {
-	Secret []byte
+type Tokenizer struct {
+	config config.Config
 }
 
-func NewAuth(secret []byte) *Auth {
-	return &Auth{Secret: secret}
+func NewTokenizer(c config.Config) *Tokenizer {
+	return &Tokenizer{config: c}
 }
 
-func (a *Auth) CreateToken(userID uuid.UUID, expDate int64) (string, error) {
+func (t *Tokenizer) CreateToken(userID uuid.UUID) (string, error) {
 	claims := jwt.MapClaims{
 		claimUserIDKey:   userID.String(),
-		claimTokenExpKey: expDate,
+		claimTokenExpKey: time.Now().Add(t.config.JsonConf.TokenExpTime).Unix(),
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	signedToken, err := token.SignedString(a.Secret)
+	signedToken, err := token.SignedString(t.config.JwtSecret)
 	if err != nil {
 		return "", err
 	}
@@ -36,13 +37,13 @@ func (a *Auth) CreateToken(userID uuid.UUID, expDate int64) (string, error) {
 	return signedToken, nil
 }
 
-func (a *Auth) ValidateToken(tokenString string) (string, error) {
+func (t *Tokenizer) ValidateToken(tokenString string) (string, error) {
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
 		}
 
-		return a.Secret, nil
+		return t.config.JwtSecret, nil
 	})
 
 	if err != nil {
@@ -72,9 +73,6 @@ func (a *Auth) ValidateToken(tokenString string) (string, error) {
 	if !ok {
 		return "", fmt.Errorf("invalid exp date type, expected float64, got %T", expDateInterface)
 	}
-
-	fmt.Println("Exp Date (float64):", expDate)
-	fmt.Println("Current Time:", time.Now().Unix())
 
 	isExpired := time.Unix(int64(expDate), 0).Before(time.Now())
 	if isExpired {

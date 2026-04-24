@@ -3,7 +3,6 @@ package app
 import (
 	"context"
 	"log"
-	"time"
 	"video-provider/common/auth"
 	"video-provider/common/shared"
 	"video-provider/user-service/domain"
@@ -20,18 +19,18 @@ type UserInteractor interface {
 }
 
 type UserService struct {
-	Repo   ports.UserRepository
-	Hasher ports.PasswordHasher
-	log    log.Logger
-	Auth   *auth.Auth
+	Repo      ports.UserRepository
+	Hasher    ports.PasswordHasher
+	log       log.Logger
+	Tokenizer *auth.Tokenizer
 }
 
 func NewUserService(
 	repo ports.UserRepository,
 	hasher ports.PasswordHasher,
-	auth *auth.Auth,
+	tokenizer *auth.Tokenizer,
 ) *UserService {
-	return &UserService{Repo: repo, Hasher: hasher, Auth: auth}
+	return &UserService{Repo: repo, Hasher: hasher, Tokenizer: tokenizer}
 }
 
 func (us *UserService) Create(
@@ -98,7 +97,7 @@ func (us *UserService) Login(ctx context.Context, email string, password []byte)
 		return "", shared.NewError(shared.ErrUnauthorized, "failed to compare password", nil)
 	}
 
-	token, err := us.Auth.CreateToken(userID, time.Now().Add(24*time.Hour).Unix())
+	token, err := us.Tokenizer.CreateToken(userID)
 	if err != nil {
 		return "", err
 	}

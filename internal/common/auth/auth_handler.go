@@ -13,12 +13,12 @@ const contextUserID contextKeyUserID = "USER_ID"
 const bearerHeaderPrefix string = "Bearer "
 
 type Authorizer struct {
-	auth *Auth
+	tokenizer *Tokenizer
 }
 
-func NewAuthorizer(auth *Auth) Authorizer {
+func NewAuthorizer(auth *Tokenizer) Authorizer {
 	return Authorizer{
-		auth: auth,
+		tokenizer: auth,
 	}
 }
 
@@ -35,7 +35,7 @@ func (a Authorizer) Auth(next http.Handler) http.Handler {
 			return
 		}
 
-		userID, err := a.auth.ValidateToken(tokenString)
+		userID, err := a.tokenizer.ValidateToken(tokenString, )
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			return

@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
 	_ "video-provider/user-service/docs"
 
 	"video-provider/common/auth"
@@ -27,14 +28,18 @@ import (
 // @BasePath		/
 func main() {
 	if err := run(); err != nil {
-		log.Println(err)
+		log.Fatal(err)
 	}
 }
 
 func run() error {
 	ctx := context.Background()
 
-	c, err := config.LoadConfig("user")
+	jsonConfig, err := os.ReadFile("./config/user_config.json")
+	if err != nil {
+		return fmt.Errorf("failed to load json service config: %w", err)
+	}
+	c, err := config.LoadConfig("user", jsonConfig)
 	if err != nil {
 		return fmt.Errorf("failed to load service config: %w", err)
 	}
@@ -58,9 +63,9 @@ func run() error {
 
 	userRepository := postgres.NewPostgresUserRepository(dbPool)
 	pwHasher := cryptoadp.NewBCryptPasswordHasher()
-	authSvc := auth.NewAuth([]byte(c.JwtSecret))
-	authorizer := auth.NewAuthorizer(authSvc)
-	userInteractor := app.NewUserService(userRepository, pwHasher, authSvc)
+	tokenizer := auth.NewTokenizer(c)
+	authorizer := auth.NewAuthorizer(tokenizer)
+	userInteractor := app.NewUserService(userRepository, pwHasher, tokenizer)
 	userHandler := httpadp.NewUserHandler(userInteractor, mwLog.Log)
 
 	router := mux.NewRouter()
@@ -73,8 +78,8 @@ func run() error {
 		middleware.CORSMiddleware,
 	)
 
-	log.Printf("User-service starting on port %s", c.ApiPort)
-	err = http.ListenAndServe(":"+c.ApiPort, router)
+	log.Printf("User-service starting on port %s", c.EnvConf.ApiPort)
+	err = http.ListenAndServe(":"+c.EnvConf.ApiPort, router)
 	if err != nil {
 		return fmt.Errorf("Failed to start the server: %v", err)
 	}
@@ -85,12 +90,12 @@ func run() error {
 func dbURL(c config.Config) string {
 	return fmt.Sprintf(
 		"postgres://%s:%s@%s:%s/%s?sslmode=%s&pool_max_conns=%d&pool_max_conn_lifetime=%s",
-		c.DbUser,
-		c.DbPass,
-		c.DbHost,
-		c.DbPort,
-		c.DbName,
-		c.ApiSslModCon,
-		c.ApiMaxDbCons,
-		c.ApiMaxDbConLife)
+		c.EnvConf.DbUser,
+		c.EnvConf.DbPass,
+		c.EnvConf.DbHost,
+		c.EnvConf.DbPort,
+		c.EnvConf.DbName,
+		c.JsonConf.SSLMode,
+		c.JsonConf.PoolCons,
+		c.JsonConf.PoolConLifetime)
 }

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 	"video-provider/common/shared"
 
 	"github.com/kelseyhightower/envconfig"
@@ -12,58 +13,92 @@ import (
 
 const jwtSec string = "JWT_SECRET"
 
-type Config struct {
-	ApiPort         string `required:"true" split_words:"true"`
-	ApiMaxDbCons    int    `ignored:"true"`
-	ApiMaxDbConLife string `ignored:"true"`
-	ApiSslModCon    string `ignored:"true"`
-
-	DbName string `required:"true" split_words:"true"`
-	DbPort string `required:"true" split_words:"true"`
-	DbHost string `required:"true" split_words:"true"`
-	DbPass string `required:"true" split_words:"true"`
-	DbUser string `required:"true" split_words:"true"`
-
-	JwtSecret string `ignored:"true"`
+type EnvSecureConfig struct {
+	ApiPort string `required:"true" split_words:"true"`
+	DbName  string `required:"true" split_words:"true"`
+	DbPort  string `required:"true" split_words:"true"`
+	DbHost  string `required:"true" split_words:"true"`
+	DbPass  string `required:"true" split_words:"true"`
+	DbUser  string `required:"true" split_words:"true"`
 }
 
-type serviceConfig struct {
+type JsonServiceConfig struct {
 	PoolCons        int    `json:"pool_max_conns"`
 	PoolConLifetime string `json:"pool_max_conn_lifetime"`
 	SSLMode         string `json:"ssl_mode"`
+
+	TokenExpTime time.Duration
+	// The only usage of it should be time.ParseDuration func.
+	TokenExpTimeRaw string `json:"token_exp,omitempty"`
 }
 
-func LoadConfig(svcPrefix string) (Config, error) {
-	var c Config
+type Config struct {
+	JsonConf  JsonServiceConfig
+	EnvConf   EnvSecureConfig
+	JwtSecret []byte
+}
 
-	file, err := os.ReadFile(fmt.Sprintf("./config/%s_config.json", svcPrefix))
+func LoadConfig(svcPrefix string, jsonConfig []byte) (Config, error) {
+	cm := Config{}
+
+	var err error
+	cm.EnvConf, err = loadEnvConfig(svcPrefix)
 	if err != nil {
 		return Config{}, err
 	}
 
-	var sc serviceConfig
-	err = json.NewDecoder(bytes.NewReader(file)).Decode(&sc)
+	cm.JsonConf, err = loadJsonConfig(jsonConfig)
 	if err != nil {
 		return Config{}, err
 	}
 
-	err = envconfig.Process(svcPrefix, &c)
+	sec, ok := os.LookupEnv(jwtSec)
+	if !ok || len(sec) == 0 {
+		return Config{}, fmt.Errorf("failed to load env")
+	}
+	cm.JwtSecret = []byte(sec)
+
+	return cm, nil
+}
+
+var nilJsonConfig = JsonServiceConfig{}
+
+func loadJsonConfig(config []byte) (JsonServiceConfig, error) {
+	var jsonConf JsonServiceConfig
+	err := json.NewDecoder(bytes.NewReader(config)).Decode(&jsonConf)
+	if err != nil {
+		return nilJsonConfig, err
+	}
+	if jsonConf.TokenExpTimeRaw != "" {
+		jsonConf.TokenExpTime, err = time.ParseDuration(jsonConf.TokenExpTimeRaw)
+		if err != nil {
+			return nilJsonConfig, err
+		}
+	}
+	if jsonConf == nilJsonConfig {
+		return nilJsonConfig, fmt.Errorf("empty env config")
+	}
+
+	return jsonConf, nil
+}
+
+var nilEnvConfig = EnvSecureConfig{}
+
+func loadEnvConfig(svcPrefix string) (EnvSecureConfig, error) {
+	var envConf EnvSecureConfig
+	err := envconfig.Process(svcPrefix, &envConf)
 	switch err := err.(type) {
 	case nil:
-		sec, ok := os.LookupEnv(jwtSec)
-		if !ok && len(sec) > 0 {
-			return Config{}, shared.NewError(shared.ErrInternal, fmt.Sprintf("failed to load env %s", jwtSec), err)
+		if envConf == nilEnvConfig {
+			return EnvSecureConfig{}, fmt.Errorf("empty env config")
 		}
-		c.JwtSecret = sec
-		c.ApiMaxDbCons = sc.PoolCons
-		c.ApiMaxDbConLife = sc.PoolConLifetime
-		c.ApiSslModCon = sc.SSLMode
-		return c, nil
+
+		return envConf, nil
 
 	case *envconfig.ParseError:
-		return Config{}, shared.NewError(shared.ErrInternal, fmt.Sprintf("failed to extract from env %s for field %s", err.KeyName, err.FieldName), err)
+		return EnvSecureConfig{}, shared.NewError(shared.ErrInternal, fmt.Sprintf("failed to extract from env %s for field %s", err.KeyName, err.FieldName), err)
 
 	default:
-		return Config{}, shared.NewError(shared.ErrInternal, "failed to parse config", err)
+		return EnvSecureConfig{}, shared.NewError(shared.ErrInternal, "failed to parse config", err)
 	}
 }

@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 	"video-provider/common/auth"
+	"video-provider/common/config"
 	"video-provider/common/shared"
 	"video-provider/user-service/app"
 	"video-provider/user-service/domain"
@@ -59,8 +60,8 @@ func TestUserService_Create(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockRepo := mock_ports.NewMockUserRepository(ctrl)
 			mockHasher := mock_ports.NewMockPasswordHasher(ctrl)
-			authSvc := auth.NewAuth([]byte("test"))
-			userService := app.NewUserService(mockRepo, mockHasher, authSvc)
+			tokenizer := auth.NewTokenizer(config.Config{JwtSecret: []byte("test")})
+			userService := app.NewUserService(mockRepo, mockHasher, tokenizer)
 
 			mockHasher.EXPECT().Hash(tc.password).Return([]byte(tc.password), nil).Times(1)
 			mockRepo.EXPECT().
@@ -117,8 +118,8 @@ func TestUserService_Get(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockRepo := mock_ports.NewMockUserRepository(ctrl)
 			mockHasher := mock_ports.NewMockPasswordHasher(ctrl)
-			authSvc := auth.NewAuth([]byte("test"))
-			userService := app.NewUserService(mockRepo, mockHasher, authSvc)
+			tokenizer := auth.NewTokenizer(config.Config{JwtSecret: []byte("test")})
+			userService := app.NewUserService(mockRepo, mockHasher, tokenizer)
 
 			mockRepo.EXPECT().FindByID(gomock.Any(), tc.id).Return(tc.user, tc.err).Times(1)
 
@@ -227,7 +228,12 @@ func TestUserService_Login(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockRepo := mock_ports.NewMockUserRepository(ctrl)
 			mockHasher := mock_ports.NewMockPasswordHasher(ctrl)
-			authSvc := auth.NewAuth(jwtSecret)
+			tokenizer := auth.NewTokenizer(config.Config{
+				JwtSecret: jwtSecret,
+				JsonConf: config.JsonServiceConfig{
+					TokenExpTime: 1 * time.Minute,
+				},
+			})
 
 			mockRepo.EXPECT().GetPasswordHash(gomock.Any(), tc.inputEmail).
 				Return(tc.expectedUserID, expectedHash, tc.repoErr).Times(tc.repoCalls)
@@ -236,9 +242,9 @@ func TestUserService_Login(t *testing.T) {
 				Return(tc.hashErr).Times(tc.hashCalls)
 
 			userService := &app.UserService{
-				Repo:   mockRepo,
-				Hasher: mockHasher,
-				Auth:   authSvc,
+				Repo:      mockRepo,
+				Hasher:    mockHasher,
+				Tokenizer: tokenizer,
 			}
 
 			token, err := userService.Login(context.Background(), tc.inputEmail, tc.inputPas)
@@ -275,8 +281,8 @@ func TestUserService_Login(t *testing.T) {
 				}
 
 				// Now check the claims
-				assert.Equal(t, float64(time.Now().Add(1*time.Minute).Unix()), claims["exp"])
 				assert.Equal(t, tc.expectedUserID.String(), claims["user_id"])
+				assert.Equal(t, float64(time.Now().Add(1*time.Minute).Unix()), claims["exp"])
 			}
 		})
 	}
@@ -318,8 +324,10 @@ func TestUserService_Update(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			mockRepo := mock_ports.NewMockUserRepository(ctrl)
 			mockHasher := mock_ports.NewMockPasswordHasher(ctrl)
-			authSvc := auth.NewAuth([]byte("test"))
-			userService := app.NewUserService(mockRepo, mockHasher, authSvc)
+			tokenizer := auth.NewTokenizer(config.Config{
+				JwtSecret: []byte("test"),
+			})
+			userService := app.NewUserService(mockRepo, mockHasher, tokenizer)
 
 			// Setup expectations based on test case
 			if tc.err == nil {

@@ -129,7 +129,9 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	h.writeResponse(w, userId, http.StatusCreated)
+	h.writeResponse(w, createUserResponse{
+		UserID: userId.String(),
+	}, http.StatusCreated)
 }
 
 // GetUser godoc

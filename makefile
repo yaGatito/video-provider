@@ -146,8 +146,11 @@ endif
 
 .PHONY: coverage
 coverage:
-	cd internal/ && go test -coverprofile=coverage.out ./... && go tool cover -func=coverage.out && rm coverage.out && cd ../
-
+	cd internal/ && \
+	go test -coverprofile=coverage.out -coverpkg=$(go list ./... | grep -v _mock.go) ./... && \
+	go tool cover -func=coverage.out && \
+	rm coverage.out && \
+	cd ../
 .PHONY: tests
 tests: mocks
 	go test ./...
