@@ -107,7 +107,7 @@ func TestUserService_Get(t *testing.T) {
 			id:       uuid.MustParse("d9fa522f-0006-464f-8d68-356ba1d6ad7d"),
 			err:      errors.New("db error"),
 			errCode:  shared.ErrInternal,
-			user:     domain.User{},
+			user:     domain.Nil,
 		},
 	}
 
@@ -177,7 +177,7 @@ func TestUserService_Login(t *testing.T) {
 			repoErr:        nil,
 			hashCalls:      0,
 			hashErr:        nil,
-			resErr:         shared.NewError(shared.ErrInvalidInput, "email is required", nil),
+			resErr:         shared.NewError(shared.ErrInvalidInput, "empty email", nil),
 			resToken:       "",
 			expectedUserID: uuid.Nil,
 		},
@@ -189,7 +189,7 @@ func TestUserService_Login(t *testing.T) {
 			repoErr:        nil,
 			hashCalls:      0,
 			hashErr:        nil,
-			resErr:         shared.NewError(shared.ErrInvalidInput, "password is required", nil),
+			resErr:         shared.NewError(shared.ErrInvalidInput, "empty password", nil),
 			resToken:       "",
 			expectedUserID: uuid.Nil,
 		},
@@ -338,7 +338,7 @@ func TestUserService_Update(t *testing.T) {
 				}, nil)
 				mockRepo.EXPECT().Update(gomock.Any(), tc.id, gomock.Any()).Return(nil)
 			} else {
-				mockRepo.EXPECT().FindByID(gomock.Any(), tc.id).Return(domain.User{}, shared.NewError(shared.ErrNotFound, "user not found", nil))
+				mockRepo.EXPECT().FindByID(gomock.Any(), tc.id).Return(domain.Nil, shared.NewError(shared.ErrNotFound, "user not found", nil))
 			}
 
 			err := userService.Update(context.Background(), tc.id, tc.user)

@@ -1,6 +1,7 @@
 package httpadp_test
 
 import (
+	"encoding/json"
 	"io"
 	"log"
 	"net/http"
@@ -17,9 +18,12 @@ import (
 )
 
 func TestValidCreateUserRequest(t *testing.T) {
-	userId := "123e4567-e89b-12d3-a456-426614174000"
-	expResponse := "\"" + userId + "\"\n"
-	expUserID := uuid.MustParse(userId)
+	userID := "123e4567-e89b-12d3-a456-426614174000"
+	resp := struct {
+		UserID string `json:"user_id"`
+	}{}
+
+	expUserID := uuid.MustParse(userID)
 
 	cases := []struct {
 		name    string
@@ -59,8 +63,10 @@ func TestValidCreateUserRequest(t *testing.T) {
 					"/v1/users",
 					strings.NewReader(c.reqBody)))
 
+			err := json.NewDecoder(rec.Body).Decode(&resp)
+			require.NoError(t, err)
 			require.Equal(t, http.StatusCreated, rec.Code)
-			require.Equal(t, expResponse, rec.Body.String())
+			require.Equal(t, resp.UserID, userID)
 		})
 	}
 }
@@ -157,9 +163,10 @@ func TestInvalidCreateUserRequest(t *testing.T) {
 }
 
 func BenchmarkValidCreateUserRequest(b *testing.B) {
-	userId := "123e4567-e89b-12d3-a456-426614174000"
-	expResponse := "\"" + userId + "\"\n"
-	expUserID := uuid.MustParse(userId)
+	userID := "123e4567-e89b-12d3-a456-426614174000"
+	expResponse := `{"user_id":"` + userID + `"}`
+
+	expUserID := uuid.MustParse(userID)
 
 	reqBody := `{"email":"test@example.com","name":"John","lastname":"Doe","password":"Password123!!"}`
 

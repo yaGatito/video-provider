@@ -15,3 +15,5 @@ type User struct {
 	IsAdmin   bool      // internal-only; guarded by service logic
 	Status    string    // "active", "disabled"
 }
+
+var Nil = User{}

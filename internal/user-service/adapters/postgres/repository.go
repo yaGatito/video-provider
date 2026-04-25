@@ -53,13 +53,13 @@ func (r *PostgresUserRepository) FindByID(ctx context.Context, id uuid.UUID) (do
 	row, err := r.q.FindUserById(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return domain.User{}, shared.NewError(
+			return domain.Nil, shared.NewError(
 				shared.ErrNotFound,
 				"user not found with ID "+id.String(),
 				err,
 			)
 		} else {
-			return domain.User{}, shared.NewError(shared.ErrInternal, "failed to retrieve user with ID "+id.String(), err)
+			return domain.Nil, shared.NewError(shared.ErrInternal, "failed to retrieve user with ID "+id.String(), err)
 		}
 	}
 
@@ -81,13 +81,13 @@ func (r *PostgresUserRepository) FindByEmail(
 	row, err := r.q.FindUserByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return domain.User{}, shared.NewError(
+			return domain.Nil, shared.NewError(
 				shared.ErrNotFound,
 				"user not found with email "+email,
 				err,
 			)
 		} else {
-			return domain.User{}, shared.NewError(shared.ErrInternal, "failed to retrieve user with email "+email, err)
+			return domain.Nil, shared.NewError(shared.ErrInternal, "failed to retrieve user with email "+email, err)
 		}
 	}
 

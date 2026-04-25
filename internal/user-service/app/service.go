@@ -38,20 +38,30 @@ func (us *UserService) Create(
 	user domain.User,
 	password string,
 ) (uuid.UUID, error) {
+	if user == domain.Nil {
+		return uuid.Nil, shared.NewError(shared.ErrInvalidInput, "empty user", nil)
+	}
+	if password == "" {
+		return uuid.Nil, shared.NewError(shared.ErrInvalidInput, "empty password", nil)
+	}
+
 	hash, err := us.Hasher.Hash(password)
 	if err != nil {
-		return uuid.UUID{}, shared.NewError(shared.ErrInternal, "failed to hash password", err)
+		return uuid.Nil, shared.NewError(shared.ErrInternal, "failed to hash password", err)
 	}
 
 	id, err := us.Repo.Create(ctx, user, hash)
 	if err != nil {
-		return uuid.UUID{}, err
+		return uuid.Nil, err
 	}
 
 	return id, nil
 }
 
 func (us *UserService) Get(ctx context.Context, id uuid.UUID) (domain.User, error) {
+	if id == uuid.Nil {
+		return domain.Nil, shared.NewError(shared.ErrInvalidInput, "empty id", nil)
+	}
 	return us.Repo.FindByID(ctx, id)
 }
 
@@ -81,10 +91,10 @@ func (us *UserService) Update(ctx context.Context, id uuid.UUID, toUpdate domain
 
 func (us *UserService) Login(ctx context.Context, email string, password []byte) (string, error) {
 	if email == "" {
-		return "", shared.NewError(shared.ErrInvalidInput, "email is required", nil)
+		return "", shared.NewError(shared.ErrInvalidInput, "empty email", nil)
 	}
 	if len(password) == 0 {
-		return "", shared.NewError(shared.ErrInvalidInput, "password is required", nil)
+		return "", shared.NewError(shared.ErrInvalidInput, "empty password", nil)
 	}
 
 	userID, hash, err := us.Repo.GetPasswordHash(ctx, email)
