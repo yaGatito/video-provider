@@ -8,6 +8,7 @@ import (
 	"os"
 	"video-provider/common/auth"
 	"video-provider/common/config"
+	"video-provider/common/shared"
 	httpadp "video-provider/video-service/adapters/http"
 	"video-provider/video-service/adapters/postgres"
 	"video-provider/video-service/app"
@@ -57,7 +58,7 @@ func run() error {
 	}
 	defer pool.Close()
 
-	mwLog := middleware.NewMiddlewareLogger(httpadp.DefaultLogger)
+	log := shared.NewLogger(shared.DefaultOutput, "VID-SVC")
 
 	authorizer := auth.NewAuthorizer(auth.NewTokenizer(c))
 	videoRepository := postgres.NewVideoRepoPostgreSQL(pool)
@@ -65,9 +66,9 @@ func run() error {
 
 	val, err := httpadp.NewVideoValidator()
 	if err != nil {
-		log.Default().Printf("failed to create validator: %s\n", err.Error())
+		log.Error("failed to create validator", err)
 	}
-	videoHandler := httpadp.NewVideoHandler(videoService, mwLog.Log, val)
+	videoHandler := httpadp.NewVideoHandler(videoService, log, val)
 
 	router := mux.NewRouter()
 
@@ -75,11 +76,11 @@ func run() error {
 		router,
 		videoHandler,
 		authorizer.Auth,
-		mwLog.LoggingMiddleware,
+		middleware.NewMiddlewareLogger(log).LoggingMiddleware,
 		middleware.CORSMiddleware,
 	)
 
-	log.Printf("Video-service starting on port %s", c.EnvConf.ApiPort)
+	log.Info("Video-service starting on port " + c.EnvConf.ApiPort)
 	err = http.ListenAndServe(":"+c.EnvConf.ApiPort, router)
 	if err != nil {
 		return fmt.Errorf("failed to start server: %w", err)

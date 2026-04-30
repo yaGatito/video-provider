@@ -8,7 +8,7 @@ import (
 
 type contextKeyUserID string
 
-const contextUserID contextKeyUserID = "USER_ID"
+const ContextUserID contextKeyUserID = "USER_ID"
 
 const bearerHeaderPrefix string = "Bearer "
 
@@ -46,6 +46,6 @@ func (a Authorizer) Auth(next http.Handler) http.Handler {
 			return
 		}
 
-		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), contextUserID, userID)))
+		next.ServeHTTP(w, r.WithContext(context.WithValue(r.Context(), ContextUserID, userID)))
 	})
 }

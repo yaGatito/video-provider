@@ -2,9 +2,7 @@ package httpadp
 
 import (
 	"encoding/json"
-	"log"
 	"net/http"
-	"os"
 	"video-provider/common/shared"
 	"video-provider/user-service/app"
 	"video-provider/user-service/domain"
@@ -17,12 +15,10 @@ import (
 type UserHandler struct {
 	userInteractor app.UserInteractor
 	validate       *validator.Validate
-	log            *log.Logger
+	log            *shared.Logger
 }
 
-var DefaultLogger = log.New(os.Stdout, "[VIDSVC]", log.Ldate|log.Ltime|log.Lmicroseconds|log.LUTC)
-
-func NewUserHandler(userInteractor app.UserInteractor, log *log.Logger) *UserHandler {
+func NewUserHandler(userInteractor app.UserInteractor, log *shared.Logger) *UserHandler {
 	return &UserHandler{userInteractor: userInteractor, log: log, validate: newUserValidate()}
 }
 
@@ -183,7 +179,7 @@ func (h *UserHandler) writeResponse(w http.ResponseWriter, v any, code int) {
 
 	err := json.NewEncoder(w).Encode(v)
 	if err != nil {
-		h.log.Println("Error encoding response body:", err)
+		h.log.Error("Error encoding response body:", err)
 	}
 }
 
@@ -192,36 +188,36 @@ func (h *UserHandler) writeErrorResponse(w http.ResponseWriter, vErr error) {
 
 	switch vErr := vErr.(type) {
 	case *shared.Error:
-		h.log.Printf("Error: %v\n", vErr)
+		h.log.Error(vErr.Message, vErr.Err)
 
 		w.WriteHeader(int(vErr.Code))
 		err := json.NewEncoder(w).Encode(serviceErrorResponse{
 			Message: vErr.Message,
 		})
 		if err != nil {
-			h.log.Println("Error encoding error response body:", err)
+			h.log.Error("Error encoding error response body:", err)
 		}
 
 	case validator.ValidationErrors:
-		h.log.Printf("Validation request body error: %s\n", vErr[0].Error())
+		h.log.Error("Invalid request body error", vErr[0])
 
 		w.WriteHeader(http.StatusBadRequest)
 		err := json.NewEncoder(w).Encode(serviceErrorResponse{
 			Message: "invalid field: " + vErr[0].Field(),
 		})
 		if err != nil {
-			h.log.Println("Error validating request body:", err)
+			h.log.Error("Error encoding error response body:", err)
 		}
 
 	case error:
-		h.log.Printf("Fallback error: %s\n", vErr.Error())
+		h.log.Error("Fallback error", vErr)
 
 		w.WriteHeader(http.StatusInternalServerError)
 		err := json.NewEncoder(w).Encode(serviceErrorResponse{
 			Message: "video-provider error",
 		})
 		if err != nil {
-			h.log.Println("Error encoding error response body:", err)
+			h.log.Error("Error encoding error response body", err)
 		}
 	}
 }

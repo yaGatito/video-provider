@@ -30,7 +30,7 @@ const (
 // VideoHandler handles HTTP requests related to video operations.
 type VideoHandler struct {
 	videoInteractor app.VideoService
-	log             *log.Logger
+	log             *shared.Logger
 	validate        *validator.Validate
 }
 
@@ -39,7 +39,7 @@ var DefaultLogger = log.New(os.Stdout, "[VIDSVC]", log.Ldate|log.Ltime|log.Lmicr
 // NewVideoHandler creates a new VideoHandler.
 func NewVideoHandler(
 	userInteractor app.VideoService,
-	log *log.Logger,
+	log *shared.Logger,
 	validate *validator.Validate,
 ) *VideoHandler {
 	return &VideoHandler{videoInteractor: userInteractor, log: log, validate: validate}
@@ -271,7 +271,7 @@ func (h *VideoHandler) parseUrlValues(query string) (url.Values, error) {
 	}
 	urlValues, err := url.ParseQuery(query)
 	if err != nil {
-		h.log.Println(err)
+		h.log.Error("failed to parse query: "+query, err)
 		return nil, shared.NewError(
 			http.StatusBadRequest, "unparsable url query", err)
 	}
@@ -361,7 +361,7 @@ func (h *VideoHandler) writeResponse(w http.ResponseWriter, v any, code int) {
 
 	err := json.NewEncoder(w).Encode(v)
 	if err != nil {
-		h.log.Println("Error encoding response body:", err)
+		h.log.Error("Error encoding response body", err)
 	}
 }
 
@@ -371,37 +371,34 @@ func (h *VideoHandler) writeErrorResponse(w http.ResponseWriter, vErr error) {
 
 	switch vErr := vErr.(type) {
 	case *shared.Error:
-		h.log.Printf("Error: %s\n", vErr.Message)
-		if vErr.Err != nil {
-			h.log.Printf("Details: %s\n", vErr.Err.Error())
-		}
+		h.log.Error(vErr.Message, vErr.Err)
 
 		w.WriteHeader(int(vErr.Code))
 		err := json.NewEncoder(w).Encode(serviceErrorResponse{
 			Message: vErr.Message,
 		})
 		if err != nil {
-			h.log.Println("Error encoding error response body:", err)
+			h.log.Error("Error encoding error response body", err)
 		}
 
 	case validator.ValidationErrors:
-		h.log.Printf("Validation request body error: %s\n", vErr[0].Error())
+		h.log.Error("Validation request body error", vErr[0])
 		w.WriteHeader(http.StatusBadRequest)
 		err := json.NewEncoder(w).Encode(serviceErrorResponse{
 			Message: "invalid field: " + vErr[0].Field(),
 		})
 		if err != nil {
-			h.log.Println("Error validating request body:", err)
+			h.log.Error("Error validating request body:", err)
 		}
 
 	case error:
-		h.log.Printf("Fallback error: %s\n", vErr.Error())
+		h.log.Error("Fallback error", vErr)
 		w.WriteHeader(http.StatusInternalServerError)
 		err := json.NewEncoder(w).Encode(serviceErrorResponse{
 			Message: "video-provider error",
 		})
 		if err != nil {
-			h.log.Println("Error encoding error response body:", err)
+			h.log.Error("Error encoding error response body:", err)
 		}
 	}
 }

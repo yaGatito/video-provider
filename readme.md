@@ -1,77 +1,29 @@
-# video-provider
 
-## Quick Start (from zero)
+TODO: try to exploit this server using its vulnerability of type  assertion on jwt token claims? -- done! (cannot be exploited for now)
 
-1. Clone repo and enter folder.
-2. Create `.env` in project root:
+TODO: secrets rotation
+TODO: logging across project (may be a separate logging service)
 
-```env
-POSTGRES_USER=gato
-POSTGRES_PASSWORD=root
-```
+TODO: loading video on S3
 
-3. Install required tools (Go, Docker, GNU Make, `yq`, plus Go CLIs below).
-4. Run:
+TODO: DESIGN: friends list
 
-```bash
-make bootstrap
-make setup
-```
+TODO: watch video
+TODO: add activity feature
 
-5. Start services in separate terminals:
+TODO: lint fix
 
-```bash
-make run CONFIG=video
-make run CONFIG=user
-```
+TODO: autocanon -m GET -c 20 -d 20 -p 2 "http://url"
+TODO: CI/CD/Github Actions?
+TODO: kubernetes
 
-## Cross-platform setup
+TODO: caching using redis
 
-### Linux (Ubuntu/Debian example)
+LEARN: notate indecies DB (how they work)
+LEARN: notate how append works under the hood and edge cases
+LEARN: map/slice how it works inside
 
-```bash
-sudo apt update
-sudo apt install -y make docker.io curl
-sudo snap install yq
+DONE: config refactor using envconfig AND/OR viper
+DONE: UTs all
+LEARN: how caching is implemented for differenet types of data.
 
-go install github.com/golang/mock/mockgen@v1.6.0
-go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.26.0
-go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.2
-go install github.com/swaggo/swag/cmd/swag@latest
-go install github.com/pressly/goose/v3/cmd/goose@latest
-```
-
-Note: ensure `$(go env GOPATH)/bin` is in `PATH`.
-
-### Windows (PowerShell + Scoop)
-
-```powershell
-Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
-irm get.scoop.sh | iex
-scoop install make
-scoop install docker
-scoop install yq
-
-go install github.com/golang/mock/mockgen@v1.6.0
-go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.26.0
-go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.55.2
-go install github.com/swaggo/swag/cmd/swag@latest
-go install github.com/pressly/goose/v3/cmd/goose@latest
-```
-
-## Make targets
-
-```bash
-make help
-```
-
-Main targets:
-- `make bootstrap` - verify all required tools are installed.
-- `make setup` - start both DB containers, init DBs, run migrations.
-- `make db-status CONFIG=video|user` - print DB settings.
-- `make db-up CONFIG=video|user` - start one DB container.
-- `make db-down CONFIG=video|user` - stop/remove one DB container.
-- `make migrate-up CONFIG=video|user` - run migrations for one service.
-- `make run CONFIG=video|user` - run selected service.
-- `make test PKG=<pkg> TEST=<regex>` - focused tests.
-- `make tests` - full test suite.

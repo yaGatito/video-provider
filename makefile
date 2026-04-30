@@ -23,6 +23,8 @@ ifeq ($(config),user)
   DB_HOST   = $(USER_DB_HOST)
   DB_PORT   = $(USER_DB_PORT)
   API_PORT  = $(USER_API_PORT)
+	POSTGRES_USER 	= $(USER_DB_USER)
+	POSTGRES_PASSWORD 	= $(USER_DB_PASS)
 endif
 
 ifeq ($(config),video)
@@ -30,6 +32,8 @@ ifeq ($(config),video)
   DB_HOST   = $(VIDEO_DB_HOST)
   DB_PORT   = $(VIDEO_DB_PORT)
   API_PORT  = $(VIDEO_API_PORT)
+	POSTGRES_USER = $(VIDEO_DB_USER)
+	POSTGRES_PASSWORD= $(VIDEO_DB_PASS)
 endif
 
 MIGRATIONS_DIR 		= internal/$(SERVICE_NAME)/adapters/postgres/sql/migrations
@@ -94,11 +98,6 @@ setup:
 	$(call log, "Running migrations for video database...")
 	$(MAKE) migrate-up config=video
 
-.PHONY: compose
-compose:
-	docker-compose up --build
-	$(call log, "Docker compose started")
-
 .PHONY: web
 web:
 	$(call log, "Starting frontend application...")
@@ -145,23 +144,32 @@ ifeq ("$(config)","user")
 endif
 
 .PHONY: coverage
+
 coverage:
-	cd internal/ && \
-	go test -coverprofile=coverage.out -coverpkg=$(go list ./... | grep -v _mock.go) ./... && \
-	go tool cover -func=coverage.out && \
-	rm coverage.out && \
-	cd ../
+	cd internal && \
+	go test -coverprofile=coverage.out -coverpkg=./... ./... && \
+	grep -v "_mock.go" coverage.out > coverage_filtered.out && \
+	go tool cover -func=coverage_filtered.out && \
+	rm coverage.out coverage_filtered.out && \
+	cd ..
+
 .PHONY: tests
 tests: mocks
 	go test ./...
 
 #   --- Docker ---
 
+.PHONY: minio
+minio:
+	docker run -p $(MINIO_PORT):$(MINIO_PORT) -p $(MINIO_MGMT_PORT):$(MINIO_MGMT_PORT) \
+		-e MINIO_ROOT_USER=$(MINIO_ROOT_USER) \
+		-e MINIO_ROOT_PASSWORD=$(MINIO_ROOT_PASSWORD) \
+		minio/minio server /data --console-address ":$(MINIO_MGMT_PORT)"
+
 .PHONY: do-run
 do-run:
 	docker build -D -t $(SERVICE_NAME) -f internal/$(SERVICE_NAME)/Dockerfile .
 	docker rm -f $(SERVICE_NAME)
-# 	docker run --rm -p 8081:8081 --env-file .env $(SERVICE_NAME)
 	docker run  --name $(SERVICE_NAME) --rm -p $(API_PORT):$(API_PORT) $(SERVICE_NAME)
 
 # .PHONY: db-up

@@ -11,6 +11,7 @@ import (
 	"video-provider/common/auth"
 	"video-provider/common/config"
 	"video-provider/common/middleware"
+	"video-provider/common/shared"
 
 	cryptoadp "video-provider/user-service/adapters/crypto"
 	httpadp "video-provider/user-service/adapters/http"
@@ -59,14 +60,14 @@ func run() error {
 
 	defer dbPool.Close()
 
-	mwLog := middleware.NewMiddlewareLogger(httpadp.DefaultLogger)
+	log := shared.NewLogger(shared.DefaultOutput, "USR-SVC")
 
 	userRepository := postgres.NewPostgresUserRepository(dbPool)
 	pwHasher := cryptoadp.NewBCryptPasswordHasher()
 	tokenizer := auth.NewTokenizer(c)
 	authorizer := auth.NewAuthorizer(tokenizer)
 	userInteractor := app.NewUserService(userRepository, pwHasher, tokenizer)
-	userHandler := httpadp.NewUserHandler(userInteractor, mwLog.Log)
+	userHandler := httpadp.NewUserHandler(userInteractor, log)
 
 	router := mux.NewRouter()
 
@@ -74,16 +75,16 @@ func run() error {
 		router,
 		userHandler,
 		authorizer.Auth,
-		mwLog.LoggingMiddleware,
+		middleware.NewMiddlewareLogger(log).LoggingMiddleware,
 		middleware.CORSMiddleware,
 	)
 
-	log.Printf("User-service starting on port %s", c.EnvConf.ApiPort)
+	log.Info("User-service starting on port: " + c.EnvConf.ApiPort)
 	err = http.ListenAndServe(":"+c.EnvConf.ApiPort, router)
 	if err != nil {
 		return fmt.Errorf("Failed to start the server: %v", err)
 	}
-	fmt.Printf("Server successfully started")
+	log.Info("Server successfully started")
 	return nil
 }
 
