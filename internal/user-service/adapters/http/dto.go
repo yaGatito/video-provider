@@ -55,3 +55,11 @@ func toUserDto(u domain.User) userResponse {
 		CreatedAt: u.CreatedAt,
 	}
 }
+
+func toDomainUser(r createUserRequest) domain.User {
+	return domain.User{
+		Email:    r.Email,
+		Name:     r.Name,
+		LastName: r.LastName,
+	}
+}

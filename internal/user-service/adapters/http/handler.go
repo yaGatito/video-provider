@@ -5,7 +5,6 @@ import (
 	"net/http"
 	"video-provider/pkg/common"
 	"video-provider/user-service/app"
-	"video-provider/user-service/domain"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -38,7 +37,7 @@ func NewUserHandler(userInteractor app.UserInteractor, log *common.Logger) *User
 func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var loginRequestData loginUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&loginRequestData); err != nil {
-		h.writeErrorResponse(w, &common.Error{
+		common.WriteErrorResponse(w, h.log, &common.Error{
 			Code: http.StatusBadRequest, Message: "failed to decode login request body", Err: err,
 		})
 		return
@@ -46,13 +45,13 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 
 	err := h.validate.Struct(loginRequestData)
 	if err != nil {
-		h.writeErrorResponse(w, err)
+		common.WriteErrorResponse(w, h.log, err)
 		return
 	}
 
 	err = validatePassword([]byte(loginRequestData.Password))
 	if err != nil {
-		h.writeErrorResponse(w, err)
+		common.WriteErrorResponse(w, h.log, err)
 		return
 	}
 
@@ -64,11 +63,11 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 		[]byte(loginRequestData.Password),
 	)
 	if err != nil {
-		h.writeErrorResponse(w, err)
+		common.WriteErrorResponse(w, h.log, err)
 		return
 	}
 
-	h.writeResponse(w, authResponse{Token: token}, http.StatusOK)
+	common.WriteResponse(w, h.log, authResponse{Token: token}, http.StatusOK)
 }
 
 // CreateUser godoc
@@ -89,7 +88,7 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var createUserRequestData createUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&createUserRequestData); err != nil {
-		h.writeErrorResponse(w, &common.Error{
+		common.WriteErrorResponse(w, h.log, &common.Error{
 			Err:     err,
 			Code:    http.StatusBadRequest,
 			Message: "failed to decode create user request body",
@@ -99,13 +98,13 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 
 	err := h.validate.Struct(createUserRequestData)
 	if err != nil {
-		h.writeErrorResponse(w, err)
+		common.WriteErrorResponse(w, h.log, err)
 		return
 	}
 
 	err = validatePassword([]byte(createUserRequestData.Password))
 	if err != nil {
-		h.writeErrorResponse(w, err)
+		common.WriteErrorResponse(w, h.log, err)
 		return
 	}
 
@@ -117,11 +116,11 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 		createUserRequestData.Password,
 	)
 	if err != nil {
-		h.writeErrorResponse(w, err)
+		common.WriteErrorResponse(w, h.log, err)
 		return
 	}
 
-	h.writeResponse(w, createUserResponse{
+	common.WriteResponse(w, h.log, createUserResponse{
 		UserID: userId.String(),
 	}, http.StatusCreated)
 }
@@ -145,7 +144,7 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	userID, err := uuid.Parse(mux.Vars(r)[pathVarUserID])
 	if err != nil {
-		h.writeErrorResponse(w, &common.Error{
+		common.WriteErrorResponse(w, h.log, &common.Error{
 			Err:     err,
 			Code:    http.StatusBadRequest,
 			Message: "invalid user id format",
@@ -154,7 +153,7 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if userID == uuid.Nil {
-		h.writeErrorResponse(w, &common.Error{
+		common.WriteErrorResponse(w, h.log, &common.Error{
 			Code:    http.StatusBadRequest,
 			Message: "user ID cannot be empty",
 		})
@@ -163,11 +162,11 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 
 	user, err := h.userInteractor.Get(r.Context(), userID)
 	if err != nil {
-		h.writeErrorResponse(w, err)
+		common.WriteErrorResponse(w, h.log, err)
 		return
 	}
 
-	h.writeResponse(w, toUserDto(user), http.StatusOK)
+	common.WriteResponse(w, h.log, toUserDto(user), http.StatusOK)
 }
 
 func (h *UserHandler) writeResponse(w http.ResponseWriter, v any, code int) {
@@ -216,13 +215,5 @@ func (h *UserHandler) writeErrorResponse(w http.ResponseWriter, vErr error) {
 		if err != nil {
 			h.log.Error("Error encoding error response body", err)
 		}
-	}
-}
-
-func toDomainUser(r createUserRequest) domain.User {
-	return domain.User{
-		Email:    r.Email,
-		Name:     r.Name,
-		LastName: r.LastName,
 	}
 }
