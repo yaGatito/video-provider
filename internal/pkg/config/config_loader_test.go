@@ -4,7 +4,7 @@ import (
 	"os"
 	"testing"
 	"time"
-	"video-provider/common/config"
+	"video-provider/pkg/config"
 
 	"github.com/stretchr/testify/assert"
 )

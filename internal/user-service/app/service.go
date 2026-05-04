@@ -3,8 +3,8 @@ package app
 import (
 	"context"
 	"log"
-	"video-provider/common/auth"
-	"video-provider/common/shared"
+	"video-provider/pkg/auth"
+	"video-provider/pkg/common"
 	"video-provider/user-service/domain"
 	"video-provider/user-service/ports"
 
@@ -39,15 +39,21 @@ func (us *UserService) Create(
 	password string,
 ) (uuid.UUID, error) {
 	if user == domain.Nil {
-		return uuid.Nil, shared.NewError(shared.ErrInvalidInput, "empty user", nil)
+		return uuid.Nil, &common.Error{
+			Code:    common.ErrInvalidInput,
+			Message: "empty user"}
 	}
 	if password == "" {
-		return uuid.Nil, shared.NewError(shared.ErrInvalidInput, "empty password", nil)
+		return uuid.Nil, &common.Error{
+			Code: common.ErrInvalidInput, Message: "empty password"}
 	}
 
 	hash, err := us.Hasher.Hash(password)
 	if err != nil {
-		return uuid.Nil, shared.NewError(shared.ErrInternal, "failed to hash password", err)
+		return uuid.Nil, &common.Error{
+			Err:     err,
+			Code:    common.ErrInternal,
+			Message: "failed to hash password"}
 	}
 
 	id, err := us.Repo.Create(ctx, user, hash)
@@ -60,7 +66,9 @@ func (us *UserService) Create(
 
 func (us *UserService) Get(ctx context.Context, id uuid.UUID) (domain.User, error) {
 	if id == uuid.Nil {
-		return domain.Nil, shared.NewError(shared.ErrInvalidInput, "empty id", nil)
+		return domain.Nil, &common.Error{
+			Code:    common.ErrInvalidInput,
+			Message: "empty id"}
 	}
 	return us.Repo.FindByID(ctx, id)
 }
@@ -91,10 +99,13 @@ func (us *UserService) Update(ctx context.Context, id uuid.UUID, toUpdate domain
 
 func (us *UserService) Login(ctx context.Context, email string, password []byte) (string, error) {
 	if email == "" {
-		return "", shared.NewError(shared.ErrInvalidInput, "empty email", nil)
+		return "", &common.Error{
+			Code: common.ErrInvalidInput, Message: "empty email"}
 	}
 	if len(password) == 0 {
-		return "", shared.NewError(shared.ErrInvalidInput, "empty password", nil)
+		return "", &common.Error{
+			Code:    common.ErrInvalidInput,
+			Message: "empty password"}
 	}
 
 	userID, hash, err := us.Repo.GetPasswordHash(ctx, email)
@@ -104,7 +115,9 @@ func (us *UserService) Login(ctx context.Context, email string, password []byte)
 
 	err = us.Hasher.CompareHashAndPassword(hash, password)
 	if err != nil {
-		return "", shared.NewError(shared.ErrUnauthorized, "failed to compare password", nil)
+		return "", &common.Error{
+			Err:  err,
+			Code: common.ErrUnauthorized, Message: "failed to compare password"}
 	}
 
 	token, err := us.Tokenizer.CreateToken(userID)

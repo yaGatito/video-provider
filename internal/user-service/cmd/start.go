@@ -6,12 +6,12 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"video-provider/pkg/common"
 	_ "video-provider/user-service/docs"
 
-	"video-provider/common/auth"
-	"video-provider/common/config"
-	"video-provider/common/middleware"
-	"video-provider/common/shared"
+	"video-provider/pkg/auth"
+	"video-provider/pkg/config"
+	"video-provider/pkg/middleware"
 
 	cryptoadp "video-provider/user-service/adapters/crypto"
 	httpadp "video-provider/user-service/adapters/http"
@@ -60,7 +60,7 @@ func run() error {
 
 	defer dbPool.Close()
 
-	log := shared.NewLogger(shared.DefaultOutput, "USR-SVC")
+	log := common.NewLogger(common.DefaultOutput, "USR-SVC")
 
 	userRepository := postgres.NewPostgresUserRepository(dbPool)
 	pwHasher := cryptoadp.NewBCryptPasswordHasher()

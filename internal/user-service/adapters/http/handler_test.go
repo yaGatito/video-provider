@@ -7,7 +7,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
-	"video-provider/common/shared"
+	"video-provider/pkg/common"
 	httpadp "video-provider/user-service/adapters/http"
 	mock_app "video-provider/user-service/app/mock"
 
@@ -43,7 +43,7 @@ func TestValidCreateUserRequest(t *testing.T) {
 			defer ctrl.Finish()
 
 			s := mock_app.NewMockUserInteractor(ctrl)
-			h := httpadp.NewUserHandler(s, shared.NewLogger(io.Discard, ""))
+			h := httpadp.NewUserHandler(s, common.NewLogger(io.Discard, ""))
 			r := mux.NewRouter()
 			mockMiddleware := func(next http.Handler) http.Handler {
 				return next
@@ -139,7 +139,7 @@ func TestInvalidCreateUserRequest(t *testing.T) {
 			defer ctrl.Finish()
 
 			s := mock_app.NewMockUserInteractor(ctrl)
-			h := httpadp.NewUserHandler(s, shared.NewLogger(io.Discard, ""))
+			h := httpadp.NewUserHandler(s, common.NewLogger(io.Discard, ""))
 			r := mux.NewRouter()
 			mockMiddleware := func(next http.Handler) http.Handler {
 				return next
@@ -175,7 +175,7 @@ func BenchmarkValidCreateUserRequest(b *testing.B) {
 		defer ctrl.Finish()
 
 		s := mock_app.NewMockUserInteractor(ctrl)
-		h := httpadp.NewUserHandler(s, shared.NewLogger(io.Discard, ""))
+		h := httpadp.NewUserHandler(s, common.NewLogger(io.Discard, ""))
 		r := mux.NewRouter()
 		mockMiddleware := func(next http.Handler) http.Handler {
 			return next
@@ -211,7 +211,7 @@ func BenchmarkGetUserRequest(b *testing.B) {
 		defer ctrl.Finish()
 
 		s := mock_app.NewMockUserInteractor(ctrl)
-		h := httpadp.NewUserHandler(s, shared.NewLogger(io.Discard, ""))
+		h := httpadp.NewUserHandler(s, common.NewLogger(io.Discard, ""))
 		r := mux.NewRouter()
 		mockMiddleware := func(next http.Handler) http.Handler {
 			return next
@@ -247,7 +247,7 @@ func BenchmarkLogin(b *testing.B) {
 		defer ctrl.Finish()
 
 		s := mock_app.NewMockUserInteractor(ctrl)
-		h := httpadp.NewUserHandler(s, shared.NewLogger(io.Discard, ""))
+		h := httpadp.NewUserHandler(s, common.NewLogger(io.Discard, ""))
 		r := mux.NewRouter()
 		mockMiddleware := func(next http.Handler) http.Handler {
 			return next

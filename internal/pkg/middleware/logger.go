@@ -2,14 +2,14 @@ package middleware
 
 import (
 	"net/http"
-	"video-provider/common/shared"
+	"video-provider/pkg/common"
 )
 
 type MiddlewareLogger struct {
-	Log *shared.Logger
+	Log *common.Logger
 }
 
-func NewMiddlewareLogger(log *shared.Logger) *MiddlewareLogger {
+func NewMiddlewareLogger(log *common.Logger) *MiddlewareLogger {
 	return &MiddlewareLogger{
 		Log: log,
 	}
@@ -17,7 +17,7 @@ func NewMiddlewareLogger(log *shared.Logger) *MiddlewareLogger {
 
 func (l *MiddlewareLogger) LoggingMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		l.Log.LogRequest(r.Method, r.RequestURI)
+		l.Log.Info(r.Method + " \"" + r.RequestURI + "\"")
 		next.ServeHTTP(w, r)
 	})
 }

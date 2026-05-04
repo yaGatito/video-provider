@@ -9,9 +9,9 @@ import (
 	"net/http/httptest"
 	"sync"
 	"testing"
-	"video-provider/common/auth"
-	"video-provider/common/config"
-	"video-provider/common/shared"
+	"video-provider/pkg/auth"
+	"video-provider/pkg/common"
+	"video-provider/pkg/config"
 	cryptoadp "video-provider/user-service/adapters/crypto"
 	"video-provider/user-service/app"
 	"video-provider/user-service/domain"
@@ -35,7 +35,7 @@ func TestLoginIntegration(t *testing.T) {
 	})
 	service := app.NewUserService(repo, pwHasher, tokenizer)
 
-	handler := NewUserHandler(service, shared.NewLogger(io.Discard, ""))
+	handler := NewUserHandler(service, common.NewLogger(io.Discard, ""))
 	router := mux.NewRouter()
 	mockMiddleware := func(next http.Handler) http.Handler {
 		return next
@@ -136,7 +136,9 @@ func (repo *MemoryUserRepository) FindByID(ctx context.Context, id uuid.UUID) (d
 
 	user, exists := repo.Users[id]
 	if !exists {
-		return domain.User{}, shared.NewError(http.StatusNotFound, "user not found", nil)
+		return domain.User{}, &common.Error{
+			Code: http.StatusNotFound, Message: "user not found",
+		}
 	}
 	return user, nil
 }
@@ -147,7 +149,9 @@ func (repo *MemoryUserRepository) FindByEmail(ctx context.Context, email string)
 
 	user, exists := repo.Users[repo.Emails[email]]
 	if !exists {
-		return domain.User{}, shared.NewError(http.StatusNotFound, "user not found", nil)
+		return domain.User{}, &common.Error{
+			Code: http.StatusNotFound, Message: "user not found",
+		}
 	}
 	return user, nil
 }
@@ -158,7 +162,9 @@ func (repo *MemoryUserRepository) GetPasswordHash(ctx context.Context, email str
 
 	pass, exists := repo.Passwords[email]
 	if !exists {
-		return uuid.Nil, nil, shared.NewError(http.StatusNotFound, "user not found", nil)
+		return uuid.Nil, nil, &common.Error{
+			Code: http.StatusNotFound, Message: "user not found",
+		}
 	}
 
 	return repo.Users[repo.Emails[email]].ID, pass, nil

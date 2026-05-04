@@ -4,7 +4,7 @@ package auth
 import (
 	"fmt"
 	"time"
-	"video-provider/common/config"
+	"video-provider/pkg/config"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"

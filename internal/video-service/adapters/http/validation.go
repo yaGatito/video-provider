@@ -3,7 +3,7 @@ package httpadp
 import (
 	"fmt"
 	"strings"
-	"video-provider/common/shared"
+	"video-provider/pkg/common"
 	"video-provider/video-service/domain"
 	"video-provider/video-service/policy"
 
@@ -70,18 +70,14 @@ func ValidateSearchQuery(query string) (string, error) {
 	query = strings.TrimSpace(query)
 
 	if len(query) < policy.SearchMinLen {
-		return "", shared.NewError(
-			shared.ErrInvalidInput,
-			fmt.Sprintf("%s size is less than threshold: %d", query, policy.SearchMinLen),
-			nil,
-		)
+		return "", &common.Error{
+			Code:    common.ErrInvalidInput,
+			Message: fmt.Sprintf("%s size is less than threshold: %d", query, policy.SearchMinLen)}
 	}
 	if !policy.GetWordsFormatRE128().MatchString(query) {
-		return "", shared.NewError(
-			shared.ErrInvalidInput,
-			"query string contains prohibited characters",
-			nil,
-		)
+		return "", &common.Error{
+			Code:    common.ErrInvalidInput,
+			Message: "query string contains prohibited characters"}
 	}
 
 	return query, nil
@@ -89,29 +85,23 @@ func ValidateSearchQuery(query string) (string, error) {
 
 func ValidateLimit(limit int32) (int32, error) {
 	if limit < policy.ThresholdVideosLimit {
-		return 0, shared.NewError(
-			shared.ErrInvalidInput,
-			fmt.Sprintf("limit is less then threshold(%d): %d", policy.ThresholdVideosLimit, limit),
-			nil,
-		)
+		return 0, &common.Error{
+			Code:    common.ErrInvalidInput,
+			Message: fmt.Sprintf("limit is less then threshold(%d): %d", policy.ThresholdVideosLimit, limit)}
 	}
 	if limit > policy.VideosMaxLimit {
-		return 0, shared.NewError(
-			shared.ErrInvalidInput,
-			fmt.Sprintf("limit reached maximum allowed value: %d", limit),
-			nil,
-		)
+		return 0, &common.Error{
+			Code:    common.ErrInvalidInput,
+			Message: fmt.Sprintf("limit reached maximum allowed value: %d", limit)}
 	}
 	return limit, nil
 }
 
 func ValidateOffset(offset int32) (int32, error) {
 	if offset < 0 {
-		return 0, shared.NewError(
-			shared.ErrInvalidInput,
-			fmt.Sprintf("offset is zero or less: %d", offset),
-			nil,
-		)
+		return 0, &common.Error{
+			Code:    common.ErrInvalidInput,
+			Message: fmt.Sprintf("offset is zero or less: %d", offset)}
 	}
 	return offset, nil
 }
@@ -121,11 +111,9 @@ func ValidateOrderBy(orderBy string) (string, error) {
 	case domain.OrderByDate:
 		return orderBy, nil
 	default:
-		return "", shared.NewError(
-			shared.ErrInvalidInput,
-			fmt.Sprintf("invalid orderBy argument: %s", orderBy),
-			nil,
-		)
+		return "", &common.Error{
+			Code:    common.ErrInvalidInput,
+			Message: fmt.Sprintf("invalid orderBy argument: %s", orderBy)}
 	}
 }
 
@@ -136,10 +124,8 @@ func ValidateIsAsc(asc string) (string, error) {
 	case domain.DescOrder:
 		return domain.DescOrder, nil
 	default:
-		return "", shared.NewError(
-			shared.ErrInvalidInput,
-			fmt.Sprintf("invalid asc argument: %s; only `t` and `f` are allowed", asc),
-			nil,
-		)
+		return "", &common.Error{
+			Code:    common.ErrInvalidInput,
+			Message: fmt.Sprintf("invalid asc argument: %s; only `t` and `f` are allowed", asc)}
 	}
 }

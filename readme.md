@@ -1,5 +1,7 @@
 
-TODO: try to exploit this server using its vulnerability of type  assertion on jwt token claims? -- done! (cannot be exploited for now)
+TODO: cover repo with UT
+
+
 
 TODO: secrets rotation
 TODO: logging across project (may be a separate logging service)
@@ -27,3 +29,5 @@ DONE: config refactor using envconfig AND/OR viper
 DONE: UTs all
 LEARN: how caching is implemented for differenet types of data.
 
+
+DONE: try to exploit this server using its vulnerability of type  assertion on jwt token claims? -- done! (cannot be exploited for now)

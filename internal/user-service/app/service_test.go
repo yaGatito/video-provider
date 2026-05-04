@@ -7,9 +7,9 @@ import (
 	"fmt"
 	"testing"
 	"time"
-	"video-provider/common/auth"
-	"video-provider/common/config"
-	"video-provider/common/shared"
+	"video-provider/pkg/auth"
+	"video-provider/pkg/common"
+	"video-provider/pkg/config"
 	"video-provider/user-service/app"
 	"video-provider/user-service/domain"
 	mock_ports "video-provider/user-service/ports/mock"
@@ -88,7 +88,7 @@ func TestUserService_Get(t *testing.T) {
 		testName string
 		id       uuid.UUID
 		err      error
-		errCode  shared.ErrorCode
+		errCode  common.ErrorCode
 		user     domain.User
 	}{
 		{
@@ -106,7 +106,7 @@ func TestUserService_Get(t *testing.T) {
 			testName: "Invalid user retrieval",
 			id:       uuid.MustParse("d9fa522f-0006-464f-8d68-356ba1d6ad7d"),
 			err:      errors.New("db error"),
-			errCode:  shared.ErrInternal,
+			errCode:  common.ErrInternal,
 			user:     domain.Nil,
 		},
 	}
@@ -177,7 +177,7 @@ func TestUserService_Login(t *testing.T) {
 			repoErr:        nil,
 			hashCalls:      0,
 			hashErr:        nil,
-			resErr:         shared.NewError(shared.ErrInvalidInput, "empty email", nil),
+			resErr:         newErr(common.ErrInvalidInput, "empty email"),
 			resToken:       "",
 			expectedUserID: uuid.Nil,
 		},
@@ -189,7 +189,7 @@ func TestUserService_Login(t *testing.T) {
 			repoErr:        nil,
 			hashCalls:      0,
 			hashErr:        nil,
-			resErr:         shared.NewError(shared.ErrInvalidInput, "empty password", nil),
+			resErr:         newErr(common.ErrInvalidInput, "empty password"),
 			resToken:       "",
 			expectedUserID: uuid.Nil,
 		},
@@ -213,10 +213,9 @@ func TestUserService_Login(t *testing.T) {
 			repoErr:    nil,
 			hashCalls:  1,
 			hashErr:    errors.New("password mismatch"),
-			resErr: shared.NewError(
-				shared.ErrUnauthorized,
-				"failed to compare password",
-				nil,
+			resErr: newErr(
+				common.ErrUnauthorized,
+				"failed to compare password: password mismatch",
 			),
 			resToken:       "",
 			expectedUserID: uuid.Nil,
@@ -313,7 +312,7 @@ func TestUserService_Update(t *testing.T) {
 				Email:    "updated@example.com",
 				LastName: "UpdatedLastname",
 			},
-			err: shared.NewError(shared.ErrNotFound, "user not found", nil),
+			err: newErr(common.ErrNotFound, "user not found"),
 		},
 	}
 
@@ -338,7 +337,7 @@ func TestUserService_Update(t *testing.T) {
 				}, nil)
 				mockRepo.EXPECT().Update(gomock.Any(), tc.id, gomock.Any()).Return(nil)
 			} else {
-				mockRepo.EXPECT().FindByID(gomock.Any(), tc.id).Return(domain.Nil, shared.NewError(shared.ErrNotFound, "user not found", nil))
+				mockRepo.EXPECT().FindByID(gomock.Any(), tc.id).Return(domain.Nil, newErr(common.ErrNotFound, "user not found"))
 			}
 
 			err := userService.Update(context.Background(), tc.id, tc.user)
@@ -355,5 +354,12 @@ func TestUserService_Update(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+func newErr(code common.ErrorCode, msg string) *common.Error {
+	return &common.Error{
+		Code:    code,
+		Message: msg,
 	}
 }

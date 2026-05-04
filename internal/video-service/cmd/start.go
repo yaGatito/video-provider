@@ -6,15 +6,15 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"video-provider/common/auth"
-	"video-provider/common/config"
-	"video-provider/common/shared"
+	"video-provider/pkg/auth"
+	"video-provider/pkg/common"
+	"video-provider/pkg/config"
 	httpadp "video-provider/video-service/adapters/http"
 	"video-provider/video-service/adapters/postgres"
 	"video-provider/video-service/app"
 	_ "video-provider/video-service/docs"
 
-	"video-provider/common/middleware"
+	"video-provider/pkg/middleware"
 
 	"github.com/gorilla/mux"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -58,7 +58,7 @@ func run() error {
 	}
 	defer pool.Close()
 
-	log := shared.NewLogger(shared.DefaultOutput, "VID-SVC")
+	log := common.NewLogger(common.DefaultOutput, "VID-SVC")
 
 	authorizer := auth.NewAuthorizer(auth.NewTokenizer(c))
 	videoRepository := postgres.NewVideoRepoPostgreSQL(pool)

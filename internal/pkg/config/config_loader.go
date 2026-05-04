@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"os"
 	"time"
-	"video-provider/common/shared"
+	"video-provider/pkg/common"
 
 	"github.com/kelseyhightower/envconfig"
 )
@@ -90,15 +90,27 @@ func loadEnvConfig(svcPrefix string) (EnvSecureConfig, error) {
 	switch err := err.(type) {
 	case nil:
 		if envConf == nilEnvConfig {
-			return EnvSecureConfig{}, fmt.Errorf("empty env config")
+			return EnvSecureConfig{}, &common.Error{
+				Code:    common.ErrInternal,
+				Message: "empty env config",
+			}
 		}
 
 		return envConf, nil
 
 	case *envconfig.ParseError:
-		return EnvSecureConfig{}, shared.NewError(shared.ErrInternal, fmt.Sprintf("failed to extract from env %s for field %s", err.KeyName, err.FieldName), err)
+		return EnvSecureConfig{}, &common.Error{
+			Code:    common.ErrInternal,
+			Message: "failed to extract from env",
+			Err:     err,
+			Details: fmt.Sprintf("env %s for field %s", err.KeyName, err.FieldName),
+		}
 
 	default:
-		return EnvSecureConfig{}, shared.NewError(shared.ErrInternal, "failed to parse config", err)
+		return EnvSecureConfig{}, &common.Error{
+			Code:    common.ErrInternal,
+			Message: "failed to parse config",
+			Err:     err,
+		}
 	}
 }

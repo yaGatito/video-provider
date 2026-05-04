@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 	"time"
-	"video-provider/common/shared"
+	"video-provider/pkg/common"
 	httpadp "video-provider/video-service/adapters/http"
 	mock_app "video-provider/video-service/app/mock"
 	"video-provider/video-service/domain"
@@ -69,7 +69,7 @@ func TestCreateVideo(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			s := mock_app.NewMockVideoService(ctrl)
 			val, _ := httpadp.NewVideoValidator()
-			h := httpadp.NewVideoHandler(s, shared.NewLogger(io.Discard, ""), val)
+			h := httpadp.NewVideoHandler(s, common.NewLogger(io.Discard, ""), val)
 			r := mux.NewRouter()
 			mockMiddleware := func(next http.Handler) http.Handler {
 				return next
@@ -113,7 +113,7 @@ func TestGetVideoById(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	s := mock_app.NewMockVideoService(ctrl)
 	val, _ := httpadp.NewVideoValidator()
-	h := httpadp.NewVideoHandler(s, shared.NewLogger(io.Discard, ""), val)
+	h := httpadp.NewVideoHandler(s, common.NewLogger(io.Discard, ""), val)
 	r := mux.NewRouter()
 	mockMiddleware := func(next http.Handler) http.Handler {
 		return next
@@ -240,7 +240,7 @@ func TestGetByPublisherVideos(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			s := mock_app.NewMockVideoService(ctrl)
 			val, _ := httpadp.NewVideoValidator()
-			h := httpadp.NewVideoHandler(s, shared.NewLogger(io.Discard, ""), val)
+			h := httpadp.NewVideoHandler(s, common.NewLogger(io.Discard, ""), val)
 			r := mux.NewRouter()
 			mockMiddleware := func(next http.Handler) http.Handler {
 				return next
@@ -332,7 +332,7 @@ func TestSearchPublisherVideos(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			s := mock_app.NewMockVideoService(ctrl)
 			val, _ := httpadp.NewVideoValidator()
-			h := httpadp.NewVideoHandler(s, shared.NewLogger(io.Discard, ""), val)
+			h := httpadp.NewVideoHandler(s, common.NewLogger(io.Discard, ""), val)
 			r := mux.NewRouter()
 			mockMiddleware := func(next http.Handler) http.Handler {
 				return next
@@ -381,7 +381,7 @@ func BenchmarkCreateVideo(b *testing.B) {
 	ctrl := gomock.NewController(b)
 	s := mock_app.NewMockVideoService(ctrl)
 	val, _ := httpadp.NewVideoValidator()
-	h := httpadp.NewVideoHandler(s, shared.NewLogger(io.Discard, ""), val)
+	h := httpadp.NewVideoHandler(s, common.NewLogger(io.Discard, ""), val)
 	r := mux.NewRouter()
 	mockMiddleware := func(next http.Handler) http.Handler {
 		return next
@@ -415,7 +415,7 @@ func BenchmarkGetVideoById(b *testing.B) {
 	ctrl := gomock.NewController(b)
 	s := mock_app.NewMockVideoService(ctrl)
 	val, _ := httpadp.NewVideoValidator()
-	h := httpadp.NewVideoHandler(s, shared.NewLogger(io.Discard, ""), val)
+	h := httpadp.NewVideoHandler(s, common.NewLogger(io.Discard, ""), val)
 	r := mux.NewRouter()
 	mockMiddleware := func(next http.Handler) http.Handler {
 		return next
@@ -457,7 +457,7 @@ func BenchmarkGetByPublisherVideos(b *testing.B) {
 	ctrl := gomock.NewController(b)
 	s := mock_app.NewMockVideoService(ctrl)
 	val, _ := httpadp.NewVideoValidator()
-	h := httpadp.NewVideoHandler(s, shared.NewLogger(io.Discard, ""), val)
+	h := httpadp.NewVideoHandler(s, common.NewLogger(io.Discard, ""), val)
 	r := mux.NewRouter()
 	mockMiddleware := func(next http.Handler) http.Handler {
 		return next
@@ -500,7 +500,7 @@ func BenchmarkSearchGlobalVideos(b *testing.B) {
 	ctrl := gomock.NewController(b)
 	s := mock_app.NewMockVideoService(ctrl)
 	val, _ := httpadp.NewVideoValidator()
-	h := httpadp.NewVideoHandler(s, shared.NewLogger(io.Discard, ""), val)
+	h := httpadp.NewVideoHandler(s, common.NewLogger(io.Discard, ""), val)
 	r := mux.NewRouter()
 	mockMiddleware := func(next http.Handler) http.Handler {
 		return next

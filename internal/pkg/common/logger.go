@@ -1,4 +1,4 @@
-package shared
+package common
 
 import (
 	"io"
@@ -7,6 +7,7 @@ import (
 	"time"
 )
 
+// TODO: reconsider using sb
 var DefaultOutput = os.Stdout
 
 type Logger struct {
@@ -21,19 +22,17 @@ func NewLogger(output io.Writer, svcID string) *Logger {
 	}
 }
 
-func (l Logger) Info(message string) {
+func (l *Logger) Info(message string) {
 	l.log.Printf("%s [INFO] %s: %s\n", time.Now().String(), l.svcID, message)
 }
 
-func (l Logger) Debug(message string) {
+func (l *Logger) Debug(message string) {
 	l.log.Printf("%s [DEBUG] %s: %s\n", time.Now().String(), l.svcID, message)
 }
 
-func (l Logger) Error(message string, err error) {
+func (l *Logger) Error(message string, err error) {
 	l.log.Printf("%s [ERROR] %s: %s\n", time.Now().String(), l.svcID, message)
-	l.Debug(message + ": " + err.Error())
-}
-
-func (l Logger) LogRequest(method, requestURI string) {
-	l.log.Printf("%s [REQUEST] %s: %s \"%s\"\n", time.Now().String(), l.svcID, method, requestURI)
+	if err != nil {
+		l.Debug(err.Error())
+	}
 }

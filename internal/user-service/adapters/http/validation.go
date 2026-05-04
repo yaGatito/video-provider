@@ -3,7 +3,7 @@ package httpadp
 import (
 	"fmt"
 	"regexp"
-	"video-provider/common/shared"
+	"video-provider/pkg/common"
 	"video-provider/user-service/policy"
 
 	"github.com/go-playground/validator/v10"
@@ -34,46 +34,42 @@ var passReqSpecGroup = regexp.MustCompile(`.*[!@#$%^&*()_=+-]+.*`)
 
 func validatePassword(password []byte) error {
 	if len(password) < policy.MinPasswordLen || len(password) > policy.MaxInputTextLen {
-		return shared.NewError(
-			shared.ErrInvalidInput,
-			fmt.Sprintf(
+		return &common.Error{
+			Code: common.ErrInvalidInput,
+			// TODO: reconsider
+			Message: fmt.Sprintf(
 				"password must be between %d and %d characters long",
 				policy.MinPasswordLen,
 				policy.MaxInputTextLen,
-			),
-			nil,
-		)
+			)}
 	}
 	if !passRe.Match(password) {
-		return shared.NewError(shared.ErrInvalidInput, "password contains invalid characters", nil)
+		return &common.Error{
+			Code: common.ErrInvalidInput, Message: "password contains invalid characters"}
 	}
 	if !passReqDigGroup.Match(password) {
-		return shared.NewError(
-			shared.ErrInvalidInput,
-			"password must contain at least one digit",
-			nil,
-		)
+		return &common.Error{
+			Code:    common.ErrInvalidInput,
+			Message: "password must contain at least one digit",
+		}
 	}
 	if !passReqLowGroup.Match(password) {
-		return shared.NewError(
-			shared.ErrInvalidInput,
-			"password must contain at least one lowercase letter",
-			nil,
-		)
+		return &common.Error{
+			Code:    common.ErrInvalidInput,
+			Message: "password must contain at least one lowercase letter",
+		}
 	}
 	if !passReqCapGroup.Match(password) {
-		return shared.NewError(
-			shared.ErrInvalidInput,
-			"password must contain at least one uppercase letter",
-			nil,
-		)
+		return &common.Error{
+			Code:    common.ErrInvalidInput,
+			Message: "password must contain at least one uppercase letter",
+		}
 	}
 	if !passReqSpecGroup.Match(password) {
-		return shared.NewError(
-			shared.ErrInvalidInput,
-			"password must contain at least one special character",
-			nil,
-		)
+		return &common.Error{
+			Code:    common.ErrInvalidInput,
+			Message: "password must contain at least one special character",
+		}
 	}
 	return nil
 }

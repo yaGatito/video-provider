@@ -3,8 +3,8 @@ package auth_test
 import (
 	"testing"
 	"time"
-	"video-provider/common/auth"
-	"video-provider/common/config"
+	"video-provider/pkg/auth"
+	"video-provider/pkg/config"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/google/uuid"

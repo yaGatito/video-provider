@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 
-	"video-provider/common/shared"
+	"video-provider/pkg/common"
 	postgres "video-provider/user-service/adapters/postgres/db"
 	"video-provider/user-service/domain"
 	"video-provider/user-service/ports"
@@ -15,7 +15,7 @@ import (
 )
 
 type PostgresUserRepository struct {
-	q *postgres.Queries
+	q postgres.Querier
 }
 
 // Ensure PostgresUserRepository implements ports.UserRepository
@@ -44,7 +44,10 @@ func (r *PostgresUserRepository) Create(
 
 	id, err := r.q.CreateUser(ctx, params)
 	if err != nil {
-		return uuid.UUID{}, shared.NewError(shared.ErrInternal, "failed to create user", err)
+		return uuid.UUID{}, &common.Error{
+			Err:     err,
+			Code:    common.ErrInternal,
+			Message: "failed to create user"}
 	}
 	return id, nil
 }
@@ -53,13 +56,15 @@ func (r *PostgresUserRepository) FindByID(ctx context.Context, id uuid.UUID) (do
 	row, err := r.q.FindUserById(ctx, id)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return domain.Nil, shared.NewError(
-				shared.ErrNotFound,
-				"user not found with ID "+id.String(),
-				err,
-			)
+			return domain.Nil, &common.Error{
+				Err:     err,
+				Code:    common.ErrNotFound,
+				Message: "user not found with ID " + id.String()}
 		} else {
-			return domain.Nil, shared.NewError(shared.ErrInternal, "failed to retrieve user with ID "+id.String(), err)
+			return domain.Nil, &common.Error{
+				Err:     err,
+				Code:    common.ErrInternal,
+				Message: "failed to retrieve user with ID " + id.String()}
 		}
 	}
 
@@ -81,13 +86,15 @@ func (r *PostgresUserRepository) FindByEmail(
 	row, err := r.q.FindUserByEmail(ctx, email)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return domain.Nil, shared.NewError(
-				shared.ErrNotFound,
-				"user not found with email "+email,
-				err,
-			)
+			return domain.Nil, &common.Error{
+				Err:     err,
+				Code:    common.ErrNotFound,
+				Message: "user not found with email " + email}
 		} else {
-			return domain.Nil, shared.NewError(shared.ErrInternal, "failed to retrieve user with email "+email, err)
+			return domain.Nil, &common.Error{
+				Err:     err,
+				Code:    common.ErrInternal,
+				Message: "failed to retrieve user with email " + email}
 		}
 	}
 
@@ -112,7 +119,10 @@ func (r *PostgresUserRepository) Update(ctx context.Context, id uuid.UUID, user 
 
 	err := r.q.UpdateUser(ctx, params)
 	if err != nil {
-		return shared.NewError(shared.ErrInternal, "failed to update user", err)
+		return &common.Error{
+			Err:     err,
+			Code:    common.ErrInternal,
+			Message: "failed to update user"}
 	}
 	return nil
 }
@@ -124,13 +134,17 @@ func (r *PostgresUserRepository) GetPasswordHash(
 	row, err := r.q.GetPassword(ctx, email)
 	if err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
-			return uuid.UUID{}, nil, shared.NewError(
-				shared.ErrNotFound,
-				"not found password and email combination for email: "+email,
-				err,
-			)
+			return uuid.UUID{}, nil, &common.Error{
+				Err:     err,
+				Code:    common.ErrNotFound,
+				Message: "not found combination of password and email",
+				Details: email,
+			}
 		} else {
-			return uuid.UUID{}, nil, shared.NewError(shared.ErrInternal, "failed to retrieve password", err)
+			return uuid.UUID{}, nil, &common.Error{
+				Err:     err,
+				Code:    common.ErrInternal,
+				Message: "failed to retrieve password"}
 		}
 	}
 

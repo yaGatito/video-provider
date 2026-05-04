@@ -3,7 +3,7 @@ package httpadp
 import (
 	"encoding/json"
 	"net/http"
-	"video-provider/common/shared"
+	"video-provider/pkg/common"
 	"video-provider/user-service/app"
 	"video-provider/user-service/domain"
 
@@ -15,10 +15,10 @@ import (
 type UserHandler struct {
 	userInteractor app.UserInteractor
 	validate       *validator.Validate
-	log            *shared.Logger
+	log            *common.Logger
 }
 
-func NewUserHandler(userInteractor app.UserInteractor, log *shared.Logger) *UserHandler {
+func NewUserHandler(userInteractor app.UserInteractor, log *common.Logger) *UserHandler {
 	return &UserHandler{userInteractor: userInteractor, log: log, validate: newUserValidate()}
 }
 
@@ -38,10 +38,9 @@ func NewUserHandler(userInteractor app.UserInteractor, log *shared.Logger) *User
 func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var loginRequestData loginUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&loginRequestData); err != nil {
-		h.writeErrorResponse(
-			w,
-			shared.NewError(http.StatusBadRequest, "failed to decode login request body", err),
-		)
+		h.writeErrorResponse(w, &common.Error{
+			Code: http.StatusBadRequest, Message: "failed to decode login request body", Err: err,
+		})
 		return
 	}
 
@@ -90,14 +89,11 @@ func (h *UserHandler) Login(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 	var createUserRequestData createUserRequest
 	if err := json.NewDecoder(r.Body).Decode(&createUserRequestData); err != nil {
-		h.writeErrorResponse(
-			w,
-			shared.NewError(
-				http.StatusBadRequest,
-				"failed to decode create user request body",
-				err,
-			),
-		)
+		h.writeErrorResponse(w, &common.Error{
+			Err:     err,
+			Code:    http.StatusBadRequest,
+			Message: "failed to decode create user request body",
+		})
 		return
 	}
 
@@ -149,18 +145,19 @@ func (h *UserHandler) CreateUser(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	userID, err := uuid.Parse(mux.Vars(r)[pathVarUserID])
 	if err != nil {
-		h.writeErrorResponse(
-			w,
-			shared.NewError(http.StatusBadRequest, "invalid user id format", err),
-		)
+		h.writeErrorResponse(w, &common.Error{
+			Err:     err,
+			Code:    http.StatusBadRequest,
+			Message: "invalid user id format",
+		})
 		return
 	}
 
 	if userID == uuid.Nil {
-		h.writeErrorResponse(
-			w,
-			shared.NewError(http.StatusBadRequest, "user ID cannot be empty", nil),
-		)
+		h.writeErrorResponse(w, &common.Error{
+			Code:    http.StatusBadRequest,
+			Message: "user ID cannot be empty",
+		})
 		return
 	}
 
@@ -187,10 +184,10 @@ func (h *UserHandler) writeErrorResponse(w http.ResponseWriter, vErr error) {
 	w.Header().Set("Content-Type", "application/json")
 
 	switch vErr := vErr.(type) {
-	case *shared.Error:
-		h.log.Error(vErr.Message, vErr.Err)
-
+	case *common.Error:
 		w.WriteHeader(int(vErr.Code))
+
+		h.log.Error(vErr.Message, vErr.Err)
 		err := json.NewEncoder(w).Encode(serviceErrorResponse{
 			Message: vErr.Message,
 		})
