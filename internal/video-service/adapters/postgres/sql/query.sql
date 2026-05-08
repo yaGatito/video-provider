@@ -30,13 +30,13 @@ WHERE
 ORDER BY $3
 LIMIT $4 OFFSET $5;
 
--- name: UpdateVideo :one
-UPDATE videos SET
-  topic = $2,
-  description = $3,
-  updatedAt = NOW()
-WHERE id = $1
-RETURNING *;
+-- -- name: UpdateVideo :one
+-- UPDATE videos SET
+--   topic = $2,
+--   description = $3,
+--   updatedAt = NOW()
+-- WHERE id = $1
+-- RETURNING *;
 
--- name: GetLatestTopNUploads :many
-SELECT * FROM videos ORDER BY createdAt DESC LIMIT $1;
+-- -- name: GetLatestTopNUploads :many
+-- SELECT * FROM videos ORDER BY createdAt DESC LIMIT $1;

@@ -159,21 +159,21 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resInt, err := common.ParseIntsUrlParams(urlValues, LimitUrlParam, OffsetUrlParam)
+	intParams, err := common.ParseIntsUrlParams(urlValues, LimitUrlParam, OffsetUrlParam)
 	if err != nil {
 		common.WriteErrorResponse(w, h.log, err)
 		return
 	}
-	limit := resInt[0]
-	offset := resInt[1]
+	limit := intParams[0]
+	offset := intParams[1]
 
-	resStr, err := common.ParseStringsUrlParams(urlValues, SortByUrlParam, IsAscUrlParam)
+	strParams, err := common.ParseStringsUrlParams(urlValues, SortByUrlParam, IsAscUrlParam)
 	if err != nil {
 		common.WriteErrorResponse(w, h.log, err)
 		return
 	}
-	orderBy := resStr[0]
-	asc := resStr[1]
+	orderBy := strParams[0]
+	asc := strParams[1]
 
 	search, err := common.ExtractUrlVarString(urlValues, SearchUrlParam)
 	if err != nil && !errors.Is(err, common.ErrEmptyValue) {

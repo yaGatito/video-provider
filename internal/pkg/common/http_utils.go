@@ -68,7 +68,9 @@ func ParseStringsUrlParams(
 	for i, param := range params {
 		value := values.Get(param)
 		if len(value) == 0 {
-			return nil, ErrEmptyValue
+			return nil, &Error{
+				Code:    http.StatusBadRequest,
+				Message: "empty value for " + param}
 		}
 
 		value, err := url.QueryUnescape(value)

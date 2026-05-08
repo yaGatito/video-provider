@@ -3,13 +3,12 @@ package postgres
 import (
 	"context"
 	"time"
-	postgres "video-provider/video-service/adapters/postgres/db"
+	"video-provider/video-service/adapters/postgres/sqlcgen"
 	"video-provider/video-service/domain"
 	"video-provider/video-service/ports"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
-	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/yaGatito/slicex"
 )
 
@@ -20,14 +19,14 @@ const (
 )
 
 type VideoRepoPostgreSQL struct {
-	queries *postgres.Queries
+	queries sqlcgen.Querier
 }
 
 var _ ports.VideoRepository = (*VideoRepoPostgreSQL)(nil)
 
-func NewVideoRepoPostgreSQL(db *pgxpool.Pool) ports.VideoRepository {
+func NewVideoRepoPostgreSQL(querier sqlcgen.Querier) ports.VideoRepository {
 	v := VideoRepoPostgreSQL{}
-	v.queries = postgres.New(db)
+	v.queries = querier
 	return &v
 }
 
@@ -35,7 +34,7 @@ func (r *VideoRepoPostgreSQL) CreateVideo(
 	ctx context.Context,
 	video domain.Video,
 ) (domain.Video, error) {
-	arg := postgres.CreateVideoParams{
+	arg := sqlcgen.CreateVideoParams{
 		Publisherid: video.PublisherID,
 		Topic:       video.Topic,
 		Description: pgtype.Text{String: video.Description, Valid: true},
@@ -64,7 +63,7 @@ func (r *VideoRepoPostgreSQL) GetPublisherVideos(
 	publisherID uuid.UUID,
 	params domain.VideoPageParams,
 ) ([]domain.Video, error) {
-	args := postgres.GetVideosByPublisherParams{
+	args := sqlcgen.GetVideosByPublisherParams{
 		Publisherid: publisherID,
 		Offset:      params.Offset,
 		Limit:       params.Limit,
@@ -83,10 +82,10 @@ func (r *VideoRepoPostgreSQL) SearchPublisher(
 	query string,
 	params domain.VideoPageParams,
 ) ([]domain.Video, error) {
-	args := postgres.SearchPublisherParams{
+	args := sqlcgen.SearchPublisherParams{
 		Publisherid: publisherID,
 		Column2:     query,
-		Column3:     getOrderBy(params.OrderBy, params.Asc),
+		Column3:     GetOrderBy(params.OrderBy, params.Asc),
 		Offset:      params.Offset,
 		Limit:       params.Limit,
 	}
@@ -103,9 +102,9 @@ func (r *VideoRepoPostgreSQL) SearchGlobal(
 	query string,
 	params domain.VideoPageParams,
 ) ([]domain.Video, error) {
-	args := postgres.SearchGlobalParams{
+	args := sqlcgen.SearchGlobalParams{
 		Column1: query,
-		Column2: getOrderBy(params.OrderBy, params.Asc),
+		Column2: GetOrderBy(params.OrderBy, params.Asc),
 		Offset:  params.Offset,
 		Limit:   params.Limit,
 	}
@@ -117,7 +116,7 @@ func (r *VideoRepoPostgreSQL) SearchGlobal(
 	return slicex.Map(videos, toDomainVideo), nil
 }
 
-func toDomainVideo(video postgres.Video) domain.Video {
+func toDomainVideo(video sqlcgen.Video) domain.Video {
 	return domain.Video{
 		ID:          video.ID,
 		PublisherID: video.Publisherid,
@@ -128,7 +127,7 @@ func toDomainVideo(video postgres.Video) domain.Video {
 	}
 }
 
-func getOrderBy(order string, asc string) string {
+func GetOrderBy(order string, asc string) string {
 	if order == domain.OrderByDate {
 		order = OrderByCreatedAt
 	}

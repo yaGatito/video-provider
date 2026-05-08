@@ -11,6 +11,7 @@ import (
 	"video-provider/pkg/config"
 	httpadp "video-provider/video-service/adapters/http"
 	"video-provider/video-service/adapters/postgres"
+	"video-provider/video-service/adapters/postgres/sqlcgen"
 	"video-provider/video-service/app"
 	_ "video-provider/video-service/docs"
 
@@ -61,7 +62,7 @@ func run() error {
 	log := common.NewLogger(common.DefaultOutput, "VID-SVC")
 
 	authorizer := auth.NewAuthorizer(auth.NewTokenizer(c))
-	videoRepository := postgres.NewVideoRepoPostgreSQL(pool)
+	videoRepository := postgres.NewVideoRepoPostgreSQL(sqlcgen.New(pool))
 	videoService := app.NewVideoInteractor(videoRepository)
 
 	val, err := httpadp.NewVideoValidator()
