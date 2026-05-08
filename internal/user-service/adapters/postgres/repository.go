@@ -5,7 +5,7 @@ import (
 	"errors"
 
 	"video-provider/pkg/common"
-	postgres "video-provider/user-service/adapters/postgres/db"
+	"video-provider/user-service/adapters/postgres/sqlcgen"
 	"video-provider/user-service/domain"
 	"video-provider/user-service/ports"
 
@@ -15,15 +15,15 @@ import (
 )
 
 type PostgresUserRepository struct {
-	q postgres.Querier
+	q sqlcgen.Querier
 }
 
 // Ensure PostgresUserRepository implements ports.UserRepository
 var _ ports.UserRepository = (*PostgresUserRepository)(nil)
 
-func NewPostgresUserRepository(dbConn postgres.DBTX) *PostgresUserRepository {
+func NewPostgresUserRepository(querier sqlcgen.Querier) *PostgresUserRepository {
 	return &PostgresUserRepository{
-		q: postgres.New(dbConn),
+		q: querier,
 	}
 }
 
@@ -32,7 +32,7 @@ func (r *PostgresUserRepository) Create(
 	user domain.User,
 	password []byte,
 ) (uuid.UUID, error) {
-	params := postgres.CreateUserParams{
+	params := sqlcgen.CreateUserParams{
 		Name:      user.Name,
 		Lastname:  user.LastName,
 		Email:     user.Email,
@@ -110,7 +110,7 @@ func (r *PostgresUserRepository) FindByEmail(
 }
 
 func (r *PostgresUserRepository) Update(ctx context.Context, id uuid.UUID, user domain.User) error {
-	params := postgres.UpdateUserParams{
+	params := sqlcgen.UpdateUserParams{
 		ID:       id,
 		Name:     user.Name,
 		Lastname: user.LastName,

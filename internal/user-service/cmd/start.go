@@ -16,6 +16,7 @@ import (
 	cryptoadp "video-provider/user-service/adapters/crypto"
 	httpadp "video-provider/user-service/adapters/http"
 	"video-provider/user-service/adapters/postgres"
+	"video-provider/user-service/adapters/postgres/sqlcgen"
 	"video-provider/user-service/app"
 
 	"github.com/gorilla/mux"
@@ -62,7 +63,7 @@ func run() error {
 
 	log := common.NewLogger(common.DefaultOutput, "USR-SVC")
 
-	userRepository := postgres.NewPostgresUserRepository(dbPool)
+	userRepository := postgres.NewPostgresUserRepository(sqlcgen.New(dbPool))
 	pwHasher := cryptoadp.NewBCryptPasswordHasher()
 	tokenizer := auth.NewTokenizer(c)
 	authorizer := auth.NewAuthorizer(tokenizer)
