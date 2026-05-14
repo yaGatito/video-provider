@@ -6,14 +6,14 @@ services:
       context: ./internal/
       dockerfile: ./VideoDockerfile
     ports:
-      - "${VIDEO_API_PORT}:${VIDEO_API_PORT}"
+      - "${VIDEO_API_PORT}:8080"
     depends_on:
       - video-db
     environment:
+      VIDEO_API_PORT: "8080"
       VIDEO_DB_NAME: "${VIDEO_DB_NAME}"
       VIDEO_DB_HOST: "video-db"
       VIDEO_DB_PORT: "5432"
-      VIDEO_API_PORT: "${VIDEO_API_PORT}"
       VIDEO_DB_USER: "${VIDEO_DB_USER}"
       VIDEO_DB_PASS: "${VIDEO_DB_PASS}"
       JWT_SECRET: "${JWT_SECRET}"
@@ -42,11 +42,11 @@ services:
       context: ./internal/
       dockerfile: ./UserDockerfile
     ports:
-      - "${USER_API_PORT}:${USER_API_PORT}"
+      - "${USER_API_PORT}:8080"
     depends_on:
       - user-db
     environment:
-      USER_API_PORT: "${USER_API_PORT}"
+      USER_API_PORT: "8080"
       USER_DB_NAME: "${USER_DB_NAME}"
       USER_DB_HOST: "user-db"
       USER_DB_PORT: "5432"
