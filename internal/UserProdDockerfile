@@ -1,0 +1,16 @@
+FROM golang:1.25-alpine AS builder
+WORKDIR /app
+
+COPY . .
+RUN go mod download
+RUN CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -ldflags "-s -w -extldflags '-static'" -o /bin/user-service ./user-service/cmd
+RUN apk add upx
+RUN upx /bin/user-service
+
+FROM scratch
+WORKDIR /app
+
+COPY --from=builder /bin/user-service ./user-service
+COPY --from=builder /app/config/user_config.json ./config/user_config.json
+
+CMD ["./user-service"]
