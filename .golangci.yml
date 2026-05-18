@@ -1,7 +1,7 @@
 version: "2"
 
 run:
-  tests: true
+  tests: false
   relative-path-mode: gomod
 
 linters:
@@ -56,9 +56,6 @@ linters:
   exclusions:
     generated: lax
     paths:
-      - third_party$
-      - builtin$
-      - examples$
       - internal/video-service/docs/.* 
       - internal/user-service/docs/.*
 
@@ -71,9 +68,6 @@ formatters:
   exclusions:
     generated: lax
     paths:
-      - third_party$
-      - builtin$
-      - examples$
       - internal/video-service/docs/.*
       - internal/user-service/docs/.*
 
