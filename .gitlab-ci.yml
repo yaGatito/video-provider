@@ -19,7 +19,7 @@ test:
 
 build:
   script:
-    - docker compose build
+    - /usr/bin/docker compose build
 
 deploy:
   when: on_success
