@@ -19,6 +19,7 @@ test:
 
 build:
   script:
+    - docker version
     - /usr/bin/docker compose build
 
 deploy:
