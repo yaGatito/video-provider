@@ -1,0 +1,50 @@
+stages:
+  - test
+  - lint
+  - generate
+  - build
+  - deploy
+
+variables:
+  DOCKER_DRIVER: overlay2
+
+test:
+  stage: test
+  image: golang:1.24
+
+  script:
+    - go test ./...
+
+lint:
+  stage: lint
+  image: golangci/golangci-lint:latest
+
+  script:
+    - golangci-lint run
+
+generate:
+  stage: generate
+  image: golang:1.24
+
+  before_script:
+    - go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+    - go install github.com/swaggo/swag/cmd/swag@latest
+    - go install go.uber.org/mock/mockgen@latest
+
+  script:
+    - sqlc generate
+    - swag init
+    - mockgen ...
+
+build:
+  stage: build
+
+  script:
+    - docker compose build
+
+deploy:
+  stage: deploy
+
+  script:
+    - docker compose down
+    - docker compose up -d
