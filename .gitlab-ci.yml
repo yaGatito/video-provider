@@ -13,6 +13,7 @@ test:
   image: golang:1.24
 
   script:
+    - echo "testing..."
     - go test ./...
 
 lint:
@@ -20,6 +21,7 @@ lint:
   image: golangci/golangci-lint:latest
 
   script:
+    - echo "linting..."
     - golangci-lint run
 
 generate:
@@ -27,6 +29,7 @@ generate:
   image: golang:1.24
 
   before_script:
+    - echo "generating..."
     - go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
     - go install github.com/swaggo/swag/cmd/swag@latest
     - go install go.uber.org/mock/mockgen@latest
@@ -40,11 +43,13 @@ build:
   stage: build
 
   script:
+    - echo "building..."
     - docker compose build
 
 deploy:
   stage: deploy
 
   script:
+    - echo "deploying..."
     - docker compose down
     - docker compose up -d
