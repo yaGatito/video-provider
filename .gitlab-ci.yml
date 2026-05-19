@@ -17,6 +17,12 @@ test:
   script:
     - docker run --rm -v $(pwd)/internal:/app -w /app golang:1.25-alpine sh -c "go test ./..."
 
+  script:
+    - echo "testing..."
+    - cd internal
+    - go test ./...
+
+
 build:
   script:
     - docker compose build
@@ -26,7 +32,7 @@ deploy:
   script:
     - docker compose up -d
 
-# migrate: 1
+# migrate: 
 #   stage: migrate
 
 #   script:
