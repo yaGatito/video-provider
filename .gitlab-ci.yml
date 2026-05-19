@@ -14,7 +14,7 @@ test:
 
   script:
     - echo "testing..."
-    - go test ./...
+    - cd internal && go test ./...
 
 lint:
   stage: lint
