@@ -24,7 +24,8 @@ test:
 
   script:
     - echo "testing..."
-    - make tests
+    - cd internal
+    - go test ./...
 
 # lint:
 #   stage: lint
@@ -34,6 +35,7 @@ test:
 #     - echo "linting..."
 #     - make lint 
 
+<<<<<<< HEAD
 generate:
   stage: generate
   image: golang:1.25-alpine
@@ -47,6 +49,8 @@ generate:
     - make gen config=video
 >>>>>>> 862b801 (using golang:1.25-alpine)
 
+=======
+>>>>>>> d13fd81 (Update .gitlab-ci.yml file)
 build:
   script:
     - docker compose build
