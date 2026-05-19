@@ -4,7 +4,7 @@ stages:
 
 default:
   tags:
-    - orange-pi-5
+    - orange-pi-5-4gb
 
 build:
   stage: build
