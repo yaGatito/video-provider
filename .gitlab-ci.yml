@@ -30,6 +30,7 @@ generate:
 
   before_script:
     - echo "downloading tools..."
+    - git pull
     - make go-tools
 
   script:
