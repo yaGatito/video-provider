@@ -26,7 +26,7 @@ deploy:
   script:
     - docker compose up -d
 
-# migrate:
+# migrate: 1
 #   stage: migrate
 
 #   script:
