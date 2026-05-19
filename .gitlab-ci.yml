@@ -29,7 +29,6 @@ generate:
   image: golang:1.25-alpine
 
   before_script:
-    - apk add --no-cache make
     - echo "downloading tools..."
     - make go-tools
 
