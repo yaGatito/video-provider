@@ -10,10 +10,7 @@ default:
 
 test:
   script:
-    - docker run --rm \
-      -v $(pwd)/internal:/app \ 
-      -w /app golang:1.25-alpine \ 
-      sh -c "go test ./..."
+    - docker run --rm -v $(pwd)/internal:/app -w /app golang:1.25-alpine sh -c "go test ./..."
 
 # migrate:
 #   stage: migrate
