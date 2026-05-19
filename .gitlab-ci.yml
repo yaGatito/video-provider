@@ -1,6 +1,9 @@
 stages:
+<<<<<<< HEAD
   - lint
   - test
+=======
+>>>>>>> 8bf3586 (Update .gitlab-ci.yml file)
   - build
   - deploy
   # - migrate
@@ -8,6 +11,7 @@ stages:
 default:
   tags:
     - orange-pi-5-4gb
+<<<<<<< HEAD
 
 lint:
   when: manual
@@ -34,6 +38,8 @@ test:
 #   script:
 #     - echo "linting..."
 #     - make lint 
+=======
+>>>>>>> 8bf3586 (Update .gitlab-ci.yml file)
 
 <<<<<<< HEAD
 generate:
@@ -45,6 +51,7 @@ generate:
     - make go-tools
 
   script:
+<<<<<<< HEAD
     - make gen config=user
     - make gen config=video
 >>>>>>> 862b801 (using golang:1.25-alpine)
@@ -53,11 +60,14 @@ generate:
 >>>>>>> d13fd81 (Update .gitlab-ci.yml file)
 build:
   script:
+=======
+>>>>>>> 8bf3586 (Update .gitlab-ci.yml file)
     - docker compose build
 
 deploy:
   when: on_success
   script:
+<<<<<<< HEAD
     - docker compose up -d
 
 # migrate:
@@ -66,3 +76,6 @@ deploy:
 #   script:
 #     - make migrate-up config=user
 #     - make migrate-up config=video
+=======
+    - docker compose up -d --build
+>>>>>>> 8bf3586 (Update .gitlab-ci.yml file)
