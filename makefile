@@ -144,7 +144,6 @@ ifeq ("$(config)","user")
 endif
 
 .PHONY: coverage
-
 coverage:
 	cd internal && \
 	go test -coverprofile=coverage.out -coverpkg=./... ./... && \
@@ -155,6 +154,7 @@ coverage:
 
 .PHONY: tests
 tests: mocks
+	cd internal && \
 	go test ./...
 
 #   --- Docker ---
@@ -214,8 +214,8 @@ db-status:
 # 	--- Tools ---
 .PHONY: go-tools
 go-tools:
-	go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
-	go install github.com/golang/mock/mockgen@latest
-	go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
-	go install github.com/swaggo/swag/cmd/swag@latest
-	go install github.com/pressly/goose/v3/cmd/goose@latest
+	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2
+	go install github.com/golang/mock/mockgen@v1.6.0
+	go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.0
+	go install github.com/swaggo/swag/cmd/swag@v1.16.6
+	go install github.com/pressly/goose/v3/cmd/goose@v3.27.1
