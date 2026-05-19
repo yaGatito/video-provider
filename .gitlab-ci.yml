@@ -10,7 +10,7 @@ variables:
 
 test:
   stage: test
-  image: golang:1.24
+  image: golang:1.25
 
   script:
     - echo "testing..."
@@ -26,13 +26,11 @@ test:
 
 generate:
   stage: generate
-  image: golang:1.24
+  image: golang:1.25
 
   before_script:
-    - echo "generating..."
-    - go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
-    - go install github.com/swaggo/swag/cmd/swag@latest
-    - go install go.uber.org/mock/mockgen@latest
+    - echo "downloading tools..."
+    - make go-tools
 
   script:
     - make gen config=user
