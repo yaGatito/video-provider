@@ -10,7 +10,6 @@ default:
 
 test:
   script:
-    - mkdir /app
     - docker run --rm \
         -v $(pwd)/internal:/app \
         -w /app \
