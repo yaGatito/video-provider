@@ -1,42 +1,19 @@
 stages:
-  - lint
-  - generate
-  - test
   - build
   - deploy
 
-variables:
-  DOCKER_DRIVER: overlay2
-
-test:
-  stage: test
-  image: golang:1.25-alpine
-
-  script:
-    - echo "testing..."
-    - cd internal
-    - go test ./...
-
-# lint:
-#   stage: lint
-#   image: golangci/golangci-lint:latest
-
-#   script:
-#     - echo "linting..."
-#     - make lint 
+default:
+  tags:
+    - orange-pi-5-4gb
 
 build:
   stage: build
 
   script:
-    - echo "building..."
     - docker compose build
 
 deploy:
   stage: deploy
 
   script:
-    - echo "deploying..."
-    - docker compose down
-    - docker compose up -d
-    # - dummy change
+    - docker compose up -d --build
