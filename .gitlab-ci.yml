@@ -10,7 +10,7 @@ variables:
 
 test:
   stage: test
-  image: golang:1.25
+  image: golang:1.25-alpine
 
   script:
     - echo "testing..."
@@ -26,7 +26,7 @@ test:
 
 generate:
   stage: generate
-  image: golang:1.25
+  image: golang:1.25-alpine
 
   before_script:
     - echo "downloading tools..."
