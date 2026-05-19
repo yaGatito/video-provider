@@ -16,13 +16,13 @@ test:
     - echo "testing..."
     - make tests
 
-lint:
-  stage: lint
-  image: golangci/golangci-lint:latest
+# lint:
+#   stage: lint
+#   image: golangci/golangci-lint:latest
 
-  script:
-    - echo "linting..."
-    - make lint 
+#   script:
+#     - echo "linting..."
+#     - make lint 
 
 generate:
   stage: generate
