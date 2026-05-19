@@ -10,6 +10,7 @@ build:
   stage: build
 
   script:
+    - docker version
     - /usr/bin/docker compose build
 
 deploy:
