@@ -154,6 +154,7 @@ coverage:
 
 .PHONY: tests
 tests: mocks
+	cd internal && \
 	go test ./...
 
 #   --- Docker ---
