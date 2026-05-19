@@ -39,9 +39,8 @@ generate:
   #   - go install github.com/swaggo/swag/cmd/swag@v1.16.6
 
   script:
-    - sqlc generate
-    - swag init
-    - mockgen ...
+    - make gen config=user
+    - make gen config=video
 
 build:
   stage: build
@@ -54,3 +53,6 @@ deploy:
 
   script:
     - docker compose up -d --build
+    - sleep 0.5
+    - make migrate-up config=user
+    - make migrate-up config=video
