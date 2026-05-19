@@ -14,7 +14,8 @@ test:
 
   script:
     - echo "testing..."
-    - make tests
+    - cd internal
+    - go test ./...
 
 # lint:
 #   stage: lint
@@ -23,19 +24,6 @@ test:
 #   script:
 #     - echo "linting..."
 #     - make lint 
-
-generate:
-  stage: generate
-  image: golang:1.25-alpine
-
-  before_script:
-    - apk add --no-cache make
-    - echo "downloading tools..."
-    - make go-tools
-
-  script:
-    - make gen config=user
-    - make gen config=video
 
 build:
   stage: build
