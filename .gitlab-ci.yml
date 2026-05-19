@@ -1,5 +1,6 @@
 stages:
   - test
+  - lint
   # - migrate
   - build
   - deploy
@@ -12,6 +13,10 @@ test:
   script:
     - docker run --rm -v $(pwd)/internal:/app -w /app golang:1.25-alpine sh -c "go test ./..."
 
+lint:
+  script:
+    - docker run --rm -v $(pwd)/internal:/app -w /app golang:1.25-alpine sh -c "go test ./..."
+
 # migrate:
 #   stage: migrate
 
@@ -20,13 +25,9 @@ test:
 #     - make migrate-up config=video
 
 build:
-  stage: build
-
   script:
     - docker compose build
 
 deploy:
-  stage: deploy
-
   script:
     - docker compose up -d --build
