@@ -14,7 +14,7 @@ test:
 
   script:
     - echo "testing..."
-    - cd internal && go test ./...
+    - make tests
 
 lint:
   stage: lint
@@ -22,7 +22,7 @@ lint:
 
   script:
     - echo "linting..."
-    - golangci-lint run
+    - make lint 
 
 generate:
   stage: generate
@@ -35,9 +35,8 @@ generate:
     - go install go.uber.org/mock/mockgen@latest
 
   script:
-    - sqlc generate
-    - swag init
-    - mockgen ...
+    - make gen config=user
+    - make gen config=video
 
 build:
   stage: build
