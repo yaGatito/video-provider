@@ -1,55 +1,35 @@
 stages:
-  - test
   - lint
-  - generate
+  - test
   - build
   - deploy
+  # - migrate
 
-variables:
-  DOCKER_DRIVER: overlay2
-
-test:
-  stage: test
-  image: golang:1.24
-
-  script:
-    - echo "testing..."
-    - go test ./...
+default:
+  tags:
+    - orange-pi-5-4gb
 
 lint:
-  stage: lint
-  image: golangci/golangci-lint:latest
-
+  when: manual
   script:
-    - echo "linting..."
-    - golangci-lint run
+    - docker run --rm -v $(pwd):/app -w /app golang:1.25-alpine sh -c "go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2 && cd /app/internal && golangci-lint run -c /app/.golangci.yml"
 
-generate:
-  stage: generate
-  image: golang:1.24
-
-  before_script:
-    - echo "generating..."
-    - go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
-    - go install github.com/swaggo/swag/cmd/swag@latest
-    - go install go.uber.org/mock/mockgen@latest
-
+test:
   script:
-    - sqlc generate
-    - swag init
-    - mockgen ...
+    - docker run --rm -v $(pwd)/internal:/app -w /app golang:1.25-alpine sh -c "go test ./..."
 
 build:
-  stage: build
-
   script:
-    - echo "building..."
     - docker compose build
 
 deploy:
-  stage: deploy
-
+  when: on_success
   script:
-    - echo "deploying..."
-    - docker compose down
     - docker compose up -d
+
+# migrate:
+#   stage: migrate
+
+#   script:
+#     - make migrate-up config=user
+#     - make migrate-up config=video
