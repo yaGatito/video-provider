@@ -1,4 +1,6 @@
 stages:
+  - lint
+  - test
   - build
   - deploy
   - migrate-up
@@ -7,19 +9,9 @@ default:
   tags:
     - orange-pi-5-4gb
 
-v4-lint:
-  image: docker.io/jnikko/golangci-go:1.0
-  script:
-    - cd internal
-    - golangci-lint run -c ../.golangci.yml
-
-v3-lint:
+lint:
   script:
     - docker run --rm -v $(pwd):/app -w /app docker.io/jnikko/golangci-go:1.0 sh -c "cd /app/internal && golangci-lint run -c /app/.golangci.yml"
-
-v2-lint:
-  script:
-    - docker build -f Dockerfile.lint -t linter-batman . && docker run --rm -v $(pwd):/app -w /app linter-batman sh -c "cd /app/internal && golangci-lint run -c /app/.golangci.yml"
 
 test:
   script:
