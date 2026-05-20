@@ -3,7 +3,7 @@ stages:
   - build
   - deploy
   - lint
-  # - migrate
+  - migrate
 
 default:
   tags:
@@ -23,13 +23,14 @@ build:
     - docker compose build
 
 deploy:
+  stage: deploy
   when: on_success
   script:
     - docker compose up -d
 
-# migrate:
-#   stage: migrate
+migrate:
+  stage: migrate
 
-#   script:
-#     - make migrate-up config=user
-#     - make migrate-up config=video
+  script:
+    - echo "make migrate-up config=user"
+    - echo "make migrate-up config=video"
