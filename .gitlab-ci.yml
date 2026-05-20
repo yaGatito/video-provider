@@ -19,14 +19,13 @@ test:
     - docker run --rm -v $(pwd)/internal:/app -w /app golang:1.25-alpine sh -c "go test ./..."
 
 build:
-  when: on_success
   script:
     - docker compose build
 
 deploy:
   when: on_success
   script:
-    - docker compose up -d --build
+    - docker compose up -d
 
 
 # migrate:
