@@ -1,10 +1,12 @@
-stages:  
+stages:
+  - publish-build-runners
   - test
   - build
   - deploy
   - v1-lint
   - v2-lint
   - v3-lint
+  - v4-lint
   - migrate-up
 
 default:
@@ -19,14 +21,14 @@ publish-build-runners:
     - docker push jnikko/golangci-go:1.0
     - docker push jnikko/goose-go:1.0
 
-v4-linter:
+v4-lint:
   when: manual
   image: jnikko/golangci-go:1.0
   script:
     - cd internal
     - golangci-lint run -c ../.golangci.yml
 
-v3-linter:
+v3-lint:
   script:
     - docker run --rm -v $(pwd):/app -w /app jnikko/golangci-go:1.0 sh -c "cd /app/internal && golangci-lint run -c /app/.golangci.yml"
 
