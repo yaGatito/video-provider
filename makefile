@@ -222,7 +222,5 @@ go-tools:
 
 .PHONY: update-runners
 update-runners:
-	docker build -f Dockerfile.goose -t jnikko/golangci-go:1.0 .
-	docker build -f Dockerfile.lint -t jnikko/goose-go:1.0 .
-	docker push jnikko/golangci-go:1.0
-	docker push jnikko/goose-go:1.0
+	docker buildx build -f Dockerfile.goose --platform linux/arm64 -t jnikko/goose-go:1.0 --push .
+	docker buildx build -f Dockerfile.lint --platform linux/arm64 -t jnikko/golangci-go:1.0 --push .

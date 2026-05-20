@@ -2,9 +2,6 @@ stages:
   - test
   - build
   - deploy
-  - v2-lint
-  - v3-lint
-  - v4-lint
   - migrate-up
 
 default:
