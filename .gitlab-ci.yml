@@ -19,7 +19,6 @@ test:
 
 build:
   script:
-    - echo "building..."
     - docker compose build
 
 deploy:
