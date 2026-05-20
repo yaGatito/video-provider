@@ -87,12 +87,12 @@ func ValidateLimit(limit int32) (int32, error) {
 	if limit < policy.ThresholdVideosLimit {
 		return 0, &common.Error{
 			Code:    common.ErrInvalidInput,
-			Message: fmt.Sprintf("limit is less then threshold(%d): %d", policy.ThresholdVideosLimit, limit)}
+			Message: fmt.Sprintf("limit is less then %d", policy.ThresholdVideosLimit)}
 	}
 	if limit > policy.VideosMaxLimit {
 		return 0, &common.Error{
 			Code:    common.ErrInvalidInput,
-			Message: fmt.Sprintf("limit reached maximum allowed value: %d", limit)}
+			Message: fmt.Sprintf("limit is greater then: %d", limit)}
 	}
 	return limit, nil
 }

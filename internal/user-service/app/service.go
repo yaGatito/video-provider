@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"log"
 	"video-provider/pkg/auth"
 	"video-provider/pkg/common"
 	"video-provider/user-service/domain"
@@ -21,7 +20,6 @@ type UserInteractor interface {
 type UserService struct {
 	Repo      ports.UserRepository
 	Hasher    ports.PasswordHasher
-	log       log.Logger
 	Tokenizer *auth.Tokenizer
 }
 

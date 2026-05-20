@@ -22,14 +22,10 @@ type loginUserRequest struct {
 	Password string `json:"password" validate:"required"`
 }
 
-func (r createUserRequest) normalize() {
+func (r *createUserRequest) normalize() {
 	r.Email = strings.TrimSpace(strings.ToLower(r.Email))
 	r.Name = strings.TrimSpace(r.Name)
 	r.LastName = strings.TrimSpace(r.LastName)
-}
-
-type serviceErrorResponse struct {
-	Message string `json:"msg"`
 }
 
 type authResponse struct {
@@ -43,7 +39,7 @@ type userResponse struct {
 	CreatedAt time.Time `json:"createdAt"`
 }
 
-func (r loginUserRequest) normalize() {
+func (r *loginUserRequest) normalize() {
 	r.Email = strings.ToLower(r.Email)
 }
 

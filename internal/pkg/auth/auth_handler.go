@@ -35,7 +35,7 @@ func (a Authorizer) Auth(next http.Handler) http.Handler {
 			return
 		}
 
-		userID, err := a.tokenizer.ValidateToken(tokenString, )
+		userID, err := a.tokenizer.ValidateToken(tokenString)
 		if err != nil {
 			w.WriteHeader(http.StatusUnauthorized)
 			return

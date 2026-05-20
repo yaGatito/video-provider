@@ -3,16 +3,21 @@ stages:
   - build
   - deploy
   - lint
-  - migrate
+  - migrate-up
 
 default:
   tags:
     - orange-pi-5-4gb
 
-lint:
+old-lint:
   when: manual
   script:
     - docker run --rm -v $(pwd):/app -w /app golang:1.25-alpine sh -c "go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2 && cd /app/internal && golangci-lint run -c /app/.golangci.yml"
+
+lint:
+  when: manual
+  script:
+    - docker build -f Dockerfile.lint -t linter-batman . && docker run --rm -v $(pwd):/app -w /app linter-batman sh -c "cd /app/internal && golangci-lint run -c /app/.golangci.yml"
 
 test:
   script:
@@ -29,7 +34,7 @@ deploy:
     - docker compose up -d
 
 migrate:
-  stage: migrate
+  stage: migrate-up
 
   script:
     - echo "make migrate-up config=user"

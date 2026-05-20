@@ -13,17 +13,23 @@ var textRe = regexp.MustCompile(
 	fmt.Sprintf(`^[A-Za-z]{%d,%d}$`, policy.MinInputTextLen, policy.MaxInputTextLen),
 )
 
-func newUserValidate() *validator.Validate {
+func newUserValidate() (*validator.Validate, error) {
 	validate := validator.New(validator.WithRequiredStructEnabled())
 
-	validate.RegisterValidation("text64", func(fl validator.FieldLevel) bool {
+	err := validate.RegisterValidation("text64", func(fl validator.FieldLevel) bool {
 		return textRe.MatchString(fl.Field().String())
 	})
-	validate.RegisterValidation("lenLimit", func(fl validator.FieldLevel) bool {
+	if err != nil {
+		return nil, err
+	}
+	err = validate.RegisterValidation("lenLimit", func(fl validator.FieldLevel) bool {
 		return len(fl.Field().String()) <= policy.MaxInputTextLen
 	})
+	if err != nil {
+		return nil, err
+	}
 
-	return validate
+	return validate, nil
 }
 
 var passRe = regexp.MustCompile(`^[A-Za-z0-9!@#$%^&*()_=+]+$`)

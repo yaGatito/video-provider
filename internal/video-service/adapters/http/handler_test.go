@@ -360,8 +360,8 @@ func TestSearchPublisherVideos(t *testing.T) {
 			if c.expCallCnt == 1 {
 				var actualRes httpadp.VideosResponseBody
 				err := json.Unmarshal(rec.Body.Bytes(), &actualRes)
-				require.Equal(t, expectedResponseBody, actualRes)
 				require.NoError(t, err)
+				require.Equal(t, expectedResponseBody, actualRes)
 			}
 		})
 	}

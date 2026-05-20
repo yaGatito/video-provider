@@ -18,7 +18,11 @@ type UserHandler struct {
 }
 
 func NewUserHandler(userInteractor app.UserInteractor, log *common.Logger) *UserHandler {
-	return &UserHandler{userInteractor: userInteractor, log: log, validate: newUserValidate()}
+	validate, err := newUserValidate()
+	if err != nil {
+		log.Error("validate is not created. aborting..", err)
+	}
+	return &UserHandler{userInteractor: userInteractor, log: log, validate: validate}
 }
 
 // Login godoc
@@ -167,53 +171,4 @@ func (h *UserHandler) GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	common.WriteResponse(w, h.log, toUserDto(user), http.StatusOK)
-}
-
-func (h *UserHandler) writeResponse(w http.ResponseWriter, v any, code int) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(code)
-
-	err := json.NewEncoder(w).Encode(v)
-	if err != nil {
-		h.log.Error("Error encoding response body:", err)
-	}
-}
-
-func (h *UserHandler) writeErrorResponse(w http.ResponseWriter, vErr error) {
-	w.Header().Set("Content-Type", "application/json")
-
-	switch vErr := vErr.(type) {
-	case *common.Error:
-		w.WriteHeader(int(vErr.Code))
-
-		h.log.Error(vErr.Message, vErr.Err)
-		err := json.NewEncoder(w).Encode(serviceErrorResponse{
-			Message: vErr.Message,
-		})
-		if err != nil {
-			h.log.Error("Error encoding error response body:", err)
-		}
-
-	case validator.ValidationErrors:
-		h.log.Error("Invalid request body error", vErr[0])
-
-		w.WriteHeader(http.StatusBadRequest)
-		err := json.NewEncoder(w).Encode(serviceErrorResponse{
-			Message: "invalid field: " + vErr[0].Field(),
-		})
-		if err != nil {
-			h.log.Error("Error encoding error response body:", err)
-		}
-
-	case error:
-		h.log.Error("Fallback error", vErr)
-
-		w.WriteHeader(http.StatusInternalServerError)
-		err := json.NewEncoder(w).Encode(serviceErrorResponse{
-			Message: "video-provider error",
-		})
-		if err != nil {
-			h.log.Error("Error encoding error response body", err)
-		}
-	}
 }

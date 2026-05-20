@@ -27,7 +27,6 @@ linters:
     - testpackage
     - unconvert
     - gochecknoinits
-    - gochecknoglobals
     - gomoddirectives
     - testableexamples
     - nakedret
