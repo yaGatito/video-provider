@@ -11,7 +11,7 @@ default:
 
 lint:
   script:
-    - docker run --rm -v $(pwd)/internal:/app -w /app golang:1.25-alpine sh -c "go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2 && cd ./internal/ && golangci-lint run -c ../.golangci.yml"
+    - docker run --rm -v $(pwd):/app -w /app golang:1.25-alpine sh -c "go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2 && cd /app/internal && golangci-lint run -c /app/.golangci.yml"
 
 test:
   script:
