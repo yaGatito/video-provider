@@ -1,9 +1,7 @@
 stages:
-  - publish-build-runners
   - test
   - build
   - deploy
-  - v1-lint
   - v2-lint
   - v3-lint
   - v4-lint
@@ -12,14 +10,6 @@ stages:
 default:
   tags:
     - orange-pi-5-4gb
-
-publish-build-runners:
-  when: manual
-  script:
-    - docker build -f Dockerfile.goose -t jnikko/golangci-go:1.0 .
-    - docker build -f Dockerfile.lint -t jnikko/goose-go:1.0 .
-    - docker push jnikko/golangci-go:1.0
-    - docker push jnikko/goose-go:1.0
 
 v4-lint:
   when: manual

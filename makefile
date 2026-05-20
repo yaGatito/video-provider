@@ -219,3 +219,10 @@ go-tools:
 	go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.30.0
 	go install github.com/swaggo/swag/cmd/swag@v1.16.6
 	go install github.com/pressly/goose/v3/cmd/goose@v3.27.1
+
+.PHONY: update-runners
+update-runners:
+	docker build -f Dockerfile.goose -t jnikko/golangci-go:1.0 .
+	docker build -f Dockerfile.lint -t jnikko/goose-go:1.0 .
+	docker push jnikko/golangci-go:1.0
+	docker push jnikko/goose-go:1.0
