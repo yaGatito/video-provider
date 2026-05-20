@@ -11,14 +11,22 @@ default:
   tags:
     - orange-pi-5-4gb
 
-build-lint-runner:
+publish-build-runners:
   when: manual
   script:
-    - docker build -f Dockerfile.lint -t jnikko/golangci-go:1.0 .
+    - docker build -f Dockerfile.goose -t jnikko/golangci-go:1.0 .
+    - docker build -f Dockerfile.lint -t jnikko/goose-go:1.0 .
     - docker push jnikko/golangci-go:1.0
+    - docker push jnikko/goose-go:1.0
+
+v4-linter:
+  when: manual
+  image: jnikko/golangci-go:1.0
+  script:
+    - cd internal
+    - golangci-lint run -c ../.golangci.yml
 
 v3-linter:
-  when: manual
   script:
     - docker run --rm -v $(pwd):/app -w /app jnikko/golangci-go:1.0 sh -c "cd /app/internal && golangci-lint run -c /app/.golangci.yml"
 
@@ -44,9 +52,10 @@ deploy:
   script:
     - docker compose up -d
 
-migrate:
+migrate-up:
   stage: migrate-up
-
+  when: manual
+	# goose -dir "internal/video-service/adapters/postgres/sql/migrations" postgres "$(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable" up
   script:
-    - echo "make migrate-up config=user"
-    - echo "make migrate-up config=video"
+    - docker run --rm -v $(pwd):/app -w /app golang:1.25-alpine sh -c "go install github.com/pressly/goose/v3/cmd/goose@v3.27.1 && goose -dir "internal/video-service/adapters/postgres/sql/migrations" postgres "$(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable" up && goose -dir "internal/user-service/adapters/postgres/sql/migrations" postgres "$(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable" up"
+
