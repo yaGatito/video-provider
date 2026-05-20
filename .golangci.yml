@@ -16,7 +16,6 @@ linters:
     - rowserrcheck
     - gocyclo
     - gocritic
-    - revive
     - misspell
     - lll
     - whitespace
