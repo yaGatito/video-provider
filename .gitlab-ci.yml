@@ -12,7 +12,6 @@ default:
 lint:
   when: manual
   script:
-    - go version
     - docker run --rm -v $(pwd):/app -w /app golang:1.25-alpine sh -c "go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2 && cd /app/internal && golangci-lint run -c /app/.golangci.yml"
 
 test:
@@ -27,7 +26,6 @@ deploy:
   when: on_success
   script:
     - docker compose up -d
-
 
 # migrate:
 #   stage: migrate
