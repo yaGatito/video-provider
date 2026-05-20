@@ -1,5 +1,10 @@
-stages:
+stages:  
+  - test
+  - build
   - deploy
+  - v1-lint
+  - v2-lint
+  - v3-lint
   - migrate-up
 
 default:
