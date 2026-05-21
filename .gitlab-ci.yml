@@ -27,9 +27,12 @@ deploy:
   script:
     - docker compose up -d
 
-# migrate-up:
-#   stage: migrate-up
-#   when: manual
-#   script:
-#     - docker run --rm -v $(pwd):/app -w /app golang:1.25-alpine sh -c "go install github.com/pressly/goose/v3/cmd/goose@v3.27.1 && goose -dir "internal/video-service/adapters/postgres/sql/migrations" postgres "$(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable" up && goose -dir "internal/user-service/adapters/postgres/sql/migrations" postgres "$(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable" up"
+migrate-up:
+  stage: migrate-up
+  when: manual
+  script:
+    # - docker run --rm -v $(pwd):/app -w /app docker.io/jnikko/goose-go:1.0 sh -c "cd /app/internal && golangci-lint run -c /app/.golangci.yml"
+    - docker run --rm -v $(pwd)/internal/video-service/adapters/postgres/sql/migrations:/migrations -w /app docker.io/jnikko/goose-go:1.0 sh -c "goose -dir '/migrations' postgres 'postgres://$(VIDEO_DB_USER):$(VIDEO_DB_PASS)@$(VIDEO_DB_HOST):$(VIDEO_DB_PORT)/$(VIDEO_DB_NAME)?sslmode=disable' up"
+    - docker run --rm -v $(pwd)/internal/user-service/adapters/postgres/sql/migrations:/migrations -w /app docker.io/jnikko/goose-go:1.0 sh -c "goose -dir '/migrations' postgres 'postgres://$(USER_DB_USER):$(USER_DB_PASS)@$(USER_DB_HOST):$(USER_DB_PORT)/$(USER_DB_NAME)?sslmode=disable' up"
+    # - docker run --rm -v $(pwd):/app -w /app golang:1.25-alpine sh -c "go install github.com/pressly/goose/v3/cmd/goose@v3.27.1 && goose -dir "internal/video-service/adapters/postgres/sql/migrations" postgres "$(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable" up && goose -dir "internal/user-service/adapters/postgres/sql/migrations" postgres "$(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable" up"
 
