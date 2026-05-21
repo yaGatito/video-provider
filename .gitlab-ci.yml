@@ -29,21 +29,8 @@ deploy:
 
 migrate-up:
   stage: migrate-up
-  when: always
+  when: manual
   script:
-    - echo $VIDEO_DB_USER
-    - echo $VIDEO_DB_NAME
-    - docker run --rm -e VIDEO_DB_USER="$VIDEO_DB_USER" -e VIDEO_DB_PASS="$VIDEO_DB_PASS" -e VIDEO_DB_HOST="$VIDEO_DB_HOST" -e VIDEO_DB_PORT="$VIDEO_DB_PORT" -e VIDEO_DB_NAME="$VIDEO_DB_NAME" -v $(pwd)/internal/video-service/adapters/postgres/sql/migrations:/migrations docker.io/jnikko/goose-go:1.0 sh -c 'goose -dir /migrations postgres "postgres://$VIDEO_DB_USER:$VIDEO_DB_PASS@$VIDEO_DB_HOST:$VIDEO_DB_PORT/$VIDEO_DB_NAME?sslmode=disable" up'
-    # - |
-    #   docker run --rm \
-    #     -e VIDEO_DB_USER="$VIDEO_DB_USER" \
-    #     -e VIDEO_DB_PASS="$VIDEO_DB_PASS" \
-    #     -e VIDEO_DB_HOST="$VIDEO_DB_HOST" \
-    #     -e VIDEO_DB_PORT="$VIDEO_DB_PORT" \
-    #     -e VIDEO_DB_NAME="$VIDEO_DB_NAME" \
-    #     -v $(pwd)/internal/video-service/adapters/postgres/sql/migrations:/migrations \
-    #     docker.io/jnikko/goose-go:1.0 \
-    #     sh -c 'goose -dir /migrations postgres "postgres://$VIDEO_DB_USER:$VIDEO_DB_PASS@$VIDEO_DB_HOST:$VIDEO_DB_PORT/$VIDEO_DB_NAME?sslmode=disable" up'
-        
-    # - docker run --rm -v $(pwd)/internal/user-service/adapters/postgres/sql/migrations:/migrations docker.io/jnikko/goose-go:1.0 sh -c "goose -dir '/migrations' postgres "postgres://$USER_DB_USER:$USER_DB_PASS@$USER_DB_HOST:$USER_DB_PORT/$USER_DB_NAME?sslmode=disable" up"
-
+    - |
+      docker compose run --rm migration_runner sh -c 'goose -dir /migrations postgres \
+      "postgres://$VIDEO_DB_USER:$VIDEO_DB_PASS@$VIDEO_DB_HOST:$VIDEO_DB_PORT/$VIDEO_DB_NAME?sslmode=disable" up'
