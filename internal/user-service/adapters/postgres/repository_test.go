@@ -18,17 +18,26 @@ type MockQuerier struct {
 	mock.Mock
 }
 
-func (m *MockQuerier) CreateUser(ctx context.Context, params sqlcgen.CreateUserParams) (uuid.UUID, error) {
+func (m *MockQuerier) CreateUser(
+	ctx context.Context,
+	params sqlcgen.CreateUserParams,
+) (uuid.UUID, error) {
 	args := m.Called(ctx, params)
 	return args.Get(0).(uuid.UUID), args.Error(1)
 }
 
-func (m *MockQuerier) FindUserById(ctx context.Context, id uuid.UUID) (sqlcgen.FindUserByIdRow, error) {
+func (m *MockQuerier) FindUserById(
+	ctx context.Context,
+	id uuid.UUID,
+) (sqlcgen.FindUserByIdRow, error) {
 	args := m.Called(ctx, id)
 	return args.Get(0).(sqlcgen.FindUserByIdRow), args.Error(1)
 }
 
-func (m *MockQuerier) FindUserByEmail(ctx context.Context, email string) (sqlcgen.FindUserByEmailRow, error) {
+func (m *MockQuerier) FindUserByEmail(
+	ctx context.Context,
+	email string,
+) (sqlcgen.FindUserByEmailRow, error) {
 	args := m.Called(ctx, email)
 	return args.Get(0).(sqlcgen.FindUserByEmailRow), args.Error(1)
 }
@@ -38,7 +47,10 @@ func (m *MockQuerier) UpdateUser(ctx context.Context, params sqlcgen.UpdateUserP
 	return args.Error(0)
 }
 
-func (m *MockQuerier) GetPassword(ctx context.Context, email string) (sqlcgen.GetPasswordRow, error) {
+func (m *MockQuerier) GetPassword(
+	ctx context.Context,
+	email string,
+) (sqlcgen.GetPasswordRow, error) {
 	args := m.Called(ctx, email)
 	return args.Get(0).(sqlcgen.GetPasswordRow), args.Error(1)
 }

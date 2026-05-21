@@ -4,7 +4,7 @@ services:
     container_name: video-service-alpine
     build:
       context: ./internal/
-      dockerfile: ./VideoDockerfile
+      dockerfile: ./Dockerfile.video.prod
     ports:
       - "${VIDEO_API_PORT}:8080"
     depends_on:
@@ -40,7 +40,7 @@ services:
     container_name: user-service-alpine
     build:
       context: ./internal/
-      dockerfile: ./UserDockerfile
+      dockerfile: ./Dockerfile.user.prod
     ports:
       - "${USER_API_PORT}:8080"
     depends_on:

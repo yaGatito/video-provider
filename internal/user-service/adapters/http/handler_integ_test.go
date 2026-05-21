@@ -46,12 +46,16 @@ func TestLoginIntegration(t *testing.T) {
 	defer server.Close()
 
 	// Register step
-	createUserResp, err := http.Post(server.URL+"/v1/users", "application/json", bytes.NewBuffer([]byte(`{
+	createUserResp, err := http.Post(
+		server.URL+"/v1/users",
+		"application/json",
+		bytes.NewBuffer([]byte(`{
 			"email":"test@example.com",
 			"name":"User",
 			"lastname":"Test",
 			"password":"PeeSWORD!!11"
-		}`)))
+		}`)),
+	)
 	assert.NoError(t, err)
 	defer createUserResp.Body.Close()
 	assert.NotEmpty(t, createUserResp)
@@ -110,7 +114,11 @@ func NewUserRepository() *MemoryUserRepository {
 	}
 }
 
-func (repo *MemoryUserRepository) Create(ctx context.Context, user domain.User, password []byte) (uuid.UUID, error) {
+func (repo *MemoryUserRepository) Create(
+	ctx context.Context,
+	user domain.User,
+	password []byte,
+) (uuid.UUID, error) {
 	repo.userLock.Lock()
 	defer repo.userLock.Unlock()
 
@@ -126,7 +134,11 @@ func (repo *MemoryUserRepository) Create(ctx context.Context, user domain.User, 
 	return id, nil
 }
 
-func (repo *MemoryUserRepository) Update(ctx context.Context, id uuid.UUID, user domain.User) error {
+func (repo *MemoryUserRepository) Update(
+	ctx context.Context,
+	id uuid.UUID,
+	user domain.User,
+) error {
 	return nil
 }
 
@@ -143,7 +155,10 @@ func (repo *MemoryUserRepository) FindByID(ctx context.Context, id uuid.UUID) (d
 	return user, nil
 }
 
-func (repo *MemoryUserRepository) FindByEmail(ctx context.Context, email string) (domain.User, error) {
+func (repo *MemoryUserRepository) FindByEmail(
+	ctx context.Context,
+	email string,
+) (domain.User, error) {
 	repo.userLock.RLock()
 	defer repo.userLock.RUnlock()
 
@@ -156,7 +171,10 @@ func (repo *MemoryUserRepository) FindByEmail(ctx context.Context, email string)
 	return user, nil
 }
 
-func (repo *MemoryUserRepository) GetPasswordHash(ctx context.Context, email string) (uuid.UUID, []byte, error) {
+func (repo *MemoryUserRepository) GetPasswordHash(
+	ctx context.Context,
+	email string,
+) (uuid.UUID, []byte, error) {
 	repo.userLock.RLock()
 	defer repo.userLock.RUnlock()
 

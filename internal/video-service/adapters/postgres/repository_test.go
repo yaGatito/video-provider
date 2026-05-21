@@ -19,7 +19,10 @@ type MockQuerier struct {
 	mock.Mock
 }
 
-func (m *MockQuerier) CreateVideo(ctx context.Context, params sqlcgen.CreateVideoParams) (sqlcgen.Video, error) {
+func (m *MockQuerier) CreateVideo(
+	ctx context.Context,
+	params sqlcgen.CreateVideoParams,
+) (sqlcgen.Video, error) {
 	args := m.Called(ctx, params)
 	return args.Get(0).(sqlcgen.Video), args.Error(1)
 }
@@ -29,17 +32,26 @@ func (m *MockQuerier) GetVideoByID(ctx context.Context, id uuid.UUID) (sqlcgen.V
 	return args.Get(0).(sqlcgen.Video), args.Error(1)
 }
 
-func (m *MockQuerier) GetVideosByPublisher(ctx context.Context, params sqlcgen.GetVideosByPublisherParams) ([]sqlcgen.Video, error) {
+func (m *MockQuerier) GetVideosByPublisher(
+	ctx context.Context,
+	params sqlcgen.GetVideosByPublisherParams,
+) ([]sqlcgen.Video, error) {
 	args := m.Called(ctx, params)
 	return args.Get(0).([]sqlcgen.Video), args.Error(1)
 }
 
-func (m *MockQuerier) SearchPublisher(ctx context.Context, params sqlcgen.SearchPublisherParams) ([]sqlcgen.Video, error) {
+func (m *MockQuerier) SearchPublisher(
+	ctx context.Context,
+	params sqlcgen.SearchPublisherParams,
+) ([]sqlcgen.Video, error) {
 	args := m.Called(ctx, params)
 	return args.Get(0).([]sqlcgen.Video), args.Error(1)
 }
 
-func (m *MockQuerier) SearchGlobal(ctx context.Context, params sqlcgen.SearchGlobalParams) ([]sqlcgen.Video, error) {
+func (m *MockQuerier) SearchGlobal(
+	ctx context.Context,
+	params sqlcgen.SearchGlobalParams,
+) ([]sqlcgen.Video, error) {
 	args := m.Called(ctx, params)
 	return args.Get(0).([]sqlcgen.Video), args.Error(1)
 }

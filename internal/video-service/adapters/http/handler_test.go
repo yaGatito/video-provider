@@ -306,8 +306,13 @@ func TestSearchPublisherVideos(t *testing.T) {
 		{"ok search", 1,
 			pubIDStr, "?offset=0&limit=5&sort=date&order=t&query=search", http.StatusOK},
 
-		{"few words search", 1,
-			pubIDStr, "?offset=0&limit=5&sort=date&order=t&query=search+lorem+ipsum+kitty+dolor", http.StatusOK},
+		{
+			"few words search",
+			1,
+			pubIDStr,
+			"?offset=0&limit=5&sort=date&order=t&query=search+lorem+ipsum+kitty+dolor",
+			http.StatusOK,
+		},
 
 		{"invalid offset search", 0,
 			pubIDStr, "?offset=A&limit=5&sort=date&order=t&query=search", http.StatusBadRequest},
