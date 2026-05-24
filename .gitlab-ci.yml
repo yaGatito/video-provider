@@ -48,12 +48,12 @@ deploy:
 
 migrate-up:
   stage: migrate-up
-  image: jnikko/goose-go:1.0
+  image: docker:27-cli
   when: manual
   script:
     - |
-      goose -dir ./internal/user-service/adapters/postgres/sql/migrations postgres \
-      "postgres://$USER_DB_USER:$USER_DB_PASS@$USER_DB_HOST:$USER_DB_PORT/$USER_DB_NAME?sslmode=disable" up
+      docker compose run --rm migration_runner sh -c 'goose -dir /migrations postgres \
+      "postgres://$USER_DB_USER:$USER_DB_PASS@$USER_DB_HOST:$USER_DB_PORT/$USER_DB_NAME?sslmode=disable" up'
     - |
-      goose -dir ./internal/video-service/adapters/postgres/sql/migrations postgres \
-      "postgres://$VIDEO_DB_USER:$VIDEO_DB_PASS@$VIDEO_DB_HOST:$VIDEO_DB_PORT/$VIDEO_DB_NAME?sslmode=disable" up
+      docker compose run --rm migration_runner sh -c 'goose -dir /migrations postgres \
+      "postgres://$VIDEO_DB_USER:$VIDEO_DB_PASS@$VIDEO_DB_HOST:$VIDEO_DB_PORT/$VIDEO_DB_NAME?sslmode=disable" up'
