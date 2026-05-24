@@ -52,8 +52,8 @@ migrate-up:
   when: manual
   script:
     - |
-      goose -dir /internal/user-service/adapters/postgres/sql/migrations postgres \
+      goose -dir ./internal/user-service/adapters/postgres/sql/migrations postgres \
       "postgres://$USER_DB_USER:$USER_DB_PASS@$USER_DB_HOST:$USER_DB_PORT/$USER_DB_NAME?sslmode=disable" up
     - |
-      goose -dir /internal/video-service/adapters/postgres/sql/migrations postgres \
+      goose -dir ./internal/video-service/adapters/postgres/sql/migrations postgres \
       "postgres://$VIDEO_DB_USER:$VIDEO_DB_PASS@$VIDEO_DB_HOST:$VIDEO_DB_PORT/$VIDEO_DB_NAME?sslmode=disable" up
