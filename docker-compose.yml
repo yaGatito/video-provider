@@ -93,7 +93,8 @@ services:
     image: jnikko/goose-go:1.0
     container_name: migration_runner
     volumes:
-      - ./internal/video-service/adapters/postgres/sql/migrations:/migrations
+      - ./internal/video-service/adapters/postgres/sql/migrations:/video-migrations
+      - ./internal/user-service/adapters/postgres/sql/migrations:/user-migrations
     environment:
       USER_DB_NAME: "${USER_DB_NAME}"
       USER_DB_HOST: "user-db"
