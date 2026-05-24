@@ -89,26 +89,26 @@ services:
       - app-network
 
 # --- Migration runner service ---
-  # migration_runner:
-  #   image: jnikko/goose-go:1.0
-  #   container_name: migration_runner
-  #   volumes:
-  #     - ./internal/video-service/adapters/postgres/sql/migrations:/migrations
-  #   environment:
-  #     USER_DB_NAME: "${USER_DB_NAME}"
-  #     USER_DB_HOST: "user-db"
-  #     USER_DB_PORT: "5432"
-  #     USER_DB_USER: "${USER_DB_USER}"
-  #     USER_DB_PASS: "${USER_DB_PASS}"
-  #     VIDEO_DB_NAME: "${VIDEO_DB_NAME}"
-  #     VIDEO_DB_HOST: "video-db"
-  #     VIDEO_DB_PORT: "5432"
-  #     VIDEO_DB_USER: "${VIDEO_DB_USER}"
-  #     VIDEO_DB_PASS: "${VIDEO_DB_PASS}"
-  #   depends_on:
-  #     - web
-  #   networks:
-  #     - app-network
+  migration_runner:
+    image: jnikko/goose-go:1.0
+    container_name: migration_runner
+    volumes:
+      - ./internal/video-service/adapters/postgres/sql/migrations:/migrations
+    environment:
+      USER_DB_NAME: "${USER_DB_NAME}"
+      USER_DB_HOST: "user-db"
+      USER_DB_PORT: "5432"
+      USER_DB_USER: "${USER_DB_USER}"
+      USER_DB_PASS: "${USER_DB_PASS}"
+      VIDEO_DB_NAME: "${VIDEO_DB_NAME}"
+      VIDEO_DB_HOST: "video-db"
+      VIDEO_DB_PORT: "5432"
+      VIDEO_DB_USER: "${VIDEO_DB_USER}"
+      VIDEO_DB_PASS: "${VIDEO_DB_PASS}"
+    depends_on:
+      - web
+    networks:
+      - app-network
 
 volumes:
   user-db-data:
