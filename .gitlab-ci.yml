@@ -7,24 +7,21 @@ stages:
 
 default:
   tags:
-    - orange-pi-5-4gb
+    - orange-pi-5-4gb-docker-runner 
 
 lint:
-  stage: lint
   image: docker.io/jnikko/golangci-go:1.0
   script:
     - cd internal
     - golangci-lint run -c ../.golangci.yml
 
 test:
-  stage: test
   image: golang:1.25-alpine
   script:
     - cd internal
     - go test ./...
 
 build:
-  stage: build
   image: scratch
   script:
     - echo "attempting to compose build"
