@@ -10,27 +10,50 @@ default:
     - orange-pi-5-4gb
 
 lint:
+  stage: lint
+  image: docker.io/jnikko/golangci-go:1.0
   script:
-    - docker run --rm -v $(pwd):/app -w /app docker.io/jnikko/golangci-go:1.0 sh -c "cd /app/internal && golangci-lint run -c /app/.golangci.yml"
+    - cd internal
+    - golangci-lint run -c ../.golangci.yml
 
 test:
+  stage: test
+  image: golang:1.25-alpine
   script:
-    - docker run --rm -v $(pwd)/internal:/app -w /app golang:1.25-alpine sh -c "go test ./..."
+    - cd internal
+    - go test ./...
 
 build:
+  stage: build
+  image: scratch
   script:
+    - echo "attempting to compose build"
     - docker compose build
 
 deploy:
   stage: deploy
+  image: scratch
   when: on_success
   script:
     - docker compose up -d
 
+# deploy-over-ssh:
+#   stage: deploy-over-ssh
+#   when: on_success
+#   script:
+#     - mkdir -p ~/.ssh
+#     - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+#     - chmod -R 700 ~/.ssh
+#     - echo "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
+#     - chmod 644 ~/.ssh/known_hosts
+
+#     - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'docker compose up -d'
+
 migrate-up:
   stage: migrate-up
+  image: jnikko/goose-go:1.0
   when: manual
   script:
     - |
-      docker compose run --rm migration_runner sh -c 'goose -dir /migrations postgres \
-      "postgres://$VIDEO_DB_USER:$VIDEO_DB_PASS@$VIDEO_DB_HOST:$VIDEO_DB_PORT/$VIDEO_DB_NAME?sslmode=disable" up'
+      goose -dir /migrations postgres \
+      "postgres://$VIDEO_DB_USER:$VIDEO_DB_PASS@$VIDEO_DB_HOST:$VIDEO_DB_PORT/$VIDEO_DB_NAME?sslmode=disable" up
