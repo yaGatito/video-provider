@@ -22,14 +22,12 @@ test:
     - go test ./...
 
 build:
-  image: scratch
   script:
     - echo "attempting to compose build"
     - docker compose build
 
 deploy:
   stage: deploy
-  image: scratch
   when: on_success
   script:
     - docker compose up -d
