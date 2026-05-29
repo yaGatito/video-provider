@@ -19,38 +19,38 @@ log = @echo [::MAKEFILE::] $(1)
 
 # Use .env values directly
 ifeq ($(config),user)
-  DB_NAME	= $(USER_DB_NAME)
-  DB_HOST   = $(USER_DB_HOST)
-  DB_PORT   = $(USER_DB_PORT)
-  API_PORT  = $(USER_API_PORT)
-	POSTGRES_USER 	= $(USER_DB_USER)
+  DB_NAME							= $(USER_DB_NAME)
+  DB_HOST   					= $(USER_DB_HOST)
+  DB_PORT   					= $(USER_DB_PORT)
+  API_PORT  					= $(USER_API_PORT)
+	POSTGRES_USER 			= $(USER_DB_USER)
 	POSTGRES_PASSWORD 	= $(USER_DB_PASS)
 endif
 
 ifeq ($(config),video)
-  DB_NAME   = $(VIDEO_DB_NAME)
-  DB_HOST   = $(VIDEO_DB_HOST)
-  DB_PORT   = $(VIDEO_DB_PORT)
-  API_PORT  = $(VIDEO_API_PORT)
-	POSTGRES_USER = $(VIDEO_DB_USER)
-	POSTGRES_PASSWORD= $(VIDEO_DB_PASS)
+  DB_NAME   				= $(VIDEO_DB_NAME)
+  DB_HOST   				= $(VIDEO_DB_HOST)
+  DB_PORT   				= $(VIDEO_DB_PORT)
+  API_PORT  				= $(VIDEO_API_PORT)
+	POSTGRES_USER 		= $(VIDEO_DB_USER)
+	POSTGRES_PASSWORD	= $(VIDEO_DB_PASS)
 endif
 
 MIGRATIONS_DIR 		= internal/$(SERVICE_NAME)/adapters/postgres/sql/migrations
 DEFAULT_DB_PORT 	= 5432
-DB_VENDOR 			= postgres
-DB_VERSION 			= 18-alpine
-DB_URL 				= $(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
-DB_CONTAINER_NAME 	= $(config)-db-$(DB_VENDOR)-$(DB_VERSION)
+DB_VENDOR 				= postgres
+DB_VERSION 				= 18-alpine
+DB_URL 						= $(DB_VENDOR)://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?sslmode=disable
+DB_CONTAINER_NAME = $(config)-db-$(DB_VENDOR)-$(DB_VERSION)
 
 MAIN 	= internal/$(SERVICE_NAME)/cmd/start.go
 PKG 	?= app
 TEST 	?= .
 
-MOCKGEN 		:= mockgen$(EXE)
-SQLC 			:= sqlc$(EXE)
-GOLANGCI_LINT 	:= golangci-lint$(EXE)
-SWAG 			:= swag$(EXE)
+MOCKGEN 			:= mockgen$(EXE)
+SQLC 					:= sqlc$(EXE)
+GOLANGCI_LINT := golangci-lint$(EXE)
+SWAG 					:= swag$(EXE)
 
 .DEFAULT_GOAL 	:= help
 
@@ -61,6 +61,7 @@ help:
 	@echo ""
 	@echo "Common targets:"
 	@echo "  make bootstrap      	- check required local tools"
+	@echo "  make go-tools				- installs required dev tools setup"
 	@echo "  make setup          	- run DB containers + init + migrations for user and video"
 	@echo "  make go-run config=... - run service (user or video)"
 	@echo "  make do-run config=... - run service via docker (user or video)"
@@ -70,15 +71,6 @@ help:
 	@echo "  make test           	- run selected package test"
 	@echo "  make tests          	- run all tests"
 	@echo "  make db-status      	- print DB settings for current config"
-
-.PHONY: bootstrap
-bootstrap:
-	@go version
-	@docker --version
-	@$(MOCKGEN) -version
-	@$(SQLC) version
-	@$(GOLANGCI_LINT) version
-	@goose -version
 
 .PHONY: setup
 setup:
@@ -103,38 +95,20 @@ web:
 	$(call log, "Starting frontend application...")
 	cd ./web && npm start
 
-.PHONY: go-run
-go-run:
-	go run $(MAIN)
-
 .PHONY: gen
-gen: sqlc swag mocks
+gen: 
+	$(call log, "SQLC generate by file: internal/$(SERVICE_NAME)/adapters/postgres/sqlc.yml")
+	$(SQLC) generate -f "./internal/$(SERVICE_NAME)/adapters/postgres/sqlc.yml"
 
-.PHONY: lint
-lint:
-	cd ./internal/$(SERVICE_NAME) && $(GOLANGCI_LINT) run -c ../../.golangci.yml
-	$(GOLANGCI_LINT) fmt
-	$(call log, "Formatted")
-	cd ../../
-
-.PHONY: swag
-swag: 
 	$(call log, "Swagger generate: $(MAIN)")
 	$(call log, "Swagger output: docs")
 	${SWAG} init -g cmd/start.go -o internal/$(SERVICE_NAME)/docs  --dir internal/$(SERVICE_NAME)
 
-.PHONY: sqlc
-sqlc:
-	$(call log, "SQLC generate by file: internal/$(SERVICE_NAME)/adapters/postgres/sqlc.yml")
-	$(SQLC) generate -f "./internal/$(SERVICE_NAME)/adapters/postgres/sqlc.yml"
-
-.PHONY: mocks
-mocks:
-ifeq ("$(config)","video")
-	$(MOCKGEN) -source="./internal/$(SERVICE_NAME)/app/service.go" -destination="./internal/$(SERVICE_NAME)/app/mock/service_mock.go" -mock_names=VideoService=MockVideoService
-	$(MOCKGEN) -source="./internal/$(SERVICE_NAME)/ports/video_repo.go" -destination="./internal/$(SERVICE_NAME)/ports/mock/video_repo_mock.go" -mock_names=VideoRepository=MockVideoRepository
-	$(call log, "$(SERVICE_NAME) mocks generated")
-endif
+	ifeq ("$(config)","video")
+		$(MOCKGEN) -source="./internal/$(SERVICE_NAME)/app/service.go" -destination="./internal/$(SERVICE_NAME)/app/mock/service_mock.go" -mock_names=VideoService=MockVideoService
+		$(MOCKGEN) -source="./internal/$(SERVICE_NAME)/ports/video_repo.go" -destination="./internal/$(SERVICE_NAME)/ports/mock/video_repo_mock.go" -mock_names=VideoRepository=MockVideoRepository
+		$(call log, "$(SERVICE_NAME) mocks generated")
+	endif
 
 ifeq ("$(config)","user")
 	$(MOCKGEN) -source="./internal/$(SERVICE_NAME)/app/service.go" -destination="./internal/$(SERVICE_NAME)/app/mock/service_mock.go" -mock_names=UserInteractor=MockUserInteractor
@@ -142,6 +116,13 @@ ifeq ("$(config)","user")
 	$(MOCKGEN) -source="./internal/$(SERVICE_NAME)/ports/hash_gen.go" -destination="./internal/$(SERVICE_NAME)/ports/mock/hash_gen_mock.go" -mock_names=PasswordHasher=MockPasswordHasher
 	$(call log, "$(SERVICE_NAME) mocks generated")
 endif
+
+.PHONY: fmt
+lint:
+	$(GOLANGCI_LINT) fmt
+	cd ./internal/$(SERVICE_NAME) && $(GOLANGCI_LINT) run -c ../../.golangci.yml
+	$(call log, "Formatted")
+	cd ../../
 
 .PHONY: coverage
 coverage:
@@ -168,7 +149,7 @@ minio:
 
 .PHONY: do-run
 do-run:
-	docker build -D -t $(SERVICE_NAME) -f internal/$(SERVICE_NAME)/Dockerfile .
+	docker build -D -t $(SERVICE_NAME) -f internal/$(SERVICE_NAME)/Dockerfile.user.prod .
 	docker rm -f $(SERVICE_NAME)
 	docker run  --name $(SERVICE_NAME) --rm -p $(API_PORT):$(API_PORT) $(SERVICE_NAME)
 
@@ -204,14 +185,16 @@ migrate-init:
 	goose -dir "$(MIGRATIONS_DIR)" -s create init sql
 	$(call log, "Migrate-init finished")
 
-.PHONY: db-status
-db-status:
-	$(call log, "Configuration: $(SERVICE_NAME) ---")
-	$(call log, "Target DB: $(DB_NAME) on $(DB_HOST):$(DB_PORT)")
-	$(call log, "Container: $(DB_CONTAINER_NAME)")
-	$(call log, "Migrations: $(MIGRATIONS_DIR)")
-
 # 	--- Tools ---
+.PHONY: bootstrap
+bootstrap:
+	@go version
+	@docker --version
+	@$(MOCKGEN) -version
+	@$(SQLC) version
+	@$(GOLANGCI_LINT) version
+	@goose -version
+
 .PHONY: go-tools
 go-tools:
 	go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2
@@ -225,3 +208,4 @@ update-runners:
 	docker run --privileged --rm tonistiigi/binfmt --install all
 	docker buildx build -f Dockerfile.goose --platform linux/amd64,linux/arm64 -t jnikko/goose-go:1.0 --push .
 	docker buildx build -f Dockerfile.lint --platform linux/amd64,linux/arm64 -t jnikko/golangci-go:1.0 --push .
+	docker buildx build -f Dockerfile.ssh --platform linux/amd64,linux/arm64 -t jnikko/ssh:1.0 --push .

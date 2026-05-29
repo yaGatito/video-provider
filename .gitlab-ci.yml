@@ -24,27 +24,19 @@ test:
 build:
   image: docker:27-cli
   script:
-    - echo "attempting to compose build"
     - docker compose build
 
 deploy:
   stage: deploy
-  image: docker:27-cli
+  image: jnikko/ssh:1.0
   when: on_success
   script:
-    - docker compose up -d
-
-# deploy-over-ssh:
-#   stage: deploy-over-ssh
-#   when: on_success
-#   script:
-#     - mkdir -p ~/.ssh
-#     - echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-#     - chmod -R 700 ~/.ssh
-#     - echo "$SSH_KNOWN_HOSTS" >> ~/.ssh/known_hosts
-#     - chmod 644 ~/.ssh/known_hosts
-
-#     - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'docker compose up -d'
+    - mkdir -p ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" | base64 -d > ~/.ssh/id_rsa
+    - chmod -R 600 ~/.ssh
+    - echo "$SSH_KNOWN_HOSTS" | base64 -d >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'docker compose up -d'
 
 migrate-up:
   stage: migrate-up
