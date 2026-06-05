@@ -1,7 +1,7 @@
 services:
   # --- Video Service ---
   video-service:
-    image: yagatito/video-service:1.0
+    image: yagatito/video-service-prod:1.0
     container_name: video-service-alpine
     ports:
       - "${VIDEO_API_PORT}:8080"
@@ -35,7 +35,7 @@ services:
 
   # --- User Service ---
   user-service:
-    image: yagatito/user-service:1.0
+    image: yagatito/user-service-prod:1.0
     container_name: user-service-alpine
     ports:
       - "${USER_API_PORT}:8080"

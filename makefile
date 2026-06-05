@@ -206,9 +206,9 @@ go-tools:
 .PHONY: update-runners
 update-runners:
 	docker run --privileged --rm tonistiigi/binfmt --install all
-  docker buildx build -f internal/Dockerfile.user.debug --platform linux/amd64,linux/arm64 -t yagatito/user-service:1.0 --push .
-  docker buildx build -f internal/Dockerfile.video.debug --platform linux/amd64,linux/arm64 -t yagatito/video-service:1.0 --push .
-  docker buildx build -f web/Dockerfile --platform linux/amd64,linux/arm64 -t yagatito/video-provider-web:1.0 --push .
-	docker buildx build -f Dockerfile.goose --platform linux/amd64,linux/arm64 -t yagatito/goose-go:1.0 --push .
-	docker buildx build -f Dockerfile.lint --platform linux/amd64,linux/arm64 -t yagatito/golangci-go:1.0 --push .
-	docker buildx build -f Dockerfile.ssh --platform linux/amd64,linux/arm64 -t yagatito/ssh:1.0 --push .
+	docker buildx build -f internal/Dockerfile.user.prod 		--platform linux/amd64,linux/arm64 -t yagatito/user-service-prod:1.0 	--push ./internal
+	docker buildx build -f internal/Dockerfile.video.prod 	--platform linux/amd64,linux/arm64 -t yagatito/video-service-prod:1.0 --push ./internal
+	docker buildx build -f web/Dockerfile 									--platform linux/amd64,linux/arm64 -t yagatito/video-provider-web:1.0 --push ./web
+	docker buildx build -f Dockerfile.goose 								--platform linux/amd64,linux/arm64 -t yagatito/goose-go:1.0 					--push .
+	docker buildx build -f Dockerfile.lint 									--platform linux/amd64,linux/arm64 -t yagatito/golangci-go:1.0 				--push .
+	docker buildx build -f Dockerfile.ssh 									--platform linux/amd64,linux/arm64 -t yagatito/ssh:1.0 								--push .
