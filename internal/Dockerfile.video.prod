@@ -3,7 +3,7 @@ WORKDIR /app
 
 COPY . .
 RUN go mod download
-RUN CGO_ENABLED=0 GOARCH=amd64 GOOS=linux go build -ldflags "-s -w -extldflags '-static'" -o /bin/video-service ./video-service/cmd
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags "-s -w -extldflags '-static'" -o /bin/video-service ./video-service/cmd
 RUN apk add upx
 RUN upx /bin/video-service
 
