@@ -33,7 +33,9 @@ deploy:
   script:
     - mkdir -p ~/.ssh
     - echo "$SSH_PRIVATE_KEY" | base64 -d > ~/.ssh/id_ed25519
+    - cat ~/.ssh/id_ed25519
     - chmod -R 600 ~/.ssh
+    - echo "$SSH_KNOWN_HOSTS TEST" 
     - echo "$SSH_KNOWN_HOSTS" | base64 -d >> ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
     - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'docker compose up -d'
