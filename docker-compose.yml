@@ -1,10 +1,8 @@
 services:
   # --- Video Service ---
   video-service:
+    image: yagatito/video-service:1.0
     container_name: video-service-alpine
-    build:
-      context: ./internal/
-      dockerfile: ./Dockerfile.video.prod
     ports:
       - "${VIDEO_API_PORT}:8080"
     depends_on:
@@ -37,10 +35,8 @@ services:
 
   # --- User Service ---
   user-service:
+    image: yagatito/user-service:1.0
     container_name: user-service-alpine
-    build:
-      context: ./internal/
-      dockerfile: ./Dockerfile.user.prod
     ports:
       - "${USER_API_PORT}:8080"
     depends_on:
@@ -73,11 +69,9 @@ services:
 
   # --- Web (React) Service ---
   web:
+    image: yagatito/video-provider-web
     container_name: web-nginx
-    build:
-      context: ./web
-      dockerfile: Dockerfile
-      args:
+    environment:
         REACT_APP_VIDEO_API_URL: "${REACT_APP_VIDEO_API_URL}"
         REACT_APP_USER_API_URL: "${REACT_APP_USER_API_URL}"
     ports:
@@ -90,7 +84,7 @@ services:
 
 # --- Migration runner service ---
   migration_runner:
-    image: jnikko/goose-go:1.0
+    image: yagatito/goose-go:1.0
     container_name: migration_runner
     volumes:
       - ./internal/video-service/adapters/postgres/sql/migrations:/video-migrations

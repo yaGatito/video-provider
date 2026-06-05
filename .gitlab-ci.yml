@@ -10,7 +10,7 @@ default:
     - orange-pi-5-4gb-docker-runner 
 
 lint:
-  image: docker.io/jnikko/golangci-go:1.0
+  image: docker.io/yagatito/golangci-go:1.0
   script:
     - cd internal
     - golangci-lint run -c ../.golangci.yml
@@ -24,29 +24,35 @@ test:
 build:
   image: docker:27-cli
   script:
-    - docker compose build
+    - docker run --privileged --rm tonistiigi/binfmt --install all
+    - docker buildx build -f internal/Dockerfile.user.debug --platform linux/amd64,linux/arm64 -t yagatito/user-service:1.0 --push .
+    - docker buildx build -f internal/Dockerfile.video.debug --platform linux/amd64,linux/arm64 -t yagatito/video-service:1.0 --push .
+    - docker buildx build -f web/Dockerfile --platform linux/amd64,linux/arm64 -t yagatito/video-provider-web:1.0 --push .
 
 deploy:
   stage: deploy
-  image: jnikko/ssh:1.0
+  image: docker.io/yagatito/ssh:1.0
   when: on_success
   script:
     - mkdir -p ~/.ssh
     - echo "$SSH_PRIVATE_KEY" | base64 -d > ~/.ssh/id_ed25519
     - chmod -R 600 ~/.ssh
-    - echo "$SSH_KNOWN_HOSTS"
     - echo "$SSH_KNOWN_HOSTS" | base64 -d >> ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
+    - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'mkdir -p ~/app'
+    - scp docker-compose.yml $SSH_USER@$SSH_HOST:~/app/docker-compose.yml
     - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'docker compose up -d'
+    # - scp -r internal/video-service/adapters/postgres/sql/migrations/* $SSH_USER@$SSH_HOST:/video-migrations/
+    # - scp -r internal/user-service/adapters/postgres/sql/migrations/* $SSH_USER@$SSH_HOST:/user-migrations/
 
-migrate-up:
-  stage: migrate-up
-  image: docker:27-cli
-  when: manual
-  script:
-    - |
-      docker compose run --rm migration_runner sh -c 'goose -dir /user-migrations postgres \
-      "postgres://$USER_DB_USER:$USER_DB_PASS@$USER_DB_HOST:$USER_DB_PORT/$USER_DB_NAME?sslmode=disable" up'
-    - |
-      docker compose run --rm migration_runner sh -c 'goose -dir /video-migrations postgres \
-      "postgres://$VIDEO_DB_USER:$VIDEO_DB_PASS@$VIDEO_DB_HOST:$VIDEO_DB_PORT/$VIDEO_DB_NAME?sslmode=disable" up'
+# migrate-up:
+#   stage: migrate-up
+#   image: docker:27-cli
+#   when: manual
+#   script:
+#     - |
+#       docker compose run --rm migration_runner sh -c 'goose -dir /user-migrations postgres \
+#       "postgres://$USER_DB_USER:$USER_DB_PASS@$USER_DB_HOST:$USER_DB_PORT/$USER_DB_NAME?sslmode=disable" up'
+#     - |
+#       docker compose run --rm migration_runner sh -c 'goose -dir /video-migrations postgres \
+#       "postgres://$VIDEO_DB_USER:$VIDEO_DB_PASS@$VIDEO_DB_HOST:$VIDEO_DB_PORT/$VIDEO_DB_NAME?sslmode=disable" up'
