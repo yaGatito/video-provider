@@ -32,7 +32,7 @@ deploy:
   when: on_success
   script:
     - mkdir -p ~/.ssh
-    - echo "$SSH_PRIVATE_KEY" | base64 -d > ~/.ssh/id_rsa
+    - echo "$SSH_PRIVATE_KEY" | base64 -d > ~/.ssh/id_ed25519
     - chmod -R 600 ~/.ssh
     - echo "$SSH_KNOWN_HOSTS" | base64 -d >> ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
