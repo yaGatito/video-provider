@@ -87,8 +87,8 @@ services:
     image: yagatito/goose-go:1.0
     container_name: migration_runner
     volumes:
-      - /app/video-migrations:/video-migrations
-      - /app/user-migrations:/user-migrations
+      - ~/app/video-migrations:/video-migrations
+      - ~/app/user-migrations:/user-migrations
     environment:
       USER_DB_NAME: "${USER_DB_NAME}"
       USER_DB_HOST: "user-db"
