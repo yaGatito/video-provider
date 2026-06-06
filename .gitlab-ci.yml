@@ -59,6 +59,22 @@ deploy:
     - echo "$SSH_KNOWN_HOSTS" | base64 -d >> ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
     - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'mkdir -p ~/app'
+    - |
+      ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "cat << 'EOF' > ~/app/.env
+      VIDEO_API_PORT=$VIDEO_API_PORT
+      VIDEO_DB_NAME=$VIDEO_DB_NAME
+      VIDEO_DB_USER=$VIDEO_DB_USER
+      VIDEO_DB_PASS=$VIDEO_DB_PASS
+      JWT_SECRET=$JWT_SECRET
+      VIDEO_DB_PORT=$VIDEO_DB_PORT
+      USER_DB_USER=$USER_DB_USER
+      USER_DB_PASS=$USER_DB_PASS
+      USER_DB_NAME=$USER_DB_NAME
+      USER_API_PORT=$USER_API_PORT
+      USER_DB_PORT=$USER_DB_PORT
+      REACT_APP_VIDEO_API_URL=$REACT_APP_VIDEO_API_URL
+      REACT_APP_USER_API_URL=$REACT_APP_USER_API_URL
+      EOF"
     - scp docker-compose.yml $SSH_USER@$SSH_HOST:~/app/docker-compose.yml
     - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'cd ~/app && docker compose up -d'
     # - scp -r internal/video-service/adapters/postgres/sql/migrations/* $SSH_USER@$SSH_HOST:/video-migrations/
