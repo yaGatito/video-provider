@@ -71,9 +71,13 @@ deploy:
     - scp docker-compose.yml $SSH_USER@$SSH_HOST:~/app/docker-compose.yml
 
     # Setting up migrations
-    - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'mkdir -p ~/app/video-migrations'
-    - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'mkdir -p ~/app/user-migrations'
-    - scp -r -P $SSH_PORT internal/video-service/adapters/postgres/sql/migrations/* $SSH_USER@$SSH_HOST:~/app/video-migrations/
-    - scp -r -P $SSH_PORT internal/user-service/adapters/postgres/sql/migrations/* $SSH_USER@$SSH_HOST:~/app/user-migrations/
+    - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'mkdir -p ~/app/video-migrations && mkdir -p ~/app/user-migrations'
+    - scp -r -P $SSH_PORT internal/video-service/adapters/postgres/sql/migrations/. $SSH_USER@$SSH_HOST:~/app/video-migrations/
+    - scp -r -P $SSH_PORT internal/user-service/adapters/postgres/sql/migrations/. $SSH_USER@$SSH_HOST:~/app/user-migrations/
 
-    - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'cd ~/app && docker compose up -d'
+    - |
+      ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "cd ~/app && \
+      docker compose pull && \
+      docker compose up -d && \
+      docker compose logs && \
+      docker image prune -f"
