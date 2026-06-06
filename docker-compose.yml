@@ -32,6 +32,11 @@ services:
       - video-db-data:/var/lib/postgresql
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
 
   # --- User Service ---
   user-service:
@@ -65,7 +70,12 @@ services:
     volumes:
       - user-db-data:/var/lib/postgresql
     networks:
-      - app-network
+      - app-network    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
 
   # --- Web (React) Service ---
   web:
@@ -106,7 +116,12 @@ services:
       goose -dir /video-migrations postgres "postgres://$$VIDEO_DB_USER:$$VIDEO_DB_PASS@$$VIDEO_DB_HOST:$$VIDEO_DB_PORT/$$VIDEO_DB_NAME?sslmode=disable" up
       '
     depends_on:
-      - web
+      user-db:
+        condition: service_healthy
+      video-db:
+        condition: service_healthy
+      web:
+        condition: service_started
     networks:
       - app-network
 
