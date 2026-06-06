@@ -80,4 +80,22 @@ deploy:
       docker compose pull && \
       docker compose up -d && \
       docker compose logs && \
+      docker volume prune -f && \
+      docker image prune -f"
+
+service-down:
+  stage: deploy
+  image: docker.io/yagatito/ssh:1.0
+  when: manual
+  script:
+    # Setting up SSH
+    - mkdir -p ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" | base64 -d > ~/.ssh/id_ed25519
+    - chmod -R 600 ~/.ssh
+    - echo "$SSH_KNOWN_HOSTS" | base64 -d >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    - |
+      ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "cd ~/app && \
+      docker compose down -v && \
+      docker volume prune -f && \
       docker image prune -f"
