@@ -27,9 +27,11 @@ buildx:
   services:
     - docker:27-dind # Make sure the DinD service is running if it isn't configured globally
   script:
+    - echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USER" --password-stdin
+
     # 1. Install cross-platform QEMU emulator binaries into the kernel
     - docker run --privileged --rm tonistiigi/binfmt --install all
-    
+
     # 2. Create a new multi-platform builder instance using the docker-container driver
     - docker buildx create --name mybuilder --driver docker-container --use
     
