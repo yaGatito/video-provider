@@ -60,7 +60,7 @@ deploy:
     - chmod 644 ~/.ssh/known_hosts
     - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'mkdir -p ~/app'
     - scp docker-compose.yml $SSH_USER@$SSH_HOST:~/app/docker-compose.yml
-    - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'docker compose up -d'
+    - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'cd ~/app && docker compose up -d'
     # - scp -r internal/video-service/adapters/postgres/sql/migrations/* $SSH_USER@$SSH_HOST:/video-migrations/
     # - scp -r internal/user-service/adapters/postgres/sql/migrations/* $SSH_USER@$SSH_HOST:/user-migrations/
 
