@@ -77,15 +77,3 @@ deploy:
     - scp -r -P $SSH_PORT internal/user-service/adapters/postgres/sql/migrations/* $SSH_USER@$SSH_HOST:~/app/user-migrations/
 
     - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'cd ~/app && docker compose up -d'
-
-# refactor it so it will run a separate image for it and not reusing container
-migrate-up:
-  stage: migrate-up
-  image: docker:27-cli
-  script:
-    - |
-      docker compose run --rm migration_runner sh -c 'goose -dir /user-migrations postgres \
-      "postgres://$USER_DB_USER:$USER_DB_PASS@$USER_DB_HOST:$USER_DB_PORT/$USER_DB_NAME?sslmode=disable" up'
-    - |
-      docker compose run --rm migration_runner sh -c 'goose -dir /video-migrations postgres \
-      "postgres://$VIDEO_DB_USER:$VIDEO_DB_PASS@$VIDEO_DB_HOST:$VIDEO_DB_PORT/$VIDEO_DB_NAME?sslmode=disable" up'
