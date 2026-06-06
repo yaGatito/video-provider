@@ -51,9 +51,9 @@ deploy:
     - chmod 644 ~/.ssh/known_hosts
 
     # Setting up docker compose
-    - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'mkdir -p ~/app'
+    - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'mkdir -p /app'
     - |
-      ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "cat << 'EOF' > ~/app/.env
+      ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "cat << 'EOF' > /app/.env
       VIDEO_API_PORT=$VIDEO_API_PORT
       VIDEO_DB_NAME=$VIDEO_DB_NAME
       VIDEO_DB_USER=$VIDEO_DB_USER
@@ -68,15 +68,17 @@ deploy:
       REACT_APP_VIDEO_API_URL=$REACT_APP_VIDEO_API_URL
       REACT_APP_USER_API_URL=$REACT_APP_USER_API_URL
       EOF"
-    - scp docker-compose.yml $SSH_USER@$SSH_HOST:~/app/docker-compose.yml
-    - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'cd ~/app && docker compose up -d'
+    - scp docker-compose.yml $SSH_USER@$SSH_HOST:/app/docker-compose.yml
 
     # Setting up migrations
-    # - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'mkdir -p ~/app/video-migrations'
-    - scp -r -P $SSH_PORT internal/video-service/adapters/postgres/sql/migrations $SSH_USER@$SSH_HOST:~/app/
-    # - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'mkdir -p ~/app/user-migrations'
-    - scp -r -P $SSH_PORT internal/user-service/adapters/postgres/sql/migrations $SSH_USER@$SSH_HOST:~/app/
+    - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'mkdir -p /app/video-migrations'
+    - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'mkdir -p /app/user-migrations'
+    - scp -r -P $SSH_PORT internal/video-service/adapters/postgres/sql/migrations/* $SSH_USER@$SSH_HOST:/app/video-migrations/
+    - scp -r -P $SSH_PORT internal/user-service/adapters/postgres/sql/migrations/* $SSH_USER@$SSH_HOST:/app/user-migrations/
 
+    - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'cd /app && docker compose up -d'
+
+# refactor it so it will run a separate image for it and not reusing container
 migrate-up:
   stage: migrate-up
   image: docker:27-cli
