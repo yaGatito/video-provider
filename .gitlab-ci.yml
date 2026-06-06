@@ -25,20 +25,15 @@ test:
 buildx:
   image: docker:27-cli
   services:
-    - docker:27-dind # Make sure the DinD service is running if it isn't configured globally
+    - docker:27-dind
   script:
+    # Setup
     - echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USER" --password-stdin
-
-    # 1. Install cross-platform QEMU emulator binaries into the kernel
     - docker run --privileged --rm tonistiigi/binfmt --install all
-
-    # 2. Create a new multi-platform builder instance using the docker-container driver
     - docker buildx create --name mybuilder --driver docker-container --use
-    
-    # 3. Bootstrap/Start the custom builder instance
     - docker buildx inspect --bootstrap
-    
-    # 4. Execute your build (it will now correctly route ARM64 and AMD64 tasks)
+
+    # Build
     - docker buildx build -f internal/Dockerfile.user.prod  --platform linux/amd64,linux/arm64 -t yagatito/user-service-prod:1.0  --push ./internal
     - docker buildx build -f internal/Dockerfile.video.prod --platform linux/amd64,linux/arm64 -t yagatito/video-service-prod:1.0 --push ./internal
     - docker buildx build -f web/Dockerfile                 --platform linux/amd64,linux/arm64 -t yagatito/video-provider-web:1.0 --push ./web
@@ -48,11 +43,14 @@ deploy:
   image: docker.io/yagatito/ssh:1.0
   when: on_success
   script:
+    # Setting up SSH
     - mkdir -p ~/.ssh
     - echo "$SSH_PRIVATE_KEY" | base64 -d > ~/.ssh/id_ed25519
     - chmod -R 600 ~/.ssh
     - echo "$SSH_KNOWN_HOSTS" | base64 -d >> ~/.ssh/known_hosts
     - chmod 644 ~/.ssh/known_hosts
+
+    # Setting up docker compose
     - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'mkdir -p ~/app'
     - |
       ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "cat << 'EOF' > ~/app/.env
@@ -72,10 +70,12 @@ deploy:
       EOF"
     - scp docker-compose.yml $SSH_USER@$SSH_HOST:~/app/docker-compose.yml
     - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'cd ~/app && docker compose up -d'
-    - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'mkdir -p ~/app/video-migrations'
-    - scp -r internal/video-service/adapters/postgres/sql/migrations/* $SSH_USER@$SSH_HOST:/app/video-migrations/
-    - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'mkdir -p ~/app/user-migrations'
-    - scp -r internal/user-service/adapters/postgres/sql/migrations/* $SSH_USER@$SSH_HOST:/app/user-migrations/
+
+    # Setting up migrations
+    # - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'mkdir -p ~/app/video-migrations'
+    - scp -r -P $SSH_PORT internal/video-service/adapters/postgres/sql/migrations $SSH_USER@$SSH_HOST:~/app/
+    # - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'mkdir -p ~/app/user-migrations'
+    - scp -r -P $SSH_PORT internal/user-service/adapters/postgres/sql/migrations $SSH_USER@$SSH_HOST:~/app/
 
 migrate-up:
   stage: migrate-up
