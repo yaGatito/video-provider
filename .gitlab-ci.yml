@@ -1,28 +1,27 @@
 stages:
-  - lint
-  - test
   - build
-  - buildx
   - deploy
-  - migrate-up
 
 default:
   tags:
     - orange-pi-5-4gb-docker-runner 
 
 lint:
+  stage: build
   image: docker.io/yagatito/golangci-go:1.0
   script:
     - cd internal
     - golangci-lint run -c ../.golangci.yml
 
 test:
+  stage: build
   image: golang:1.25-alpine
   script:
     - cd internal
     - go test ./...
 
 buildx:
+  stage: build
   image: docker:27-cli
   services:
     - docker:27-dind
