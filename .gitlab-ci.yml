@@ -97,4 +97,5 @@ service-down:
       ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "cd ~/app && \
       docker compose down -v && \
       docker volume prune -f && \
-      docker image prune -f"
+      docker image prune -f && \
+      cd .. && rm -rf app"
