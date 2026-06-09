@@ -1,36 +1,101 @@
 stages:
-  - test
   - build
   - deploy
-  - lint
-  - migrate
 
 default:
   tags:
-    - orange-pi-5-4gb
+    - orange-pi-5-4gb-docker-runner 
 
 lint:
-  when: manual
+  stage: build
+  image: docker.io/yagatito/golangci-go:1.0
   script:
-    - docker run --rm -v $(pwd):/app -w /app golang:1.25-alpine sh -c "go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@v2.12.2 && cd /app/internal && golangci-lint run -c /app/.golangci.yml"
+    - cd internal
+    - golangci-lint run -c ../.golangci.yml
 
 test:
+  stage: build
+  image: golang:1.25-alpine
   script:
-    - docker run --rm -v $(pwd)/internal:/app -w /app golang:1.25-alpine sh -c "go test ./..."
+    - cd internal
+    - go test ./...
 
-build:
+buildx:
+  stage: build
+  image: docker:27-cli
+  services:
+    - docker:27-dind
   script:
-    - docker compose build
+    # Setup
+    - echo "$DOCKER_HUB_PASSWORD" | docker login -u "$DOCKER_HUB_USER" --password-stdin
+    - docker run --privileged --rm tonistiigi/binfmt --install all
+    - docker buildx create --name mybuilder --driver docker-container --use
+    - docker buildx inspect --bootstrap
+
+    # Build
+    - docker buildx build -f internal/Dockerfile.user.prod  --platform linux/amd64,linux/arm64 -t yagatito/user-service-prod:1.0  --push ./internal
+    - docker buildx build -f internal/Dockerfile.video.prod --platform linux/amd64,linux/arm64 -t yagatito/video-service-prod:1.0 --push ./internal
+    - docker buildx build -f web/Dockerfile                 --platform linux/amd64,linux/arm64 -t yagatito/video-provider-web:1.0 --push ./web
 
 deploy:
   stage: deploy
+  image: docker.io/yagatito/ssh:1.0
   when: on_success
   script:
-    - docker compose up -d
+    # Setting up SSH
+    - mkdir -p ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" | base64 -d > ~/.ssh/id_ed25519
+    - chmod -R 600 ~/.ssh
+    - echo "$SSH_KNOWN_HOSTS" | base64 -d >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
 
-migrate:
-  stage: migrate
+    # Setting up docker compose
+    - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'mkdir -p ~/app'
+    - |
+      ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "cat << 'EOF' > ~/app/.env
+      VIDEO_API_PORT=$VIDEO_API_PORT
+      VIDEO_DB_NAME=$VIDEO_DB_NAME
+      VIDEO_DB_USER=$VIDEO_DB_USER
+      VIDEO_DB_PASS=$VIDEO_DB_PASS
+      JWT_SECRET=$JWT_SECRET
+      VIDEO_DB_PORT=$VIDEO_DB_PORT
+      USER_DB_USER=$USER_DB_USER
+      USER_DB_PASS=$USER_DB_PASS
+      USER_DB_NAME=$USER_DB_NAME
+      USER_API_PORT=$USER_API_PORT
+      USER_DB_PORT=$USER_DB_PORT
+      REACT_APP_VIDEO_API_URL=$REACT_APP_VIDEO_API_URL
+      REACT_APP_USER_API_URL=$REACT_APP_USER_API_URL
+      EOF"
+    - scp docker-compose.yml $SSH_USER@$SSH_HOST:~/app/docker-compose.yml
 
+    # Setting up migrations
+    - ssh -p $SSH_PORT $SSH_USER@$SSH_HOST 'mkdir -p ~/app/video-migrations && mkdir -p ~/app/user-migrations'
+    - scp -r -P $SSH_PORT internal/video-service/adapters/postgres/sql/migrations/. $SSH_USER@$SSH_HOST:~/app/video-migrations/
+    - scp -r -P $SSH_PORT internal/user-service/adapters/postgres/sql/migrations/. $SSH_USER@$SSH_HOST:~/app/user-migrations/
+
+    - |
+      ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "cd ~/app && \
+      docker compose pull && \
+      docker compose up -d && \
+      docker compose logs && \
+      docker volume prune -f && \
+      docker image prune -f"
+
+service-down:
+  stage: deploy
+  image: docker.io/yagatito/ssh:1.0
+  when: manual
   script:
-    - echo "make migrate-up config=user"
-    - echo "make migrate-up config=video"
+    # Setting up SSH
+    - mkdir -p ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" | base64 -d > ~/.ssh/id_ed25519
+    - chmod -R 600 ~/.ssh
+    - echo "$SSH_KNOWN_HOSTS" | base64 -d >> ~/.ssh/known_hosts
+    - chmod 644 ~/.ssh/known_hosts
+    - |
+      ssh -p $SSH_PORT $SSH_USER@$SSH_HOST "cd ~/app && \
+      docker compose down -v && \
+      docker volume prune -f && \
+      docker image prune -f && \
+      cd .. && rm -rf app"

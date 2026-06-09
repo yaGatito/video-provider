@@ -27,7 +27,6 @@ linters:
     - testpackage
     - unconvert
     - gochecknoinits
-    - gochecknoglobals
     - gomoddirectives
     - testableexamples
     - nakedret
@@ -41,17 +40,7 @@ linters:
       severity: high
 
     whitespace:
-      check-branches: true
-      check-functions: true
-      check-ifs: true
-      check-returns: true
-      check-switches: true
-      check-for: true
-      check-whiles: true
-
-    gomoddirectives:
-      allow-replace: true
-      allow-exclude: true
+      multi-if: true
 
   exclusions:
     generated: lax

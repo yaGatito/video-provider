@@ -337,7 +337,9 @@ func TestUserService_Update(t *testing.T) {
 				}, nil)
 				mockRepo.EXPECT().Update(gomock.Any(), tc.id, gomock.Any()).Return(nil)
 			} else {
-				mockRepo.EXPECT().FindByID(gomock.Any(), tc.id).Return(domain.Nil, newErr(common.ErrNotFound, "user not found"))
+				mockRepo.EXPECT().
+					FindByID(gomock.Any(), tc.id).
+					Return(domain.Nil, newErr(common.ErrNotFound, "user not found"))
 			}
 
 			err := userService.Update(context.Background(), tc.id, tc.user)

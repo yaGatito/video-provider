@@ -2,7 +2,6 @@ package httpadp
 
 import (
 	"encoding/json"
-	"errors"
 	"log"
 	"net/http"
 	"os"
@@ -111,7 +110,8 @@ func (h *VideoHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if videoID == uuid.Nil {
-		common.WriteErrorResponse(w, h.log, &common.Error{Code: http.StatusBadRequest, Message: "empty video ID"})
+		common.WriteErrorResponse(w, h.log,
+			&common.Error{Code: http.StatusBadRequest, Message: "empty video ID"})
 		return
 	}
 
@@ -167,18 +167,35 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 	limit := intParams[0]
 	offset := intParams[1]
 
-	strParams, err := common.ParseStringsUrlParams(urlValues, SortByUrlParam, IsAscUrlParam)
-	if err != nil {
+	strParams, err := common.ParseStringsUrlParams(urlValues,
+		SortByUrlParam,
+		IsAscUrlParam,
+		SearchUrlParam)
+
+	var searchEmpty bool
+	var search string
+	switch err := err.(type) {
+	case nil:
+		// success
+	case *common.Error:
+		searchEmpty = SearchUrlParam == err.GetDetails()
+		// if error is because of SearchUrlParam - we can go on with other data
+		if !searchEmpty {
+			common.WriteErrorResponse(w, h.log, err)
+			return
+		}
+	default:
 		common.WriteErrorResponse(w, h.log, err)
 		return
 	}
 	orderBy := strParams[0]
 	asc := strParams[1]
-
-	search, err := common.ExtractUrlVarString(urlValues, SearchUrlParam)
-	if err != nil && !errors.Is(err, common.ErrEmptyValue) {
-		common.WriteErrorResponse(w, h.log, err)
-		return
+	if !searchEmpty {
+		search, err = ValidateSearchQuery(strParams[2])
+		if err != nil {
+			common.WriteErrorResponse(w, h.log, err)
+			return
+		}
 	}
 
 	pageParams, err := newVideoPageParams(orderBy, offset, limit, asc)
@@ -195,19 +212,15 @@ func (h *VideoHandler) GetByPublisher(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		search, err = ValidateSearchQuery(search)
-		if err != nil {
-			common.WriteErrorResponse(w, h.log, err)
-			return
-		}
-
-		videos, err = h.videoInteractor.SearchPublisher(r.Context(), publisherID, search, pageParams)
+		videos, err = h.videoInteractor.SearchPublisher(r.Context(),
+			publisherID, search, pageParams)
 		if err != nil {
 			common.WriteErrorResponse(w, h.log, err)
 			return
 		}
 	}
-	common.WriteResponse(w, h.log, VideosResponseBody{Videos: slicex.Map(videos, DtoVideo)}, http.StatusOK)
+	common.WriteResponse(w, h.log,
+		VideosResponseBody{Videos: slicex.Map(videos, DtoVideo)}, http.StatusOK)
 }
 
 // SearchGlobal godoc
@@ -239,7 +252,11 @@ func (h *VideoHandler) SearchGlobal(w http.ResponseWriter, r *http.Request) {
 	limit := resInt[0]
 	offset := resInt[1]
 
-	resStr, err := common.ParseStringsUrlParams(urlValues, SearchUrlParam, SortByUrlParam, IsAscUrlParam)
+	resStr, err := common.ParseStringsUrlParams(urlValues,
+		SearchUrlParam,
+		SortByUrlParam,
+		IsAscUrlParam)
+
 	if err != nil {
 		common.WriteErrorResponse(w, h.log, err)
 		return
@@ -260,5 +277,6 @@ func (h *VideoHandler) SearchGlobal(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	common.WriteResponse(w, h.log, VideosResponseBody{Videos: slicex.Map(videos, DtoVideo)}, http.StatusOK)
+	common.WriteResponse(w, h.log,
+		VideosResponseBody{Videos: slicex.Map(videos, DtoVideo)}, http.StatusOK)
 }

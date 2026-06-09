@@ -227,7 +227,11 @@ func TestVideoService_GetByPublisher(t *testing.T) {
 				Return(tc.expected, tc.err).
 				Times(1)
 
-			result, err := videoService.GetByPublisher(context.Background(), tc.publisherID, tc.params)
+			result, err := videoService.GetByPublisher(
+				context.Background(),
+				tc.publisherID,
+				tc.params,
+			)
 
 			if tc.err != nil {
 				require.Error(t, err)
@@ -317,7 +321,12 @@ func TestVideoService_SearchPublisher(t *testing.T) {
 				Return(tc.expected, tc.err).
 				Times(1)
 
-			result, err := videoService.SearchPublisher(context.Background(), tc.publisherID, tc.query, tc.params)
+			result, err := videoService.SearchPublisher(
+				context.Background(),
+				tc.publisherID,
+				tc.query,
+				tc.params,
+			)
 
 			if tc.err != nil {
 				require.Error(t, err)

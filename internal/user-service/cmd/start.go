@@ -83,7 +83,7 @@ func run() error {
 	log.Info("User-service starting on port: " + c.EnvConf.ApiPort)
 	err = http.ListenAndServe(":"+c.EnvConf.ApiPort, router)
 	if err != nil {
-		return fmt.Errorf("Failed to start the server: %v", err)
+		return fmt.Errorf("failed to start the server: %v", err)
 	}
 	log.Info("Server successfully started")
 	return nil

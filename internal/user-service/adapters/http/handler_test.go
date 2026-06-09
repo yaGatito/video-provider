@@ -86,11 +86,13 @@ func TestInvalidCreateUserRequest(t *testing.T) {
 			`{"email":"email@","name":"John","lastname":"Doe","password":"Password123!!"}`,
 		},
 		{
-			"Long email", http.StatusBadRequest,
+			"Long email",
+			http.StatusBadRequest,
 			`{"email":"emaillllllllllllllllllllllllllllllllllllllllllllllllllllllll@longdomainname.com","name":"John","lastname":"Doe","password":"Password123!!"}`,
 		},
 		{
-			"Invalid name format", http.StatusBadRequest,
+			"Invalid name format",
+			http.StatusBadRequest,
 			`{"email":"test@example.com","name":"John!!","lastname":"Doe","password":"Password123!!"}`,
 		},
 		{
@@ -98,11 +100,13 @@ func TestInvalidCreateUserRequest(t *testing.T) {
 			`{"email":"test@example.com","name":"J","lastname":"Doe","password":"Password123!!"}`,
 		},
 		{
-			"Too long name", http.StatusBadRequest,
+			"Too long name",
+			http.StatusBadRequest,
 			`{"email":"test@example.com","name":"JOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOHN","lastname":"Doe","password":"Password123!!"}`,
 		},
 		{
-			"Invalid lastname format", http.StatusBadRequest,
+			"Invalid lastname format",
+			http.StatusBadRequest,
 			`{"email":"test@example.com","name":"John","lastname":"Doe!!!","password":"Password123!!"}`,
 		},
 		{
@@ -110,7 +114,8 @@ func TestInvalidCreateUserRequest(t *testing.T) {
 			`{"email":"test@example.com","name":"John","lastname":"D","password":"Password123!!"}`,
 		},
 		{
-			"Too long lastname", http.StatusBadRequest,
+			"Too long lastname",
+			http.StatusBadRequest,
 			`{"email":"test@example.com","name":"John","lastname":"DOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOE","password":"Password123!!"}`,
 		},
 		{
@@ -196,7 +201,13 @@ func BenchmarkValidCreateUserRequest(b *testing.B) {
 				strings.NewReader(reqBody)))
 
 		if rec.Code != http.StatusCreated || rec.Body.String() != expResponse {
-			b.Errorf("Expected status code %d and response %q, got %d and %q", http.StatusCreated, expResponse, rec.Code, rec.Body.String())
+			b.Errorf(
+				"Expected status code %d and response %q, got %d and %q",
+				http.StatusCreated,
+				expResponse,
+				rec.Code,
+				rec.Body.String(),
+			)
 		}
 	}
 }
@@ -234,7 +245,13 @@ func BenchmarkGetUserRequest(b *testing.B) {
 				nil))
 
 		if rec.Code != http.StatusOK || rec.Body.String() != expResponse {
-			b.Errorf("Expected status code %d and response %q, got %d and %q", http.StatusOK, expResponse, rec.Code, rec.Body.String())
+			b.Errorf(
+				"Expected status code %d and response %q, got %d and %q",
+				http.StatusOK,
+				expResponse,
+				rec.Code,
+				rec.Body.String(),
+			)
 		}
 	}
 }

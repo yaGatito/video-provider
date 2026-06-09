@@ -1,10 +1,8 @@
 services:
   # --- Video Service ---
   video-service:
+    image: yagatito/video-service-prod:1.0
     container_name: video-service-alpine
-    build:
-      context: ./internal/
-      dockerfile: ./VideoDockerfile
     ports:
       - "${VIDEO_API_PORT}:8080"
     depends_on:
@@ -34,13 +32,16 @@ services:
       - video-db-data:/var/lib/postgresql
     networks:
       - app-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
 
   # --- User Service ---
   user-service:
+    image: yagatito/user-service-prod:1.0
     container_name: user-service-alpine
-    build:
-      context: ./internal/
-      dockerfile: ./UserDockerfile
     ports:
       - "${USER_API_PORT}:8080"
     depends_on:
@@ -69,15 +70,18 @@ services:
     volumes:
       - user-db-data:/var/lib/postgresql
     networks:
-      - app-network
+      - app-network    
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 3s
+      timeout: 3s
+      retries: 5
 
   # --- Web (React) Service ---
   web:
+    image: yagatito/video-provider-web:1.0
     container_name: web-nginx
-    build:
-      context: ./web
-      dockerfile: Dockerfile
-      args:
+    environment:
         REACT_APP_VIDEO_API_URL: "${REACT_APP_VIDEO_API_URL}"
         REACT_APP_USER_API_URL: "${REACT_APP_USER_API_URL}"
     ports:
@@ -85,6 +89,39 @@ services:
     depends_on:
       - user-service
       - video-service
+    networks:
+      - app-network
+
+# --- Migration runner service ---
+  migration_runner:
+    image: yagatito/goose-go:1.0
+    container_name: migration_runner
+    volumes:
+      - ~/app/video-migrations:/video-migrations
+      - ~/app/user-migrations:/user-migrations
+    environment:
+      USER_DB_NAME: "${USER_DB_NAME}"
+      USER_DB_HOST: "user-db"
+      USER_DB_PORT: "5432"
+      USER_DB_USER: "${USER_DB_USER}"
+      USER_DB_PASS: "${USER_DB_PASS}"
+      VIDEO_DB_NAME: "${VIDEO_DB_NAME}"
+      VIDEO_DB_HOST: "video-db"
+      VIDEO_DB_PORT: "5432"
+      VIDEO_DB_USER: "${VIDEO_DB_USER}"
+      VIDEO_DB_PASS: "${VIDEO_DB_PASS}"    
+    command: >
+      sh -c '
+      goose -dir /user-migrations postgres "postgres://$$USER_DB_USER:$$USER_DB_PASS@$$USER_DB_HOST:$$USER_DB_PORT/$$USER_DB_NAME?sslmode=disable" up &&
+      goose -dir /video-migrations postgres "postgres://$$VIDEO_DB_USER:$$VIDEO_DB_PASS@$$VIDEO_DB_HOST:$$VIDEO_DB_PORT/$$VIDEO_DB_NAME?sslmode=disable" up
+      '
+    depends_on:
+      user-db:
+        condition: service_healthy
+      video-db:
+        condition: service_healthy
+      web:
+        condition: service_started
     networks:
       - app-network
 

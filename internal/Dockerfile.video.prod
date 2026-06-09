@@ -1,0 +1,16 @@
+FROM golang:1.25-alpine AS builder
+WORKDIR /app
+
+COPY . .
+RUN go mod download
+RUN CGO_ENABLED=0 GOOS=linux go build -ldflags "-s -w -extldflags '-static'" -o /bin/video-service ./video-service/cmd
+RUN apk add upx
+RUN upx /bin/video-service
+
+FROM scratch
+WORKDIR /app
+
+COPY --from=builder /bin/video-service ./video-service
+COPY --from=builder /app/config/video_config.json ./config/video_config.json
+
+CMD ["./video-service"]
